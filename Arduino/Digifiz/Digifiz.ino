@@ -5,7 +5,9 @@
 #include <DS3231.h>
 #include <Wire.h>
 
-DS3231 clock;
+//Clock at 0x57
+//EEPROM at 0x50
+DS3231 clock; 
 
 uint16_t rpm = 0;
 uint16_t spd_m = 0;
