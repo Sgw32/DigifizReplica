@@ -51,5 +51,7 @@ void setMFAClockData(uint8_t hours,uint8_t minutes);
 void setFuel(uint8_t litres);
 void setRPMData(uint16_t data);
 void setSpeedometerData(uint16_t data);
+void setCoolantData(uint16_t data);
+void setDot(bool value);
 
 #endif

@@ -1,6 +1,7 @@
 #include "display.h"
 #include "speedometer.h"
 #include "tacho.h"
+#include "adc.h"
 //#include "eeprom.h"
 #include <DS3231.h>
 #include <Wire.h>
@@ -15,6 +16,26 @@ int i = 0;
 bool century = false;
 bool h12Flag;
 bool pmFlag;
+
+long clockDot;
+
+void initReadInterrupt()
+{
+    cli();//stop interrupts
+    //set timer4 interrupt at 1Hz
+    TCCR4A = 0;// set entire TCCR1A register to 0
+    TCCR4B = 0;// same for TCCR1B
+    TCNT4  = 0;//initialize counter value to 0
+    // set compare match register for 1hz increments
+    OCR4A = 1953;// = (16*10^6) / (1*1024) - 1 (must be <65536)
+    // turn on CTC mode
+    TCCR4B |= (1 << WGM12);
+    // Set CS12 and CS10 bits for 1024 prescaler
+    TCCR4B |= (1 << CS12) | (1 << CS10);  
+    // enable timer compare interrupt
+    TIMSK4 |= (1 << OCIE4A);
+    sei();//allow interrupts
+}
 
 void setup() 
 {  
@@ -36,34 +57,48 @@ void setup()
   //}
   
   initDisplay();
+  initADC();
   initSpeedometer();
   initTacho();
   
   Serial.begin(57600);
   
   Serial.println("hello");
+
+  initReadInterrupt();
+
+  clockDot = millis();
   
   //PRINTS("\nDigifiz Started!");
-  
-  /*pinMode(CLK_PIN,OUTPUT);
-  pinMode(DATA_PIN,OUTPUT);
-  pinMode(CS_PIN,OUTPUT);
-  pinMode(CLK_PIN2,OUTPUT);
-  pinMode(DATA_PIN2,OUTPUT);
-  pinMode(CS_PIN2,OUTPUT);*/
+}
+
+ISR(TIMER4_COMPA_vect)
+{
+  processGasLevel();
+  processCoolantTemperature();
 }
 
 void loop() {
-  int hour = clock.getHour(h12Flag, pmFlag);
-  int minute = clock.getMinute();
-  //int hour  = 0;
-  //int minute = 0;
-  // put your main code here, to run repeatedly:
-  setClockData(hour,minute);
-  setMFAClockData(hour,minute);
+  
+  if ((millis()-clockDot)>500)
+  {
+    setDot(true);
+  }
+  if ((millis()-clockDot)>1000)
+  {
+    int hour = clock.getHour(h12Flag, pmFlag);
+    int minute = clock.getMinute();
+    clockDot = millis();
+    setClockData(hour,minute);
+    setMFAClockData(hour,minute);
+    setDot(false);
+  }
+
   setSpeedometerData(spd_m);
   setRPMData(rpm);
-  setFuel(i);
+  setFuel(getLitresInTank());
+  //setFuel(constrain((int)getCoolantTemperature(),0,99));
+  setCoolantData(getDisplayedCoolantTemp());
   i=i+1;
 
   spd_m = readLastSpeed();
@@ -81,20 +116,4 @@ void loop() {
   Serial.println(rpm,DEC);
   Serial.println(spd_m,DEC);
   delay(100);
-
-
- /*digitalWrite(CLK_PIN,HIGH);
-  digitalWrite(DATA_PIN,HIGH);
-  digitalWrite(CS_PIN,HIGH);
-  digitalWrite(CLK_PIN2,HIGH);
-  digitalWrite(DATA_PIN2,HIGH);
-  digitalWrite(CS_PIN2,HIGH);
-  delay(10);
-  digitalWrite(CLK_PIN,LOW);
-  digitalWrite(DATA_PIN,LOW);
-  digitalWrite(CS_PIN,LOW);
-  digitalWrite(CLK_PIN2,LOW);
-  digitalWrite(DATA_PIN2,LOW);
-  digitalWrite(CS_PIN2,LOW);
-  delay(10);*/
 }

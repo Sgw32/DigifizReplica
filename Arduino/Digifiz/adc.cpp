@@ -1,7 +1,7 @@
 #include "adc.h"
 
 float R1 = 1000;
-float logR2, R2, T, oilT, airT;
+float logR2, R2, coolantT, oilT, airT;
 float coolantB = 4000;
 float V0;
 float gasolineLevel;
@@ -13,6 +13,11 @@ uint8_t gasolinePin = A11; //Gasoline sensor
 uint8_t oilPin = A14; //Gasoline sensor
 uint8_t airPin = A15; //Gasoline sensor
 
+uint8_t tankCapacity = 60;
+
+#define TAU_GASOLINE 0.02f
+#define TAU_COOLANT 0.02f
+
 void initADC()
 {
     //pinMode(A0, INPUT); //GURTANL.K
@@ -23,7 +28,7 @@ void initADC()
     pinMode(gasolinePin, INPUT); //Gasoline tank level sensor
     pinMode(oilPin, INPUT); //Coolant temperature sensor
     pinMode(airPin, INPUT); //Gasoline tank level sensor
-    T = oilT = airT = 0.0f;
+    coolantT = oilT = airT = 0.0f;
 }
 
 //RAW values 0..1024
@@ -55,21 +60,18 @@ uint16_t getRawLightLevel()
 //Data values
 float getCoolantTemperature()
 {
-    Vo = (float)analogRead(coolantPin);
-    R2 = R1 * Vo / (1023.0f - Vo); //
-    float tempT = 1.0f/(log(R2/R1)/coolantB+1.0f/(25.0f+273.15f))-273.15f;
-    if (tempT<-50.0f)
+    if (coolantT<-50.0f)
         return -999.9f;
-    else if (tempT>200.0)
+    else if (coolantT>200.0)
         return -999.9f;
     else
-        return T+=0.1*(tempT-T);
+        return coolantT;
 }
 
 float getOilTemperature()
 {
-    Vo = (float)analogRead(oilPin);
-    R2 = R1 * Vo / (1023.0f - Vo); //
+    V0 = (float)analogRead(oilPin);
+    R2 = R1 * V0 / (1023.0f - V0); //
     float tempT = 1.0f/(log(R2/R1)/coolantB+1.0f/(25.0f+273.15f))-273.15f;
     if (tempT<-50.0f)
         return -999.9f;
@@ -79,24 +81,56 @@ float getOilTemperature()
         return oilT +=0.1*(tempT-oilT);
 }
 
+
+void processCoolantTemperature()
+{
+    V0 = (float)analogRead(coolantPin);
+    R2 = 220.0f * V0 / (1023.0f - V0); //
+    float temp1 = (log(R2/R1)/coolantB);
+    temp1 += 1/(25.0f+273.15f);
+    coolantT += TAU_COOLANT*(1.0f/temp1 - 273.15f - coolantT);
+    
+    //coolantT += TAU_COOLANT*(R2-coolantT);
+}
+
+void processGasLevel()
+{
+    V0 = (float)analogRead(gasolinePin);
+    R2 = constrain(330 * V0 / (1023.0f - V0),35,265); // 330 Ohm in series with fuel sensor
+    gasolineLevel += TAU_GASOLINE*(((float)R2-35.0f)/(265.0f-35.0f)-gasolineLevel); //percents
+}
+
 float getGasLevel()
 {
-    Vo = (float)analogRead(gasolinePin);
-    R2 = constrain(330 * Vo / (1023.0f - Vo),35,265); // 330 Ohm in series with fuel sensor
-    gasoline += 0.1*(((float)R2-35.0f)/(265.0f-35.0f)-gasoline);
-    return ;
+    V0 = (float)analogRead(gasolinePin);
+    R2 = constrain(330 * V0 / (1023.0f - V0),35,265); // 330 Ohm in series with fuel sensor
+    gasolineLevel += TAU_GASOLINE*(((float)R2-35.0f)/(265.0f-35.0f)-gasolineLevel); //percents
+    return gasolineLevel;
+}
+
+uint8_t getLitresInTank() //0..99
+{
+    return constrain(gasolineLevel*(float)tankCapacity,0,99); //where 99 of course means error
+}
+
+uint8_t getDisplayedCoolantTemp()  //0..14
+{
+    return constrain((int)((coolantT-60.0f)/(120.0f - 60.0f)*14.0f),0,14); //TODO parameters
 }
 
 float getAmbientTemperature()
 {
-    Vo = (float)analogRead(airPin);
-    R2 = R1 * Vo / (1023.0f - Vo); //
+    V0 = (float)analogRead(airPin);
+    R2 = R1 * V0 / (1023.0f - V0); //
     float tempT = 1.0f/(log(R2/R1)/coolantB+1.0f/(25.0f+273.15f))-273.15f;
     if (tempT<-50.0f)
         return -999.9f;
     else if (tempT>200.0)
         return -999.9f;
     else
-        return airT +=0.1*(tempT-airT);
+    {
+        airT +=0.1*(tempT-airT);
+        return airT;
+    }
     return -999.9f;
 }

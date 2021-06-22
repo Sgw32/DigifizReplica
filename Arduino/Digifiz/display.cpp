@@ -111,11 +111,15 @@ void setRPMData(uint16_t data)
     leds_lit/=7000;
     //leds_lit=leds_lit;
     int blocks_lit = leds_lit / 8;
+    if (blocks_lit>6) 
+      blocks_lit=6; 
     //Serial.println(blocks_lit);
     for (uint8_t col=2; col<2+blocks_lit; col++)
     {
     mx.setColumn(col, 0xff);
     }
+
+    //TODO: this is optional and redundant, consider accurate exclusion for 2+blocks_lit
     for (uint8_t col=2+blocks_lit; col<8; col++)
     {
     mx.setColumn(col, 0x00);
@@ -156,4 +160,33 @@ void setSpeedometerData(uint16_t data)
       mx2.setColumn(21, number[(data / 1) % 10]); //--Y
     }
     }
+}
+
+void setDot(bool value)
+{
+  //mx.setPoint(8, 0, value);
+  //mx.setPoint(8, 1, value);
+  mx2.setPoint(0,8,value);
+  mx2.setPoint(0,9,value);
+
+  mx2.setPoint(0,12,value);
+  mx2.setPoint(0,13,value);
+  mx2.setPoint(0,14,value);
+}
+
+void setCoolantData(uint16_t data)
+{
+    uint8_t number[5]={0b0000,0b0001,0b0011,0b0111,0b1111};
+    //data is from 0..14
+    int blocks_lit = data / 4; //DIG22_0...DIG22_4
+    blocks_lit = constrain(blocks_lit,0,3);
+    for (uint8_t col=8; col<8+blocks_lit; col++)
+    {
+      mx.setColumn(col, 0xff);
+    }
+    for (uint8_t col=8+blocks_lit; col<11; col++)
+    {
+      mx.setColumn(col, 0x00);
+    }
+    mx.setColumn(8+blocks_lit, number[data%4+1]);
 }

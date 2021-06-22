@@ -12,10 +12,18 @@ uint16_t getRawGasLevel();
 uint16_t getRawAmbientTemperature();
 uint16_t getRawLightLevel();
 
-//Data values
-float getCoolantTemperature();
-float getOilTemperature();
-float getGasLevel();
-float getAmbientTemperature();
+//Display helpers
+uint8_t getLitresInTank(); //0..99
+uint8_t getDisplayedCoolantTemp(); //0..14
+
+
+//Physical data values
+float getCoolantTemperature(); //celsius
+float getOilTemperature(); //celsius
+float getGasLevel(); //percents
+float getAmbientTemperature(); //celsius
+
+void processCoolantTemperature();
+void processGasLevel();
 
 #endif
