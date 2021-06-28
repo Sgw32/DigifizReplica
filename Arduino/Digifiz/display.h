@@ -42,6 +42,16 @@
 
 #define  DELAYTIME  100  // in milliseconds
 
+#define MFA_AIR_TEMP 0
+#define MFA_OIL_TEMP 1
+#define MFA_AVERAGE_SPEED 2
+#define MFA_AVERAGE_CONSUMPTION 3
+#define MFA_DAILY_MILEAGE 4
+#define MFA_DRIVING_TIME 5
+
+#define MFA1_PIN 76
+#define MFA2_PIN 75
+
 void initDisplay();
 void setRPM(int rpmdata);
 void blinking();
@@ -53,5 +63,8 @@ void setRPMData(uint16_t data);
 void setSpeedometerData(uint16_t data);
 void setCoolantData(uint16_t data);
 void setDot(bool value);
+void setMileage(uint32_t mileage);
+void setMFAType(uint8_t mfaType);
+void setMFABlock(uint8_t block);
 
 #endif

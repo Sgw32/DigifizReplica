@@ -3,6 +3,8 @@
 uint32_t mRPMSenseData;
 uint32_t lastMillisRPM;
 
+MedianFilter2<uint32_t> medianFilterRPM(5);
+
 void PCInt20()
 {
     mRPMSenseData = (micros()-lastMillisRPM);
@@ -17,13 +19,20 @@ void initTacho()
     sei(); 
     lastMillisRPM = micros();
     mRPMSenseData = 0;
+    medianFilterRPM.AddValue(0);
+    medianFilterRPM.AddValue(0);
+    medianFilterRPM.AddValue(0);
+    medianFilterRPM.AddValue(0);
+    medianFilterRPM.AddValue(0);
 }
 
-uint16_t readLastRPM()
+uint32_t readLastRPM()
 {
-    //Serial.println(mRPMSenseData);
-    if (mRPMSenseData<1000000)
-      return mRPMSenseData;
+    if ((micros()-lastMillisRPM)<1000000)
+    {
+      uint32_t median = medianFilterRPM.AddValue(mRPMSenseData);
+      return median;
+    }
     else
       return 0;
 }

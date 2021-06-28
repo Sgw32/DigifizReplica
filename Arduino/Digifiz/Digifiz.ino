@@ -2,22 +2,29 @@
 #include "speedometer.h"
 #include "tacho.h"
 #include "adc.h"
-//#include "eeprom.h"
-#include <DS3231.h>
+#include "eeprom.h"
+#include "protocol.h"
+
+//#include <DS3231.h>
+#include <RTClib.h>
 #include <Wire.h>
 
 //Clock at 0x57
 //EEPROM at 0x50
-DS3231 clock; 
+//DS3231 clock; 
+RTC_DS3231 myRTC;
 
 uint16_t rpm = 0;
-uint16_t spd_m = 0;
+uint32_t spd_m = 0;
 int i = 0;
 bool century = false;
 bool h12Flag;
 bool pmFlag;
 
 long clockDot;
+DateTime startTime;
+
+extern digifiz_pars digifiz_parameters;
 
 void initReadInterrupt()
 {
@@ -41,44 +48,30 @@ void setup()
 {  
   // Start the I2C interface
   Wire.begin();
-  //for (int i=0; i<5; i++){
-      //delay(1000);
-      Serial.print(clock.getYear(), DEC);
-      Serial.print("-");
-      Serial.print(clock.getMonth(century), DEC);
-      Serial.print("-");
-      Serial.print(clock.getDate(), DEC);
-      Serial.print(" ");
-      Serial.print(clock.getHour(h12Flag, pmFlag), DEC); //24-hr
-      Serial.print(":");
-      Serial.print(clock.getMinute(), DEC);
-      Serial.print(":");
-      Serial.println(clock.getSecond(), DEC);
-  //}
-  
+  initEEPROM();
   initDisplay();
   initADC();
   initSpeedometer();
   initTacho();
-  
-  Serial.begin(57600);
-  
-  Serial.println("hello");
-
   initReadInterrupt();
-
+  initComProtocol();
   clockDot = millis();
-  
-  //PRINTS("\nDigifiz Started!");
+  myRTC.begin();
+  startTime = myRTC.now();
 }
 
 ISR(TIMER4_COMPA_vect)
 {
   processGasLevel();
   processCoolantTemperature();
+  setSpeedometerData(spd_m);
+  setRPMData(rpm);
+  setFuel(getLitresInTank());
+  setCoolantData(getDisplayedCoolantTemp());
 }
 
-void loop() {
+void loop() 
+{
   
   if ((millis()-clockDot)>500)
   {
@@ -86,34 +79,32 @@ void loop() {
   }
   if ((millis()-clockDot)>1000)
   {
-    int hour = clock.getHour(h12Flag, pmFlag);
-    int minute = clock.getMinute();
+    DateTime newTime = myRTC.now();
+    int hour = newTime.hour();
+    int minute = newTime.minute();
+    TimeSpan sinceStart = newTime - startTime;
     clockDot = millis();
     setClockData(hour,minute);
-    setMFAClockData(hour,minute);
+    setMFAClockData(sinceStart.hours(),sinceStart.minutes());
     setDot(false);
+    digifiz_parameters.mileage+=spd_m;
+    digifiz_parameters.daily_mileage+=spd_m;
+    setMileage(digifiz_parameters.mileage/3600); //to km
+    setMFAType(11);
   }
-
-  setSpeedometerData(spd_m);
-  setRPMData(rpm);
-  setFuel(getLitresInTank());
-  //setFuel(constrain((int)getCoolantTemperature(),0,99));
-  setCoolantData(getDisplayedCoolantTemp());
+  
+  protocolParse();
   i=i+1;
-
   spd_m = readLastSpeed();
   if (spd_m>0)
   {
     spd_m = 1000000/spd_m ; //Hz
+    spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
   }
-  
   rpm = readLastRPM(); //micros
   if (rpm>0)
   {
     rpm = 1000000/rpm;
-    rpm *= 15; //4 cylinder motor, 60 sec in min
+    rpm *= digifiz_parameters.rpmCoefficient; //4 cylinder motor, 60 sec in min
   }
-  Serial.println(rpm,DEC);
-  Serial.println(spd_m,DEC);
-  delay(100);
 }

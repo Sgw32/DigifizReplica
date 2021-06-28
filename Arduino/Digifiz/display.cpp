@@ -52,6 +52,50 @@ void blinking2()
     }
 }
 
+void setMFABlock(uint8_t block)
+{
+  //PA2 PA3
+  /*
+  switch(block)
+  {
+    case MFA_AIR_TEMP:
+      break;
+    case MFA_OIL_TEMP:
+      break;
+    case MFA_AVERAGE_SPEED:
+      break;
+    case MFA_DAILY_MILEAGE:
+      break;
+    case MFA_DRIVING_TIME:
+      break;
+    default:
+      break;
+  }
+  */
+}
+
+void setMFAType(uint8_t type)
+{
+  if (type<8)
+    mx.setColumn(0, (1<<type));
+  else
+    mx.setColumn(1, (1<<(type-8)));
+}
+
+void setMileage(uint32_t mileage)
+{
+  uint8_t number[10]={0b01111110,0b01000011,0b10110110,0b11100110,0b11001010,0b11101100,0b11111100,0b01000111,0b11111111,0b11101111};
+  mx2.setColumn(0, number[(mileage / 100000) % 10]); 
+  mx2.setColumn(1, number[(mileage / 10000) % 10]); 
+  mx2.setColumn(2, number[(mileage / 1000) % 10]); 
+  mx2.setColumn(3, number[(mileage / 100) % 10]); 
+  mx2.setColumn(4, number[(mileage / 10) % 10]); 
+  //if (mileage!=0)
+    mx2.setColumn(5, number[(mileage / 1) % 10]); 
+  //else
+  //  mx2.setColumn(5, 0b01111110); 
+}
+
 void setClockData(uint8_t hours,uint8_t minutes)
 {
     uint8_t number[10]={0b01111111,0b01000011,0b10110110,0b11100110,0b11001010,0b11101100,0b11111100,0b01000111,0b11111111,0b11101111};

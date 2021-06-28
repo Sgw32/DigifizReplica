@@ -5,6 +5,9 @@ float logR2, R2, coolantT, oilT, airT;
 float coolantB = 4000;
 float V0;
 float gasolineLevel;
+
+float tauCoolant, tauGasoline, tauAir, tauOil;
+
 uint8_t oil03Pin = A1; // Oil pressure 0.3
 uint8_t oil08Pin = A2; // Oil pressure 0.8
 uint8_t lightSensorPin = A9; // Light sensor
@@ -15,8 +18,12 @@ uint8_t airPin = A15; //Gasoline sensor
 
 uint8_t tankCapacity = 60;
 
-#define TAU_GASOLINE 0.02f
-#define TAU_COOLANT 0.02f
+//#define TAU_GASOLINE 0.02f
+//#define TAU_COOLANT 0.02f
+
+#define TAU 0.01
+
+extern digifiz_pars digifiz_parameters;
 
 void initADC()
 {
@@ -29,6 +36,11 @@ void initADC()
     pinMode(oilPin, INPUT); //Coolant temperature sensor
     pinMode(airPin, INPUT); //Gasoline tank level sensor
     coolantT = oilT = airT = 0.0f;
+    coolantB = digifiz_parameters.coolantThermistorB;
+    tauCoolant = (float)digifiz_parameters.tauCoolant*TAU;
+    tauOil = (float)digifiz_parameters.tauOil*TAU;
+    tauAir = (float)digifiz_parameters.tauAir*TAU;
+    tauGasoline = (float)digifiz_parameters.tauCoolant*TAU;
 }
 
 //RAW values 0..1024
@@ -88,7 +100,7 @@ void processCoolantTemperature()
     R2 = 220.0f * V0 / (1023.0f - V0); //
     float temp1 = (log(R2/R1)/coolantB);
     temp1 += 1/(25.0f+273.15f);
-    coolantT += TAU_COOLANT*(1.0f/temp1 - 273.15f - coolantT);
+    coolantT += tauCoolant*(1.0f/temp1 - 273.15f - coolantT);
     
     //coolantT += TAU_COOLANT*(R2-coolantT);
 }
@@ -97,14 +109,17 @@ void processGasLevel()
 {
     V0 = (float)analogRead(gasolinePin);
     R2 = constrain(330 * V0 / (1023.0f - V0),35,265); // 330 Ohm in series with fuel sensor
-    gasolineLevel += TAU_GASOLINE*(((float)R2-35.0f)/(265.0f-35.0f)-gasolineLevel); //percents
+    gasolineLevel += tauGasoline*(((float)R2-digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
+                                                digifiz_parameters.tankMinResistance)-gasolineLevel); //percents
 }
 
 float getGasLevel()
 {
     V0 = (float)analogRead(gasolinePin);
     R2 = constrain(330 * V0 / (1023.0f - V0),35,265); // 330 Ohm in series with fuel sensor
-    gasolineLevel += TAU_GASOLINE*(((float)R2-35.0f)/(265.0f-35.0f)-gasolineLevel); //percents
+    gasolineLevel += tauGasoline*(((float)R2-
+              digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
+                                                digifiz_parameters.tankMinResistance)-gasolineLevel); //percents
     return gasolineLevel;
 }
 

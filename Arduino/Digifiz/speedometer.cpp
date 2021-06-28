@@ -1,7 +1,9 @@
 #include "speedometer.h"
 
-uint16_t mSpdData;
+uint32_t mSpdData;
 uint32_t lastMillis;
+
+MedianFilter2<uint32_t> medianFilter(5);
 
 void PCInt12()
 {
@@ -21,12 +23,20 @@ void initSpeedometer()
     sei(); 
     lastMillis = micros();
     mSpdData = 0;
+    medianFilter.AddValue(0);
+    medianFilter.AddValue(0);
+    medianFilter.AddValue(0);
+    medianFilter.AddValue(0);
+    medianFilter.AddValue(0);
 }
 
-uint16_t readLastSpeed()
+uint32_t readLastSpeed()
 {
-    if (mSpdData<1000000)
-      return mSpdData;
+    if ((micros()-lastMillis)<1000000)
+    {
+      uint32_t median = medianFilter.AddValue(mSpdData);
+      return median;
+    }
     else
       return 0;
 }
