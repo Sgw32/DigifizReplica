@@ -11,6 +11,8 @@ void initDisplay()
     mx2.begin();
     mx.clear();
     mx2.clear();
+    pinMode(MFA1_PIN,OUTPUT);
+    pinMode(MFA2_PIN,OUTPUT);
 }
 
 void setRPM(int rpmdata)
@@ -54,32 +56,30 @@ void blinking2()
 
 void setMFABlock(uint8_t block)
 {
-  //PA2 PA3
-  /*
-  switch(block)
+  if (block&0x1)
   {
-    case MFA_AIR_TEMP:
-      break;
-    case MFA_OIL_TEMP:
-      break;
-    case MFA_AVERAGE_SPEED:
-      break;
-    case MFA_DAILY_MILEAGE:
-      break;
-    case MFA_DRIVING_TIME:
-      break;
-    default:
-      break;
+      digitalWrite(MFA1_PIN,HIGH);
+      digitalWrite(MFA2_PIN,LOW);
   }
-  */
+  else
+  {
+      digitalWrite(MFA1_PIN,LOW);
+      digitalWrite(MFA2_PIN,HIGH);
+  }
 }
 
 void setMFAType(uint8_t type)
 {
-  if (type<8)
-    mx.setColumn(0, (1<<type));
-  else
-    mx.setColumn(1, (1<<(type-8)));
+  if (type>6)
+  {
+      mx.setColumn(0,0);
+      mx.setColumn(1,0);
+      return;
+  }
+  uint8_t mfa1_led[6]={0b00000000,0b00000000,0b00001110,0b00110000,0b11000000,0b00000001};
+  uint8_t mfa2_led[6]={0b00001000,0b00000100,0b00000000,0b00000000,0b00000000,0b00000010};
+  mx.setColumn(0, mfa1_led[type]);
+  mx.setColumn(1, mfa2_led[type]);
 }
 
 void setMileage(uint32_t mileage)

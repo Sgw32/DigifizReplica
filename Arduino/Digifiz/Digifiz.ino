@@ -1,9 +1,12 @@
 #include "display.h"
 #include "speedometer.h"
+#include "emergency.h"
 #include "tacho.h"
 #include "adc.h"
 #include "eeprom.h"
 #include "protocol.h"
+#include "buzzer.h"
+#include "mfa.h"
 
 //#include <DS3231.h>
 #include <RTClib.h>
@@ -14,9 +17,10 @@
 //DS3231 clock; 
 RTC_DS3231 myRTC;
 
-uint16_t rpm = 0;
+uint32_t rpm = 0;
 uint32_t spd_m = 0;
 int i = 0;
+int saveParametersCounter = 0;
 bool century = false;
 bool h12Flag;
 bool pmFlag;
@@ -46,6 +50,8 @@ void initReadInterrupt()
 
 void setup() 
 {  
+  spd_m = 0;
+  rpm = 0;
   // Start the I2C interface
   Wire.begin();
   initEEPROM();
@@ -55,6 +61,9 @@ void setup()
   initTacho();
   initReadInterrupt();
   initComProtocol();
+  initBuzzer();
+  initMFA();
+  initEmergencyModule();
   clockDot = millis();
   myRTC.begin();
   startTime = myRTC.now();
@@ -68,11 +77,27 @@ ISR(TIMER4_COMPA_vect)
   setRPMData(rpm);
   setFuel(getLitresInTank());
   setCoolantData(getDisplayedCoolantTemp());
+  i=i+1;
+  spd_m = readLastSpeed();
+  if (spd_m>0)
+  {
+    spd_m = 1000000/spd_m ; //Hz
+    spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
+  }
+  rpm = readLastRPM(); //micros
+  if (rpm>0)
+  {
+    rpm = 1000000/rpm;
+    rpm *= digifiz_parameters.rpmCoefficient; //4 cylinder motor, 60 sec in min
+  }
+  if (getBuzzerEnabled())
+  {
+      buzzerToggle();
+  }
 }
 
 void loop() 
 {
-  
   if ((millis()-clockDot)>500)
   {
     setDot(true);
@@ -90,21 +115,17 @@ void loop()
     digifiz_parameters.mileage+=spd_m;
     digifiz_parameters.daily_mileage+=spd_m;
     setMileage(digifiz_parameters.mileage/3600); //to km
-    setMFAType(11);
+    
+    saveParametersCounter++;
+    if (saveParametersCounter==16)
+    {
+        saveParameters();
+        saveParametersCounter=0;
+    }
+    checkEmergency(rpm);
+    setMFABlock(digifiz_parameters.mfaBlock); //in display h
   }
-  
+  setMFAType(digifiz_parameters.mfaState);
+  processMFA();
   protocolParse();
-  i=i+1;
-  spd_m = readLastSpeed();
-  if (spd_m>0)
-  {
-    spd_m = 1000000/spd_m ; //Hz
-    spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
-  }
-  rpm = readLastRPM(); //micros
-  if (rpm>0)
-  {
-    rpm = 1000000/rpm;
-    rpm *= digifiz_parameters.rpmCoefficient; //4 cylinder motor, 60 sec in min
-  }
 }

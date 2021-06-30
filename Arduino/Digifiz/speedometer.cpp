@@ -7,8 +7,17 @@ MedianFilter2<uint32_t> medianFilter(5);
 
 void PCInt12()
 {
-    mSpdData = (micros()-lastMillis);
-    lastMillis = micros();
+    // mSpdData should correspond 0..300 kmh 
+    // Not lower(obvious) not higher(of course)
+    // 300 kmh ~ 300 Hz , we shift it to 2 times so it is 600 Hz(as in tacho)
+    // So mRPMSenseData has a window of 1000000/600 ... 1000000
+    uint32_t cur_micros = micros();
+    uint32_t delta = (cur_micros-lastMillis);
+    if (delta>1666)
+    {
+        mSpdData = (micros()-lastMillis);
+        lastMillis = micros();
+    }
     //Serial.println(millis());
 }
 

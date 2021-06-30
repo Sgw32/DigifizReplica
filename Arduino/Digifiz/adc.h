@@ -25,6 +25,8 @@ float getGasLevel(); //percents
 float getAmbientTemperature(); //celsius
 
 void processCoolantTemperature();
+void processOilTemperature();
 void processGasLevel();
+void processAmbientTemperature();
 
 #endif

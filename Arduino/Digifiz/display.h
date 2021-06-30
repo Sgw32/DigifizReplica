@@ -49,8 +49,8 @@
 #define MFA_DAILY_MILEAGE 4
 #define MFA_DRIVING_TIME 5
 
-#define MFA1_PIN 76
-#define MFA2_PIN 75
+#define MFA1_PIN 24
+#define MFA2_PIN 25
 
 void initDisplay();
 void setRPM(int rpmdata);

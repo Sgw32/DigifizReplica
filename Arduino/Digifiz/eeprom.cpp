@@ -24,7 +24,7 @@ bool checkMagicBytes()
 void saveParameters()
 {
     myMem.put(4,digifiz_parameters);
-    Serial.println("Saved!");
+    //Serial.println("Saved!");
 }
 
 void initEEPROM()
@@ -48,6 +48,7 @@ void initEEPROM()
     digifiz_parameters.mfaState = 0;
     digifiz_parameters.buzzerOff = 0;
     digifiz_parameters.maxRPM = 7000;
+    digifiz_parameters.mfaBlock = 0; //0 or 1
     Serial.begin(9600);
     Serial.println("PHL EEPROM test");
 
@@ -78,6 +79,11 @@ void initEEPROM()
           Serial.println("Magic bytes detected!");
           //read to digifiz_parameters
           myMem.get(4,digifiz_parameters);
+          /*myMem.put(0,'D');
+          myMem.put(1,'I');
+          myMem.put(2,'G');
+          myMem.put(3,'I');
+          myMem.put(4,digifiz_parameters);*/
         }
     }
 }

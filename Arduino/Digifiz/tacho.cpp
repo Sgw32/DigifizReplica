@@ -7,8 +7,17 @@ MedianFilter2<uint32_t> medianFilterRPM(5);
 
 void PCInt20()
 {
-    mRPMSenseData = (micros()-lastMillisRPM);
-    lastMillisRPM = micros();
+    // mRPMSenseData should correspond 0..9000 RPM
+    // Not lower(obvious) not higher(I assume)
+    // 9000 RPM = 150 Hz , but for 1 cylinder. For 4 it is 600 Hz
+    // So mRPMSenseData has a window of 1000000/600 ... 1000000
+    uint32_t cur_micros = micros();
+    uint32_t delta = (cur_micros-lastMillisRPM);
+    if (delta>1666)
+    {
+        mRPMSenseData = delta;
+        lastMillisRPM = micros();
+    }
     //Serial.println(millis());
 }
 
@@ -30,6 +39,7 @@ uint32_t readLastRPM()
 {
     if ((micros()-lastMillisRPM)<1000000)
     {
+      //Constrain filtered input here
       uint32_t median = medianFilterRPM.AddValue(mRPMSenseData);
       return median;
     }

@@ -3,6 +3,8 @@
 float R1 = 1000;
 float logR2, R2, coolantT, oilT, airT;
 float coolantB = 4000;
+float oilB = 4000;
+float airB = 4000;
 float V0;
 float gasolineLevel;
 
@@ -37,10 +39,13 @@ void initADC()
     pinMode(airPin, INPUT); //Gasoline tank level sensor
     coolantT = oilT = airT = 0.0f;
     coolantB = digifiz_parameters.coolantThermistorB;
+    oilB = digifiz_parameters.oilThermistorB;
+    airB = digifiz_parameters.airThermistorB;
     tauCoolant = (float)digifiz_parameters.tauCoolant*TAU;
     tauOil = (float)digifiz_parameters.tauOil*TAU;
     tauAir = (float)digifiz_parameters.tauAir*TAU;
     tauGasoline = (float)digifiz_parameters.tauCoolant*TAU;
+    tankCapacity = digifiz_parameters.tankCapacity;
 }
 
 //RAW values 0..1024
@@ -101,8 +106,15 @@ void processCoolantTemperature()
     float temp1 = (log(R2/R1)/coolantB);
     temp1 += 1/(25.0f+273.15f);
     coolantT += tauCoolant*(1.0f/temp1 - 273.15f - coolantT);
-    
-    //coolantT += TAU_COOLANT*(R2-coolantT);
+}
+
+void processOilTemperature()
+{
+    V0 = (float)analogRead(oilPin);
+    R2 = 220.0f * V0 / (1023.0f - V0); //
+    float temp1 = (log(R2/R1)/oilB);
+    temp1 += 1/(25.0f+273.15f);
+    oilT += tauOil*(1.0f/temp1 - 273.15f - oilT);
 }
 
 void processGasLevel()
@@ -110,7 +122,16 @@ void processGasLevel()
     V0 = (float)analogRead(gasolinePin);
     R2 = constrain(330 * V0 / (1023.0f - V0),35,265); // 330 Ohm in series with fuel sensor
     gasolineLevel += tauGasoline*(((float)R2-digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                                                digifiz_parameters.tankMinResistance)-gasolineLevel); //percents
+                        digifiz_parameters.tankMinResistance)-gasolineLevel); //percents
+}
+
+void processAmbientTemperature()
+{
+    V0 = (float)analogRead(airPin);
+    R2 = 220.0f * V0 / (1023.0f - V0); 
+    float temp1 = (log(R2/R1)/airB);
+    temp1 += 1/(25.0f+273.15f);
+    airT += tauAir*(1.0f/temp1 - 273.15f - airT);
 }
 
 float getGasLevel()
