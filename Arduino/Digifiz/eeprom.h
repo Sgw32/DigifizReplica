@@ -27,6 +27,9 @@ typedef struct digifiz_pars
     uint8_t buzzerOff; //used
     int maxRPM; //used
     uint8_t mfaBlock;
+    float averageConsumption;
+    float averageSpeed;
+    int duration; //minutes
 };
 
 void initEEPROM();

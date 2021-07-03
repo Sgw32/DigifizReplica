@@ -1,7 +1,6 @@
 #ifndef MFA_H
 #define MFA_H
 #include "eeprom.h"
-#include "display.h"
 
 #define MFA_MODE_PIN A13 //PJ0
 #define MFA_BLOCK_PIN 15 //PJ0
@@ -10,17 +9,10 @@
 
 #define MFA_STATE_TRIP_DURATION 0
 #define MFA_STATE_TRIP_DISTANCE 1
-#define MFA_STATE_TRIP_L100KM   1
-#define MFA_STATE_TRIP_MEAN_SPEED 1
-#define MFA_STATE_TRIP_ 1
-#define MFA_STATE_TRIP_DISTANCE 1
-#define MFA_STATE_TRIP_DISTANCE 1
-#define MFA_STATE_TRIP_DISTANCE 1
-#define MFA_STATE_TRIP_DISTANCE 1
-#define MFA_STATE_TRIP_DISTANCE 1
-#define MFA_STATE_TRIP_DISTANCE 1
-#define MFA_STATE_TRIP_DISTANCE 1
-#define MFA_STATE_TRIP_DISTANCE 1
+#define MFA_STATE_TRIP_L100KM   2
+#define MFA_STATE_TRIP_MEAN_SPEED 3
+#define MFA_STATE_OIL_TEMP 4
+#define MFA_STATE_AIR_TEMP 5
 
 void initMFA();
 void processMFA();

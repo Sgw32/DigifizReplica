@@ -1,8 +1,12 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 #include <MD_MAX72xx.h>
+#include <RTClib.h>
 #include <Wire.h>
 #include "MS5611.h"
+#include "adc.h"
+#include "mfa.h"
+
 
 // Turn on debug statements to the serial output
 #define  DEBUG  1
@@ -52,19 +56,24 @@
 #define MFA1_PIN 24
 #define MFA2_PIN 25
 
+#define BRIGHTNESS_IN_PIN A9 //PK1
+
 void initDisplay();
 void setRPM(int rpmdata);
 void blinking();
 void blinking2();
 void setClockData(uint8_t hours,uint8_t minutes);
 void setMFAClockData(uint8_t hours,uint8_t minutes);
+void setMFADisplayedNumber(uint16_t data);
 void setFuel(uint8_t litres);
 void setRPMData(uint16_t data);
 void setSpeedometerData(uint16_t data);
 void setCoolantData(uint16_t data);
 void setDot(bool value);
+void setFloatDot(bool value);
 void setMileage(uint32_t mileage);
 void setMFAType(uint8_t mfaType);
+void displayMFAType(uint8_t mfaType);
 void setMFABlock(uint8_t block);
-
+void setBrightness(uint8_t levels);
 #endif

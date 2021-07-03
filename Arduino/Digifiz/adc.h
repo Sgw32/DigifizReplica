@@ -29,4 +29,9 @@ void processOilTemperature();
 void processGasLevel();
 void processAmbientTemperature();
 
+void processFirstCoolantTemperature(); //to prevent filtering from zero value
+void processFirstOilTemperature();
+void processFirstGasLevel();
+void processFirstAmbientTemperature();
+
 #endif

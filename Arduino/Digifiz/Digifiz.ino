@@ -25,6 +25,8 @@ bool century = false;
 bool h12Flag;
 bool pmFlag;
 
+float current_averageSpeed = 0;
+
 long clockDot;
 DateTime startTime;
 
@@ -52,11 +54,11 @@ void setup()
 {  
   spd_m = 0;
   rpm = 0;
-  // Start the I2C interface
-  Wire.begin();
-  initEEPROM();
-  initDisplay();
-  initADC();
+  
+  Wire.begin(); // Start the I2C interface
+  initEEPROM(); //Start memory container
+  initDisplay(); //Start MAX7219 display driver
+  initADC(); //Init ADC ports for 
   initSpeedometer();
   initTacho();
   initReadInterrupt();
@@ -67,6 +69,8 @@ void setup()
   clockDot = millis();
   myRTC.begin();
   startTime = myRTC.now();
+  startTime = startTime - TimeSpan(digifiz_parameters.duration*60); //minus minutes
+  current_averageSpeed = digifiz_parameters.averageSpeed;
 }
 
 ISR(TIMER4_COMPA_vect)
@@ -83,6 +87,7 @@ ISR(TIMER4_COMPA_vect)
   {
     spd_m = 1000000/spd_m ; //Hz
     spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
+    current_averageSpeed += (spd_m-current_averageSpeed)*0.001;
   }
   rpm = readLastRPM(); //micros
   if (rpm>0)
@@ -100,30 +105,32 @@ void loop()
 {
   if ((millis()-clockDot)>500)
   {
-    setDot(true);
+    //if (digifiz_parameters.mfaState==MFA_STATE_TRIP_DURATION)
+    //{
+      setDot(true);
+    //}
   }
   if ((millis()-clockDot)>1000)
   {
+    clockDot = millis();
     DateTime newTime = myRTC.now();
     int hour = newTime.hour();
     int minute = newTime.minute();
-    TimeSpan sinceStart = newTime - startTime;
-    clockDot = millis();
     setClockData(hour,minute);
-    setMFAClockData(sinceStart.hours(),sinceStart.minutes());
-    setDot(false);
     digifiz_parameters.mileage+=spd_m;
     digifiz_parameters.daily_mileage+=spd_m;
     setMileage(digifiz_parameters.mileage/3600); //to km
-    
     saveParametersCounter++;
     if (saveParametersCounter==16)
     {
+        digifiz_parameters.averageSpeed = current_averageSpeed;
         saveParameters();
         saveParametersCounter=0;
     }
     checkEmergency(rpm);
     setMFABlock(digifiz_parameters.mfaBlock); //in display h
+    displayMFAType(digifiz_parameters.mfaState);
+    setDot(false);
   }
   setMFAType(digifiz_parameters.mfaState);
   processMFA();

@@ -1,4 +1,5 @@
 #include "mfa.h"
+#include "display.h"
 
 uint8_t mfaMemorySelected = 0;
 uint8_t prevMFAMode = HIGH;
@@ -7,6 +8,9 @@ uint8_t prevMFAReset = HIGH;
 uint8_t prevMFASensor = LOW;
 uint8_t sensorPressed = 0;
 uint32_t pressSensorTime = 0;
+
+extern RTC_DS3231 myRTC;
+extern DateTime startTime;
 
 extern digifiz_pars digifiz_parameters;
 
@@ -97,9 +101,26 @@ void pressMFAReset()
 {
     switch(digifiz_parameters.mfaState)
     {
-        case 0:
+        case MFA_STATE_TRIP_DURATION:
+            digifiz_parameters.duration = 0;
+            startTime = myRTC.now();
             break;
-        case 1:
+        case MFA_STATE_TRIP_DISTANCE:
+            digifiz_parameters.daily_mileage = 0;
+            break;
+        case MFA_STATE_TRIP_L100KM:
+            digifiz_parameters.averageConsumption = 0;
+            break;
+        case MFA_STATE_TRIP_MEAN_SPEED:
+            digifiz_parameters.averageSpeed = 0;
+            break;
+        case MFA_STATE_OIL_TEMP:
+            //no
+            break;
+        case MFA_STATE_AIR_TEMP:
+            //no
+            break;
+        default:
             break;
     }
 }

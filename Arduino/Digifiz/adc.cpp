@@ -46,6 +46,12 @@ void initADC()
     tauAir = (float)digifiz_parameters.tauAir*TAU;
     tauGasoline = (float)digifiz_parameters.tauCoolant*TAU;
     tankCapacity = digifiz_parameters.tankCapacity;
+    
+    //Init values:
+    processFirstCoolantTemperature();
+    processFirstOilTemperature();
+    processFirstGasLevel();
+    processFirstAmbientTemperature();
 }
 
 //RAW values 0..1024
@@ -121,8 +127,8 @@ void processGasLevel()
 {
     V0 = (float)analogRead(gasolinePin);
     R2 = constrain(330 * V0 / (1023.0f - V0),35,265); // 330 Ohm in series with fuel sensor
-    gasolineLevel += tauGasoline*(((float)R2-digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                        digifiz_parameters.tankMinResistance)-gasolineLevel); //percents
+    gasolineLevel += tauGasoline*((1.0f-((float)R2-digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
+                        digifiz_parameters.tankMinResistance))-gasolineLevel); //percents
 }
 
 void processAmbientTemperature()
@@ -132,6 +138,43 @@ void processAmbientTemperature()
     float temp1 = (log(R2/R1)/airB);
     temp1 += 1/(25.0f+273.15f);
     airT += tauAir*(1.0f/temp1 - 273.15f - airT);
+}
+
+void processFirstCoolantTemperature() //to prevent filtering from zero value
+{
+    V0 = (float)analogRead(coolantPin);
+    R2 = 220.0f * V0 / (1023.0f - V0); //
+    float temp1 = (log(R2/R1)/coolantB);
+    temp1 += 1/(25.0f+273.15f);
+    coolantT = (1.0f/temp1 - 273.15f);
+}
+
+void processFirstOilTemperature()
+{
+    V0 = (float)analogRead(oilPin);
+    R2 = 220.0f * V0 / (1023.0f - V0); //
+    float temp1 = (log(R2/R1)/oilB);
+    temp1 += 1/(25.0f+273.15f);
+    oilT = (1.0f/temp1 - 273.15f );
+}
+
+void processFirstGasLevel()
+{
+    V0 = (float)analogRead(gasolinePin);
+    R2 = constrain(330 * V0 / (1023.0f - V0),35,265); // 330 Ohm in series with fuel sensor
+    //35 = full
+    //265 = empty
+    gasolineLevel = 1.0f - (((float)R2-(float)digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
+                        digifiz_parameters.tankMinResistance)); //percents
+}
+
+void processFirstAmbientTemperature()
+{
+    V0 = (float)analogRead(airPin);
+    R2 = 220.0f * V0 / (1023.0f - V0); 
+    float temp1 = (log(R2/R1)/airB);
+    temp1 += 1/(25.0f+273.15f);
+    airT = temp1;
 }
 
 float getGasLevel()

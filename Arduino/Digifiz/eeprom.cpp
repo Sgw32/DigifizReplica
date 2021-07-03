@@ -49,6 +49,9 @@ void initEEPROM()
     digifiz_parameters.buzzerOff = 0;
     digifiz_parameters.maxRPM = 7000;
     digifiz_parameters.mfaBlock = 0; //0 or 1
+    digifiz_parameters.averageConsumption = 0;
+    digifiz_parameters.averageSpeed = 0;
+    digifiz_parameters.duration = 0;
     Serial.begin(9600);
     Serial.println("PHL EEPROM test");
 
