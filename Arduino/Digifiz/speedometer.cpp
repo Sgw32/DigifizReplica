@@ -44,7 +44,10 @@ uint32_t readLastSpeed()
     if ((micros()-lastMillis)<1000000)
     {
       uint32_t median = medianFilter.AddValue(mSpdData);
-      return median;
+      if (median<1000)
+        return 0;
+      else
+        return median;
     }
     else
       return 0;

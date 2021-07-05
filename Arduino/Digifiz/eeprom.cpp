@@ -23,14 +23,17 @@ bool checkMagicBytes()
 
 void saveParameters()
 {
+  #ifdef DISABLE_EEPROM
+  return;
+  #endif
     myMem.put(4,digifiz_parameters);
     //Serial.println("Saved!");
 }
 
 void initEEPROM()
 {
-    digifiz_parameters.rpmCoefficient = 15;
-    digifiz_parameters.speedCoefficient = 1;
+    digifiz_parameters.rpmCoefficient = 1500;
+    digifiz_parameters.speedCoefficient = 100;
     digifiz_parameters.coolantThermistorB = 4000;
     digifiz_parameters.oilThermistorB = 4000;
     digifiz_parameters.airThermistorB = 4000;
@@ -43,7 +46,7 @@ void initEEPROM()
     digifiz_parameters.mileage = 0;
     digifiz_parameters.daily_mileage = 0;
     digifiz_parameters.autoBrightness = 1;
-    digifiz_parameters.brightnessLevel = 1;
+    digifiz_parameters.brightnessLevel = 7;
     digifiz_parameters.tankCapacity = 60;
     digifiz_parameters.mfaState = 0;
     digifiz_parameters.buzzerOff = 0;
@@ -52,9 +55,12 @@ void initEEPROM()
     digifiz_parameters.averageConsumption = 0;
     digifiz_parameters.averageSpeed = 0;
     digifiz_parameters.duration = 0;
+    digifiz_paramerers.displayDot = 1;
     Serial.begin(9600);
     Serial.println("PHL EEPROM test");
-
+    #ifdef DISABLE_EEPROM
+    return;
+    #endif
     Wire.begin();
 
     if (myMem.begin() == false)

@@ -4,7 +4,14 @@ MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, 2);
 MD_MAX72XX mx2 = MD_MAX72XX(HARDWARE_TYPE, DATA_PIN2, CLK_PIN2, CS_PIN2, 3);
 
 extern digifiz_pars digifiz_parameters;
+
+#define EMULATE_RTC
+#ifdef EMULATE_RTC
+extern RTC_Millis myRTC;
+#else
 extern RTC_DS3231 myRTC;
+#endif
+
 extern DateTime startTime;
 int mRPMData = 4000;
 //int mHour = 0;
@@ -128,14 +135,15 @@ void setMFAType(uint8_t type)
 
 void setBrightness(uint8_t levels)
 {
-    
+    mx.control(MD_MAX72XX::INTENSITY, constrain(levels,0,0xF));
+    mx2.control(MD_MAX72XX::INTENSITY, constrain(levels,0,0xF));
 }
 
 void setMileage(uint32_t mileage)
 {
   uint8_t first_number[10]={0b11101110,0b01000011,0b10110110,0b01110110,0b01011010,0b01111100,0b11111100,0b01000111,0b11111111,0b01111111};
   uint8_t number[10]={0b01111110,0b01000011,0b10110110,0b11100110,0b11001010,0b11101100,0b11111100,0b01000111,0b11111111,0b11101111};
-  mx2.setColumn(0, first_number[0]); //(mileage / 100000) % 10
+  mx2.setColumn(0, first_number[(mileage / 100000) % 10]); //(mileage / 100000) % 10
   mx2.setColumn(1, number[(mileage / 10000) % 10]); 
   mx2.setColumn(2, number[(mileage / 1000) % 10]); 
   mx2.setColumn(3, number[(mileage / 100) % 10]); 

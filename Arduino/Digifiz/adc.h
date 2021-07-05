@@ -23,6 +23,7 @@ float getCoolantTemperature(); //celsius
 float getOilTemperature(); //celsius
 float getGasLevel(); //percents
 float getAmbientTemperature(); //celsius
+float getFuelConsumption();
 
 void processCoolantTemperature();
 void processOilTemperature();

@@ -3,7 +3,12 @@
 
 uint32_t statusTime;
 
+#define EMULATE_RTC
+#ifdef EMULATE_RTC
+extern RTC_Millis myRTC;
+#else
 extern RTC_DS3231 myRTC;
+#endif
 
 void initComProtocol()
 {
@@ -51,7 +56,7 @@ void processData(int parameter,long value)
     switch(par)
     {
       case PARAMETER_RPMCOEFFICIENT:
-        BTserial.println("PARAMETER_RPMCOEFFICIENT");
+        BTserial.println("PARAMETER_RPMCOEqFFICIENT");
         digifiz_parameters.rpmCoefficient = value;
         break;
       case PARAMETER_SPEEDCOEEFICIENT:
@@ -109,6 +114,22 @@ void processData(int parameter,long value)
       case PARAMETER_BRIGHTNESS_LEVEL:
         BTserial.println("PARAMETER_BRIGHTNESS_LEVEL");
         digifiz_parameters.brightnessLevel = value;
+        break;
+      case PARAMETER_TANK_CAPACITY:
+        BTserial.println("PARAMETER_BRIGHTNESS_LEVEL");
+        digifiz_parameters.tankCapacity = value;
+        break;
+      case PARAMETER_MFA_STATE:
+        BTserial.println("PARAMETER_BRIGHTNESS_LEVEL");
+        digifiz_parameters.mfaState = value;
+        break;
+      case PARAMETER_BUZZER_OFF:
+        BTserial.println("PARAMETER_BRIGHTNESS_LEVEL");
+        digifiz_parameters.buzzerOff = value;
+        break;
+      case PARAMETER_MAX_RPM:
+        BTserial.println("PARAMETER_BRIGHTNESS_LEVEL");
+        digifiz_parameters.maxRPM = value;
         break;
       default:
         break;

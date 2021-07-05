@@ -14,8 +14,15 @@
 
 //Clock at 0x57
 //EEPROM at 0x50
-//DS3231 clock; 
+//DS3231 clock;
+#define EMULATE_RTC
+
+#ifdef EMULATE_RTC
+RTC_Millis myRTC;
+#else
 RTC_DS3231 myRTC;
+#endif
+
 
 uint32_t rpm = 0;
 uint32_t spd_m = 0;
@@ -67,7 +74,11 @@ void setup()
   initMFA();
   initEmergencyModule();
   clockDot = millis();
+  #ifdef EMULATE_RTC
+  myRTC.begin(DateTime(F(__DATE__), F(__TIME__)));
+  #else
   myRTC.begin();
+  #endif
   startTime = myRTC.now();
   startTime = startTime - TimeSpan(digifiz_parameters.duration*60); //minus minutes
   current_averageSpeed = digifiz_parameters.averageSpeed;
@@ -75,30 +86,30 @@ void setup()
 
 ISR(TIMER4_COMPA_vect)
 {
-  processGasLevel();
-  processCoolantTemperature();
-  setSpeedometerData(spd_m);
-  setRPMData(rpm);
-  setFuel(getLitresInTank());
-  setCoolantData(getDisplayedCoolantTemp());
   i=i+1;
   spd_m = readLastSpeed();
   if (spd_m>0)
   {
-    spd_m = 1000000/spd_m ; //Hz
+    spd_m = 10000/spd_m ; //Hz
     spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
     current_averageSpeed += (spd_m-current_averageSpeed)*0.001;
   }
   rpm = readLastRPM(); //micros
   if (rpm>0)
   {
-    rpm = 1000000/rpm;
+    rpm = 10000/rpm;
     rpm *= digifiz_parameters.rpmCoefficient; //4 cylinder motor, 60 sec in min
   }
   if (getBuzzerEnabled())
   {
       buzzerToggle();
   }
+  processGasLevel();
+  processCoolantTemperature();
+  setSpeedometerData(spd_m);
+  setRPMData(rpm);
+  setFuel(getLitresInTank());
+  setCoolantData(getDisplayedCoolantTemp());
 }
 
 void loop() 
@@ -119,15 +130,20 @@ void loop()
     setClockData(hour,minute);
     digifiz_parameters.mileage+=spd_m;
     digifiz_parameters.daily_mileage+=spd_m;
+    
     setMileage(digifiz_parameters.mileage/3600); //to km
+    setBrightness(digifiz_parameters.brightnessLevel);
     saveParametersCounter++;
     if (saveParametersCounter==16)
     {
         digifiz_parameters.averageSpeed = current_averageSpeed;
+        digifiz_parameters.averageConsumption = getFuelConsumption()*digifiz_parameters.tankCapacity;
         saveParameters();
         saveParametersCounter=0;
     }
+    
     checkEmergency(rpm);
+    
     setMFABlock(digifiz_parameters.mfaBlock); //in display h
     displayMFAType(digifiz_parameters.mfaState);
     setDot(false);

@@ -9,7 +9,13 @@ uint8_t prevMFASensor = LOW;
 uint8_t sensorPressed = 0;
 uint32_t pressSensorTime = 0;
 
+#define EMULATE_RTC
+#ifdef EMULATE_RTC
+extern RTC_Millis myRTC;
+#else
 extern RTC_DS3231 myRTC;
+#endif
+
 extern DateTime startTime;
 
 extern digifiz_pars digifiz_parameters;
@@ -25,7 +31,7 @@ void initMFA()
 
 void processMFA()
 {
-  /*
+  
     if ((digitalRead(MFA_MODE_PIN)==LOW)&&(prevMFAMode==HIGH))
     {
         //Pressed MFA Mode
@@ -40,7 +46,7 @@ void processMFA()
     {
         //Pressed MFA Reset
         pressMFAReset();
-    }*/
+    }
     if ((digitalRead(MFA_SENSOR_PIN)==HIGH)&&(prevMFASensor==LOW))
     {
         //Pressed MFA Sensor(on Digifiz)
