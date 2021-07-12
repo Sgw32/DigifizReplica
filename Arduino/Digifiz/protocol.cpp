@@ -3,7 +3,7 @@
 
 uint32_t statusTime;
 
-#define EMULATE_RTC
+//#define EMULATE_RTC
 #ifdef EMULATE_RTC
 extern RTC_Millis myRTC;
 #else
@@ -105,7 +105,7 @@ void processData(int parameter,long value)
         break;
       case PARAMETER_DAILY_MILEAGE:
         BTserial.println("PARAMETER_DAILY_MILEAGE");
-        digifiz_parameters.daily_mileage = value;
+        digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock] = value;
         break;
       case PARAMETER_AUTO_BRIGHTNESS:
         BTserial.println("PARAMETER_AUTO_BRIGHTNESS");
@@ -131,6 +131,14 @@ void processData(int parameter,long value)
         BTserial.println("PARAMETER_BRIGHTNESS_LEVEL");
         digifiz_parameters.maxRPM = value;
         break;
+      case PARAMETER_DOT_OFF:
+        BTserial.println("PARAMETER_DOT_OFF");
+        digifiz_parameters.displayDot = value;
+        break;
+      case PARAMETER_BACKLIGHT_ON:
+        BTserial.println("PARAMETER_BACKLIGHT_ON");
+        digifiz_parameters.backlight_on = value;
+        break;
       default:
         break;
     }
@@ -150,7 +158,7 @@ void processData(int parameter,long value)
             myRTC.adjust(newTime2);
             break;
         case PARAMETER_RESET_DAILY_MILEAGE:
-            digifiz_parameters.daily_mileage = 0;
+            digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock] = 0;
             break;
         default:
             
@@ -211,7 +219,7 @@ void processData(int parameter,long value)
         break;
       case PARAMETER_DAILY_MILEAGE:
         BTserial.println("PARAMETER_DAILY_MILEAGE");
-        BTserial.println(digifiz_parameters.daily_mileage);
+        BTserial.println(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]);
         break;
       case PARAMETER_AUTO_BRIGHTNESS:
         BTserial.println("PARAMETER_AUTO_BRIGHTNESS");
@@ -236,6 +244,10 @@ void processData(int parameter,long value)
       case PARAMETER_MAX_RPM:
         BTserial.println("PARAMETER_MAX_RPM");
         BTserial.println(digifiz_parameters.maxRPM);
+        break;
+      case PARAMETER_BACKLIGHT_ON:
+        BTserial.println("PARAMETER_BACKLIGHT_ON");
+        BTserial.println(digifiz_parameters.backlight_on);
         break;
       default:
         break;

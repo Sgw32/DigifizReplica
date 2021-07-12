@@ -5,12 +5,12 @@
 #include <SparkFun_External_EEPROM.h>
 #include "Arduino.h"
 
-#define DISABLE_EEPROM
+//#define DISABLE_EEPROM
 
 typedef struct digifiz_pars
 {
-    uint8_t rpmCoefficient; //used //div 100
-    uint8_t speedCoefficient; //used //div 100
+    uint16_t rpmCoefficient; //used //div 100
+    uint16_t speedCoefficient; //used //div 100
     int coolantThermistorB; //used
     int oilThermistorB; //used
     int airThermistorB; //used
@@ -21,7 +21,7 @@ typedef struct digifiz_pars
     int tauAir; //used
     int tauTank; //used
     uint32_t mileage; //used
-    uint16_t daily_mileage[2]; //used //MFA
+    uint32_t daily_mileage[2]; //used //MFA
     uint8_t autoBrightness; 
     uint8_t brightnessLevel; //used
     uint8_t tankCapacity; //used
@@ -33,6 +33,7 @@ typedef struct digifiz_pars
     float averageSpeed[2]; //used //MFA
     int duration[2]; //used //minutes //MFA .
     uint8_t displayDot;
+    uint8_t backlight_on;
 };
 
 void initEEPROM();

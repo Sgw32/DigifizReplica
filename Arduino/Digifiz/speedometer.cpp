@@ -3,7 +3,7 @@
 uint32_t mSpdData;
 uint32_t lastMillis;
 
-MedianFilter2<uint32_t> medianFilter(5);
+MedianFilter2<uint32_t> medianFilter(12);
 
 void PCInt12()
 {

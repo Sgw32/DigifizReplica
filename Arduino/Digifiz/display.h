@@ -57,6 +57,7 @@
 #define MFA2_PIN 25
 
 #define BRIGHTNESS_IN_PIN A9 //PK1
+#define BACKLIGHT_CTL_PIN 26 //PA4
 
 void initDisplay();
 void setRPM(int rpmdata);
@@ -76,4 +77,7 @@ void setMFAType(uint8_t mfaType);
 void displayMFAType(uint8_t mfaType);
 void setMFABlock(uint8_t block);
 void setBrightness(uint8_t levels);
+void setRefuelSign(bool onoff);
+void setCheckEngine(bool onoff);
+void setBacklight(bool onoff);
 #endif

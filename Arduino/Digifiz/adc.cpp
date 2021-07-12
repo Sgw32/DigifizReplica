@@ -1,6 +1,8 @@
 #include "adc.h"
 
-float R1 = 1000;
+const float R1_Coolant = 1000; //for Coolant
+const float R1_Oil = 10000; //for Coolant
+const float R1_Ambient = 10000; //for Coolant
 float logR2, R2, coolantT, oilT, airT;
 float coolantB = 4000;
 float oilB = 4000;
@@ -40,13 +42,13 @@ void initADC()
     pinMode(oilPin, INPUT); //Coolant temperature sensor
     pinMode(airPin, INPUT); //Gasoline tank level sensor
     consumptionCounter = millis();
-    coolantT = oilT = airT = 0.0f;
+    coolantT = oilT = airT = 0.0;
     coolantB = digifiz_parameters.coolantThermistorB;
     oilB = digifiz_parameters.oilThermistorB;
     airB = digifiz_parameters.airThermistorB;
     tauCoolant = (float)digifiz_parameters.tauCoolant*TAU;
-    tauOil = (float)digifiz_parameters.tauOil*TAU;
-    tauAir = (float)digifiz_parameters.tauAir*TAU;
+    tauOil = (float)digifiz_parameters.tauOil*TAU*0.1;
+    tauAir = (float)digifiz_parameters.tauAir*TAU*0.1;
     tauGasoline = (float)digifiz_parameters.tauCoolant*TAU*0.1;
     tauGasolineConsumption = (float)digifiz_parameters.tauCoolant*TAU*0.01;
     tankCapacity = digifiz_parameters.tankCapacity;
@@ -98,8 +100,8 @@ float getCoolantTemperature()
 float getOilTemperature()
 {
     V0 = (float)analogRead(oilPin);
-    R2 = R1 * V0 / (1023.0f - V0); //
-    float tempT = 1.0f/(log(R2/R1)/coolantB+1.0f/(25.0f+273.15f))-273.15f;
+    R2 = 220.0f * V0 / (1023.0f - V0); //
+    float tempT = 1.0f/(log(R2/R1_Oil)/coolantB+1.0f/(25.0f+273.15f))-273.15f;
     if (tempT<-50.0f)
         return -999.9f;
     else if (tempT>200.0)
@@ -113,7 +115,7 @@ void processCoolantTemperature()
 {
     V0 = (float)analogRead(coolantPin);
     R2 = 220.0f * V0 / (1023.0f - V0); //
-    float temp1 = (log(R2/R1)/coolantB);
+    float temp1 = (log(R2/R1_Coolant)/coolantB);
     temp1 += 1/(25.0f+273.15f);
     coolantT += tauCoolant*(1.0f/temp1 - 273.15f - coolantT);
 }
@@ -122,7 +124,7 @@ void processOilTemperature()
 {
     V0 = (float)analogRead(oilPin);
     R2 = 220.0f * V0 / (1023.0f - V0); //
-    float temp1 = (log(R2/R1)/oilB);
+    float temp1 = (log(R2/R1_Oil)/oilB);
     temp1 += 1/(25.0f+273.15f);
     oilT += tauOil*(1.0f/temp1 - 273.15f - oilT);
 }
@@ -148,33 +150,39 @@ void processGasLevel()
 void processAmbientTemperature()
 {
     V0 = (float)analogRead(airPin);
-    R2 = 220.0f * V0 / (1023.0f - V0); 
-    float temp1 = (log(R2/R1)/airB);
+    R2 = 10000.0f * V0 / (1023.0f - V0); 
+    float temp1 = (log(R2/R1_Ambient)/airB);
     temp1 += 1/(25.0f+273.15f);
     airT += tauAir*(1.0f/temp1 - 273.15f - airT);
 }
 
 void processFirstCoolantTemperature() //to prevent filtering from zero value
 {
-    V0 = (float)analogRead(coolantPin);
+    for (int i=0;i!=100;i++)
+      V0 += (float)analogRead(coolantPin);
+    V0/=100;
     R2 = 220.0f * V0 / (1023.0f - V0); //
-    float temp1 = (log(R2/R1)/coolantB);
+    float temp1 = (log(R2/R1_Coolant)/coolantB);
     temp1 += 1/(25.0f+273.15f);
     coolantT = (1.0f/temp1 - 273.15f);
 }
 
 void processFirstOilTemperature()
 {
-    V0 = (float)analogRead(oilPin);
+    for (int i=0;i!=100;i++)
+      V0 += (float)analogRead(oilPin);
+    V0/=100;
     R2 = 220.0f * V0 / (1023.0f - V0); //
-    float temp1 = (log(R2/R1)/oilB);
+    float temp1 = (log(R2/R1_Oil)/oilB);
     temp1 += 1/(25.0f+273.15f);
     oilT = (1.0f/temp1 - 273.15f );
 }
 
 void processFirstGasLevel()
 {
-    V0 = (float)analogRead(gasolinePin);
+    for (int i=0;i!=100;i++)
+      V0 += (float)analogRead(gasolinePin);
+    V0/=100;
     R2 = constrain(330 * V0 / (1023.0f - V0),35,265); // 330 Ohm in series with fuel sensor
     //35 = full
     //265 = empty
@@ -186,9 +194,11 @@ void processFirstGasLevel()
 
 void processFirstAmbientTemperature()
 {
-    V0 = (float)analogRead(airPin);
+    for (int i=0;i!=100;i++)
+      V0 += (float)analogRead(airPin);
+    V0/=100;
     R2 = 220.0f * V0 / (1023.0f - V0); 
-    float temp1 = (log(R2/R1)/airB);
+    float temp1 = (log(R2/R1_Ambient)/airB);
     temp1 += 1/(25.0f+273.15f);
     airT = temp1;
 }
@@ -213,14 +223,14 @@ uint8_t getLitresInTank() //0..99
 
 uint8_t getDisplayedCoolantTemp()  //0..14
 {
-    return constrain((int)((coolantT-60.0f)/(120.0f - 60.0f)*14.0f),0,14f); //TODO parameters
+    return constrain((int)((coolantT-60.0f)/(120.0f - 60.0f)*14.0f),0,14); //TODO parameters
 }
 
 float getAmbientTemperature()
 {
     V0 = (float)analogRead(airPin);
-    R2 = R1 * V0 / (1023.0f - V0); //
-    float tempT = 1.0f/(log(R2/R1)/coolantB+1.0f/(25.0f+273.15f))-273.15f;
+    R2 = 10000 * V0 / (1023.0f - V0); //
+    float tempT = 1.0f/(log(R2/R1_Ambient)/coolantB+1.0f/(25.0f+273.15f))-273.15f;
     if (tempT<-50.0f)
         return -999.9f;
     else if (tempT>200.0)

@@ -80,11 +80,11 @@ void setup() {
   //setClockMode(true); // set to 12h
 
   Clock.setYear(2021);
-  Clock.setMonth(06);
-  Clock.setDate(16);
+  Clock.setMonth(07);
+  Clock.setDate(06);
   Clock.setDoW(3);
-  Clock.setHour(3);
-  Clock.setMinute(50);
+  Clock.setHour(8);
+  Clock.setMinute(27);
   Clock.setSecond(00);
 }
 

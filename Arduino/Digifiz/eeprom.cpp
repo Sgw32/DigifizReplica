@@ -44,18 +44,23 @@ void initEEPROM()
     digifiz_parameters.tauAir = 2;
     digifiz_parameters.tauTank = 2;
     digifiz_parameters.mileage = 0;
-    digifiz_parameters.daily_mileage = 0;
+    digifiz_parameters.daily_mileage[0] = 0;
+    digifiz_parameters.daily_mileage[1] = 0;
     digifiz_parameters.autoBrightness = 1;
-    digifiz_parameters.brightnessLevel = 7;
+    digifiz_parameters.brightnessLevel = 10;
     digifiz_parameters.tankCapacity = 60;
     digifiz_parameters.mfaState = 0;
     digifiz_parameters.buzzerOff = 0;
     digifiz_parameters.maxRPM = 7000;
     digifiz_parameters.mfaBlock = 0; //0 or 1
-    digifiz_parameters.averageConsumption = 0;
-    digifiz_parameters.averageSpeed = 0;
-    digifiz_parameters.duration = 0;
-    digifiz_paramerers.displayDot = 1;
+    digifiz_parameters.averageConsumption[0] = 0;
+    digifiz_parameters.averageConsumption[1] = 0;
+    digifiz_parameters.averageSpeed[0] = 0;
+    digifiz_parameters.averageSpeed[1] = 0;
+    digifiz_parameters.duration[0] = 0;
+    digifiz_parameters.duration[1] = 0;
+    digifiz_parameters.displayDot = 1;
+    digifiz_parameters.backlight_on = 0;
     Serial.begin(9600);
     Serial.println("PHL EEPROM test");
     #ifdef DISABLE_EEPROM
@@ -87,12 +92,12 @@ void initEEPROM()
         {
           Serial.println("Magic bytes detected!");
           //read to digifiz_parameters
-          myMem.get(4,digifiz_parameters);
-          /*myMem.put(0,'D');
+         // myMem.get(4,digifiz_parameters);
+          myMem.put(0,'D');
           myMem.put(1,'I');
           myMem.put(2,'G');
           myMem.put(3,'I');
-          myMem.put(4,digifiz_parameters);*/
+          myMem.put(4,digifiz_parameters);
         }
     }
 }

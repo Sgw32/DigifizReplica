@@ -9,14 +9,14 @@ uint8_t prevMFASensor = LOW;
 uint8_t sensorPressed = 0;
 uint32_t pressSensorTime = 0;
 
-#define EMULATE_RTC
+//#define EMULATE_RTC
 #ifdef EMULATE_RTC
 extern RTC_Millis myRTC;
 #else
 extern RTC_DS3231 myRTC;
 #endif
 
-extern DateTime startTime;
+extern DateTime startTime[2];
 
 extern digifiz_pars digifiz_parameters;
 
@@ -108,17 +108,17 @@ void pressMFAReset()
     switch(digifiz_parameters.mfaState)
     {
         case MFA_STATE_TRIP_DURATION:
-            digifiz_parameters.duration = 0;
-            startTime = myRTC.now();
+            digifiz_parameters.duration[digifiz_parameters.mfaBlock] = 0;
+            startTime[digifiz_parameters.mfaBlock] = myRTC.now();
             break;
         case MFA_STATE_TRIP_DISTANCE:
-            digifiz_parameters.daily_mileage = 0;
+            digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock] = 0;
             break;
         case MFA_STATE_TRIP_L100KM:
-            digifiz_parameters.averageConsumption = 0;
+            digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] = 0;
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
-            digifiz_parameters.averageSpeed = 0;
+            digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock] = 0;
             break;
         case MFA_STATE_OIL_TEMP:
             //no

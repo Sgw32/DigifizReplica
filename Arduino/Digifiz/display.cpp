@@ -5,14 +5,14 @@ MD_MAX72XX mx2 = MD_MAX72XX(HARDWARE_TYPE, DATA_PIN2, CLK_PIN2, CS_PIN2, 3);
 
 extern digifiz_pars digifiz_parameters;
 
-#define EMULATE_RTC
+//#define EMULATE_RTC
 #ifdef EMULATE_RTC
 extern RTC_Millis myRTC;
 #else
 extern RTC_DS3231 myRTC;
 #endif
 
-extern DateTime startTime;
+extern DateTime startTime[2];
 int mRPMData = 4000;
 //int mHour = 0;
 //int mMinute = 0;
@@ -25,11 +25,17 @@ void initDisplay()
     mx2.clear();
     pinMode(MFA1_PIN,OUTPUT);
     pinMode(MFA2_PIN,OUTPUT);
+    pinMode(BACKLIGHT_CTL_PIN,OUTPUT);
 }
 
 void setRPM(int rpmdata)
 {
     mRPMData=rpmdata;
+}
+
+void setBacklight(bool onoff)
+{
+    digitalWrite(BACKLIGHT_CTL_PIN, onoff ? HIGH : LOW);
 }
 
 void blinking()
@@ -80,13 +86,24 @@ void setMFABlock(uint8_t block)
   }
 }
 
+void setRefuelSign(bool onoff)
+{
+    mx.setColumn(14, onoff ? 0xff : 0x00);
+    mx.setColumn(15, onoff ? 0xff : 0x00);
+}
+
+void setCheckEngine(bool onoff)
+{
+    
+}
+
 void displayMFAType(uint8_t mfaType)
 {
     DateTime newTime = myRTC.now();
     int hour = newTime.hour();
     int minute = newTime.minute();
-    TimeSpan sinceStart = newTime - startTime;
-    digifiz_parameters.duration = sinceStart.totalseconds()/60;
+    TimeSpan sinceStart = newTime - startTime[digifiz_parameters.mfaBlock];
+    digifiz_parameters.duration[digifiz_parameters.mfaBlock] = sinceStart.totalseconds()/60;
     switch(digifiz_parameters.mfaState)
     {
         case MFA_STATE_TRIP_DURATION:
@@ -94,24 +111,23 @@ void displayMFAType(uint8_t mfaType)
             setMFAClockData(sinceStart.hours(),sinceStart.minutes());
             break;
         case MFA_STATE_TRIP_DISTANCE:
-            //digifiz_parameters.daily_mileage = 0;
-            setMFADisplayedNumber(digifiz_parameters.daily_mileage);
+            setMFADisplayedNumber(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600);
             setFloatDot(false);
             break;
         case MFA_STATE_TRIP_L100KM:
-            setMFADisplayedNumber(digifiz_parameters.averageConsumption*100);
+            setMFADisplayedNumber(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100);
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
-            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed*10));
+            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]*10));
             setFloatDot(true);
             break;
         case MFA_STATE_OIL_TEMP:
-            setMFADisplayedNumber(getRawOilTemperature()*100);
+            setMFADisplayedNumber(getOilTemperature());
             setFloatDot(true);
             break;
         case MFA_STATE_AIR_TEMP:
-            setMFADisplayedNumber(getRawAmbientTemperature()*100);
+            setMFADisplayedNumber(getAmbientTemperature());
             setFloatDot(true);
             break;
         default:
@@ -235,7 +251,7 @@ void setRPMData(uint16_t data)
     uint8_t number[9]={0b00000000,0b00000010,0b00000110,0b00001110,0b00011110,0b00111110,0b01111110,0b11111110,0b11111111};
     long long leds_lit = data;
     leds_lit*=48;
-    leds_lit/=7000;
+    leds_lit/=digifiz_parameters.maxRPM;
     //leds_lit=leds_lit;
     int blocks_lit = leds_lit / 8;
     if (blocks_lit>6) 
@@ -293,6 +309,12 @@ void setDot(bool value)
 {
   //mx.setPoint(8, 0, value);
   //mx.setPoint(8, 1, value);
+  if (!digifiz_parameters.displayDot)
+  {
+    mx2.setPoint(0,8,true);
+    mx2.setPoint(0,9,true);  
+    return;
+  }
   mx2.setPoint(0,8,value);
   mx2.setPoint(0,9,value);
   if (digifiz_parameters.mfaState==MFA_STATE_TRIP_DURATION)

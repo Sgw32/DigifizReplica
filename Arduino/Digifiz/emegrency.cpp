@@ -17,7 +17,11 @@ uint8_t processCHECKEngine()
 {
     if (digitalRead(CHECK_ENGINE_IN)==LOW)
     {
-        //TODO display check engine
+        setCheckEngine(true);
+    }
+    else
+    {
+        setCheckEngine(false);
     }
     return 0;
 }
