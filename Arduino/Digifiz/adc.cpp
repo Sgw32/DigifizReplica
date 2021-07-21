@@ -21,7 +21,7 @@ uint8_t oilPin = A14; //Gasoline sensor
 uint8_t airPin = A15; //Gasoline sensor
 
 uint8_t tankCapacity = 60;
-
+uint16_t lightLevel;
 //#define TAU_GASOLINE 0.02f
 //#define TAU_COOLANT 0.02f
 
@@ -43,6 +43,7 @@ void initADC()
     pinMode(airPin, INPUT); //Gasoline tank level sensor
     consumptionCounter = millis();
     coolantT = oilT = airT = 0.0;
+    lightLevel = 0;
     coolantB = digifiz_parameters.coolantThermistorB;
     oilB = digifiz_parameters.oilThermistorB;
     airB = digifiz_parameters.airThermistorB;
@@ -58,6 +59,31 @@ void initADC()
     processFirstOilTemperature();
     processFirstGasLevel();
     processFirstAmbientTemperature();
+}
+
+uint16_t getRawBrightnessLevel()
+{
+  return lightLevel;
+}
+
+uint8_t getBrightnessLevel()
+{
+  return constrain(lightLevel/4,4,15); //0..0.3V -> 0..80 (~255)
+}
+
+void processBrightnessLevel()
+{
+   uint16_t lData = analogRead(lightSensorPin);
+   lData += analogRead(lightSensorPin);
+   lData += analogRead(lightSensorPin);
+   lData += analogRead(lightSensorPin);
+   lData += analogRead(lightSensorPin);
+   lData += analogRead(lightSensorPin);
+   lData += analogRead(lightSensorPin);
+   if (lData>800)
+    return; //I do not believe you.
+   
+   lightLevel = lData>>3;
 }
 
 //RAW values 0..1024

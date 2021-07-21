@@ -25,10 +25,14 @@ float getGasLevel(); //percents
 float getAmbientTemperature(); //celsius
 float getFuelConsumption();
 
+uint8_t getBrightnessLevel();
+uint16_t getRawBrightnessLevel();
+
 void processCoolantTemperature();
 void processOilTemperature();
 void processGasLevel();
 void processAmbientTemperature();
+void processBrightnessLevel();
 
 void processFirstCoolantTemperature(); //to prevent filtering from zero value
 void processFirstOilTemperature();

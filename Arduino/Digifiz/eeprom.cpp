@@ -32,7 +32,7 @@ void saveParameters()
 
 void initEEPROM()
 {
-    digifiz_parameters.rpmCoefficient = 1500;
+    digifiz_parameters.rpmCoefficient = 3000;
     digifiz_parameters.speedCoefficient = 100;
     digifiz_parameters.coolantThermistorB = 4000;
     digifiz_parameters.oilThermistorB = 4000;
@@ -62,7 +62,7 @@ void initEEPROM()
     digifiz_parameters.displayDot = 1;
     digifiz_parameters.backlight_on = 0;
     Serial.begin(9600);
-    Serial.println("PHL EEPROM test");
+    //Serial.println("PHL EEPROM test");
     #ifdef DISABLE_EEPROM
     return;
     #endif
@@ -70,17 +70,17 @@ void initEEPROM()
 
     if (myMem.begin() == false)
     {
-        Serial.println("No memory detected. ");
+        //Serial.println("No memory detected. ");
     }
     else
     {
-        Serial.println("Memory detected!");
+        //Serial.println("Memory detected!");
 
-        Serial.print("Mem size in bytes: ");
-        Serial.println(myMem.length());
+        //Serial.print("Mem size in bytes: ");
+        //Serial.println(myMem.length());
         if (!checkMagicBytes())
         {
-          Serial.println("No magic bytes detected!");
+          //Serial.println("No magic bytes detected!");
           //write example digifiz parameters
           myMem.put(0,'D');
           myMem.put(1,'I');
@@ -90,14 +90,14 @@ void initEEPROM()
         }
         else
         {
-          Serial.println("Magic bytes detected!");
+          //Serial.println("Magic bytes detected!");
           //read to digifiz_parameters
-         // myMem.get(4,digifiz_parameters);
-          myMem.put(0,'D');
+          myMem.get(4,digifiz_parameters);
+          /*myMem.put(0,'D');
           myMem.put(1,'I');
           myMem.put(2,'G');
           myMem.put(3,'I');
-          myMem.put(4,digifiz_parameters);
+          myMem.put(4,digifiz_parameters);*/
         }
     }
 }

@@ -19,6 +19,7 @@ void initComProtocol()
 
 void changeBLEName()
 {
+    return;
     BTserial.println("AT+NAMEDigifiz_PHL");
     delay(100); //delay 100 ms
     while (BTserial.available() > 0)  //supress "OK" message if it sends

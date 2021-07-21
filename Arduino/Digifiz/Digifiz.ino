@@ -83,7 +83,7 @@ void setup()
   startTime[0] = myRTC.now();
   startTime[0] = startTime[0] - TimeSpan(digifiz_parameters.duration[0]*60); //minus minutes
   startTime[1] = myRTC.now();
-  startTime[1] = startTime[1] - TimeSpan(digifiz_parameters.duration[0]*60); //minus minutes
+  startTime[1] = startTime[1] - TimeSpan(digifiz_parameters.duration[1]*60); //minus minutes
   current_averageSpeed = digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock];
   spd_m_speedometer = 0;
 }
@@ -98,8 +98,8 @@ ISR(TIMER4_COMPA_vect)
     spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
     spd_m /= 100;
     current_averageSpeed += (spd_m-current_averageSpeed)*0.001;
-    spd_m_speedometer += (spd_m-spd_m_speedometer)*0.75;
   }
+  spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
   rpm = readLastRPM(); //micros
   if (rpm>0)
   {
@@ -116,7 +116,9 @@ ISR(TIMER4_COMPA_vect)
   processCoolantTemperature();
   processOilTemperature();
   processAmbientTemperature();
+  processBrightnessLevel();
   setSpeedometerData((uint16_t)spd_m_speedometer);
+  //setSpeedometerData(getRawBrightnessLevel());
   setRPMData(rpm);
   uint8_t fuel = getLitresInTank();
   if (fuel<10)
@@ -147,7 +149,7 @@ void loop()
     digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]+=spd_m;
     
     setMileage(digifiz_parameters.mileage/3600); //to km
-    setBrightness(digifiz_parameters.brightnessLevel);
+    setBrightness(digifiz_parameters.autoBrightness ? getBrightnessLevel() : digifiz_parameters.brightnessLevel);
     saveParametersCounter++;
     setBacklight(digifiz_parameters.backlight_on ? true : false);
     if (saveParametersCounter==16)

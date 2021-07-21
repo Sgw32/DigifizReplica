@@ -14,6 +14,7 @@ extern RTC_DS3231 myRTC;
 
 extern DateTime startTime[2];
 int mRPMData = 4000;
+bool floatDot = 0;
 //int mHour = 0;
 //int mMinute = 0;
 
@@ -172,7 +173,7 @@ void setMileage(uint32_t mileage)
 
 void setClockData(uint8_t hours,uint8_t minutes)
 {
-    uint8_t number[10]={0b01111111,0b01000011,0b10110110,0b11100110,0b11001010,0b11101100,0b11111100,0b01000111,0b11111111,0b11101111};
+    uint8_t number[10]={0b01111111,0b01000011,0b10110111,0b11100111,0b11001011,0b11101101,0b11111101,0b01000111,0b11111111,0b11101111};
     if (((hours / 10) % 10)!=0)
     {
     mx2.setColumn(8, number[(hours / 10) % 10]); //X-
@@ -197,7 +198,7 @@ void setMFAClockData(uint8_t hrs,uint8_t mins)
         hours=99;
         mins=99;
     }
-    uint8_t number[10]={0b01111111,0b01000011,0b10110110,0b11100110,0b11001010,0b11101100,0b11111100,0b01000111,0b11111111,0b11101111};
+    uint8_t number[10]={0b01111111,0b01000011,0b10110111,0b11100111,0b11001011,0b11101101,0b11111101,0b01000111,0b11111111,0b11101111};
     if (((hours / 10) % 10)!=0)
     {
     mx2.setColumn(12, number[(hours / 10) % 10]); //X-
@@ -215,16 +216,17 @@ void setMFAClockData(uint8_t hrs,uint8_t mins)
 
 void setMFADisplayedNumber(uint16_t data)
 {   
-    uint8_t number[10]={0b01111111,0b01000011,0b10110110,0b11100110,0b11001010,0b11101100,0b11111100,0b01000111,0b11111111,0b11101111};
+    uint8_t number[10]={0b01111111,0b01000011,0b10110111,0b11100111,0b11001011,0b11101101,0b11111101,0b01000111,0b11111111,0b11101111};
+    uint8_t dotMask = floatDot ? 0b11111110 : 0b11111111;
     if (((data / 1000) % 10)!=0)
     {
-    mx2.setColumn(12, number[(data / 1000) % 10]); //X-
-    mx2.setColumn(13, number[(data / 100) % 10]); //-X
+    mx2.setColumn(12, dotMask&number[(data / 1000) % 10]); //X-
+    mx2.setColumn(13, dotMask&number[(data / 100) % 10]); //-X
     }
     else
     {
-    mx2.setColumn(12, number[0x00]); //X-
-    mx2.setColumn(13, number[(data / 100) % 10]); //-X
+    mx2.setColumn(12, dotMask&number[0x00]); //X-
+    mx2.setColumn(13, dotMask&number[(data / 100) % 10]); //-X
     }
 
     mx2.setColumn(14, number[(data / 10) % 10]); //X-
@@ -233,7 +235,8 @@ void setMFADisplayedNumber(uint16_t data)
 
 void setFuel(uint8_t litres)
 {
-    uint8_t number[10]={0b01111111,0b01000011,0b10110110,0b11100110,0b11001010,0b11101100,0b11111100,0b01000111,0b11111111,0b11101111};
+    uint8_t number[10]={0b01111111,0b01000011,0b10110111,0b11100111,0b11001011,0b11101101,0b11111101,0b01000111,0b11111111,0b11101111};
+    //uint8_t dotMask = digifiz_parameters.displayDot ? 0b11111111 : 0b11111110;
     if (((litres / 10) % 10)!=0)
     {
     mx2.setColumn(6, number[(litres / 10) % 10]); //X-
@@ -327,6 +330,7 @@ void setDot(bool value)
 
 void setFloatDot(bool value)
 {
+    floatDot = value;
     mx2.setPoint(0,12,0);
     mx2.setPoint(0,13,0);
     mx2.setPoint(0,14,value);
