@@ -68,7 +68,7 @@ uint16_t getRawBrightnessLevel()
 
 uint8_t getBrightnessLevel()
 {
-  return constrain(lightLevel/4,4,15); //0..0.3V -> 0..80 (~255)
+  return constrain(lightLevel/4,2,15); //0..0.3V -> 0..80 (~255)
 }
 
 void processBrightnessLevel()
