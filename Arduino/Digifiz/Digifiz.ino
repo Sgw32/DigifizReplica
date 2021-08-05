@@ -21,8 +21,10 @@
 RTC_Millis myRTC;
 #else
 RTC_DS3231 myRTC;
+RTC_Millis myRTC_doubled;
 #endif
 
+bool clockRunning;
 
 uint32_t rpm = 0;
 uint32_t spd_m = 0;
@@ -66,9 +68,31 @@ void setup()
 {  
   spd_m = 0;
   rpm = 0;
-  
+  spd_m_speedometer = 0;
+  spd_m_speedometerCnt = 0;
+  averageRPM = 0;
+  averageRPMCnt = 0;
+
+  delay(100);
   Wire.begin(); // Start the I2C interface
+  
+  #ifdef EMULATE_RTC
+  myRTC.begin(DateTime(F(__DATE__), F(__TIME__)));
+  #else
+  clockRunning = myRTC.begin();
+  #endif
+  
   initEEPROM(); //Start memory container
+  current_averageSpeed = digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock];
+
+
+  if (clockRunning)
+  {
+    startTime[0] = myRTC.now();
+    startTime[0] = startTime[0] - TimeSpan(digifiz_parameters.duration[0]*60); //minus minutes
+    startTime[1] = myRTC.now();
+    startTime[1] = startTime[1] - TimeSpan(digifiz_parameters.duration[1]*60); //minus minutes
+  }
   initDisplay(); //Start MAX7219 display driver
   initADC(); //Init ADC ports for 
   initSpeedometer();
@@ -79,20 +103,6 @@ void setup()
   initMFA();
   initEmergencyModule();
   clockDot = millis();
-  #ifdef EMULATE_RTC
-  myRTC.begin(DateTime(F(__DATE__), F(__TIME__)));
-  #else
-  myRTC.begin();
-  #endif
-  startTime[0] = myRTC.now();
-  startTime[0] = startTime[0] - TimeSpan(digifiz_parameters.duration[0]*60); //minus minutes
-  startTime[1] = myRTC.now();
-  startTime[1] = startTime[1] - TimeSpan(digifiz_parameters.duration[1]*60); //minus minutes
-  current_averageSpeed = digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock];
-  spd_m_speedometer = 0;
-  spd_m_speedometerCnt = 0;
-  averageRPM = 0;
-  averageRPMCnt = 0;
 }
 
 ISR(TIMER4_COMPA_vect)
@@ -107,8 +117,7 @@ ISR(TIMER4_COMPA_vect)
     current_averageSpeed += (spd_m-current_averageSpeed)*0.001;
   }
 
-  spd_m_speedometerCnt++;
-  spd_m_speedometer += (float)spd_m;
+  spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
   rpm = readLastRPM(); 
   if (rpm>0)
   {
@@ -127,11 +136,7 @@ ISR(TIMER4_COMPA_vect)
   processOilTemperature();
   processAmbientTemperature();
   processBrightnessLevel();
-  if (spd_m_speedometerCnt==20)
-  {
-    setSpeedometerData((uint16_t)(spd_m_speedometer/20));
-    spd_m_speedometerCnt = 0;
-  }
+  setSpeedometerData((uint16_t)spd_m_speedometer);
   //setSpeedometerData(getRawBrightnessLevel());
   setRPMData(averageRPM);
   uint8_t fuel = getLitresInTank();
@@ -147,18 +152,22 @@ void loop()
 {
   if ((millis()-clockDot)>500)
   {
-    //if (digifiz_parameters.mfaState==MFA_STATE_TRIP_DURATION)
-    //{
       setDot(true);
-    //}
   }
   if ((millis()-clockDot)>1000)
   {
     clockDot = millis();
-    DateTime newTime = myRTC.now();
-    int hour = newTime.hour();
-    int minute = newTime.minute();
-    setClockData(hour,minute);
+    if (clockRunning)
+    {
+      DateTime newTime = myRTC.now();
+      int hour = newTime.hour();
+      int minute = newTime.minute();
+      setClockData(hour,minute);
+    }
+    else
+    {
+      setClockData(99,99);
+    }
     digifiz_parameters.mileage+=spd_m;
     digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]+=spd_m;
     

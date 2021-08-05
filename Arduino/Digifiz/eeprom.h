@@ -34,6 +34,7 @@ typedef struct digifiz_pars
     uint8_t backlight_on;
 };
 
+void load_defaults();
 void initEEPROM();
 bool checkMagicBytes();
 void saveParameters();

@@ -30,7 +30,7 @@ void saveParameters()
     //Serial.println("Saved!");
 }
 
-void initEEPROM()
+void load_defaults()
 {
     digifiz_parameters.rpmCoefficient = 3000;
     digifiz_parameters.speedCoefficient = 100;
@@ -60,7 +60,12 @@ void initEEPROM()
     digifiz_parameters.duration[0] = 0;
     digifiz_parameters.duration[1] = 0;
     digifiz_parameters.displayDot = 0;
-    digifiz_parameters.backlight_on = 0;
+    digifiz_parameters.backlight_on = 0; 
+}
+
+void initEEPROM()
+{
+    load_defaults();
     Serial.begin(9600);
     //Serial.println("PHL EEPROM test");
     #ifdef DISABLE_EEPROM

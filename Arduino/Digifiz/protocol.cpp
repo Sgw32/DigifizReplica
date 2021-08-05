@@ -51,6 +51,14 @@ extern digifiz_pars digifiz_parameters;
 void processData(int parameter,long value)
 {
   int par = parameter;
+  //emergency reset(if requested)
+  if (par == PARAMETER_RESET_DIGIFIZ)
+  {
+            load_defaults();
+            saveParameters();
+            return;
+  }
+  
   if (par<PARAMETER_READ_ADDITION)
   {
     switch(par)

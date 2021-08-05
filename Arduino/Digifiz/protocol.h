@@ -36,6 +36,7 @@
 #define PARAMETER_SET_HOUR 255
 #define PARAMETER_SET_MINUTE 254
 #define PARAMETER_RESET_DAILY_MILEAGE 253
+#define PARAMETER_RESET_DIGIFIZ 252
 
 void initComProtocol();
 void changeBLEName();
