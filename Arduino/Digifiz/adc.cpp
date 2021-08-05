@@ -50,8 +50,8 @@ void initADC()
     tauCoolant = (float)digifiz_parameters.tauCoolant*TAU;
     tauOil = (float)digifiz_parameters.tauOil*TAU*0.1;
     tauAir = (float)digifiz_parameters.tauAir*TAU*0.1;
-    tauGasoline = (float)digifiz_parameters.tauCoolant*TAU*0.1;
-    tauGasolineConsumption = (float)digifiz_parameters.tauCoolant*TAU*0.01;
+    tauGasoline = (float)digifiz_parameters.tauTank*TAU*0.01;
+    tauGasolineConsumption = (float)digifiz_parameters.tauTank*TAU*0.01;
     tankCapacity = digifiz_parameters.tankCapacity;
     
     //Init values:
@@ -206,9 +206,9 @@ void processFirstOilTemperature()
 
 void processFirstGasLevel()
 {
-    for (int i=0;i!=100;i++)
+    for (int i=0;i!=300;i++)
       V0 += (float)analogRead(gasolinePin);
-    V0/=100;
+    V0/=300;
     R2 = constrain(330 * V0 / (1023.0f - V0),35,265); // 330 Ohm in series with fuel sensor
     //35 = full
     //265 = empty
@@ -223,7 +223,7 @@ void processFirstAmbientTemperature()
     for (int i=0;i!=100;i++)
       V0 += (float)analogRead(airPin);
     V0/=100;
-    R2 = 220.0f * V0 / (1023.0f - V0); 
+    R2 = 10000.0f * V0 / (1023.0f - V0); 
     float temp1 = (log(R2/R1_Ambient)/airB);
     temp1 += 1/(25.0f+273.15f);
     airT = temp1;

@@ -9,11 +9,11 @@ void PCInt20()
 {
     // mRPMSenseData should correspond 0..9000 RPM
     // Not lower(obvious) not higher(I assume)
-    // 9000 RPM = 150 Hz , but for 1 cylinder. For 4 it is 600 Hz
-    // So mRPMSenseData has a window of 1000000/600 ... 1000000
+    // 9000 RPM = 150 Hz , but for 1 cylinder. For 4 it is 300 Hz
+    // So mRPMSenseData has a window of 1000000/300 ... 1000000
     uint32_t cur_micros = micros();
     uint32_t delta = (cur_micros-lastMillisRPM);
-    if (delta>1666)
+    if (delta>3000)
     {
         mRPMSenseData = delta;
         lastMillisRPM = micros();

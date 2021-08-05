@@ -9,7 +9,6 @@ uint8_t prevMFASensor = LOW;
 uint8_t sensorPressed = 0;
 uint32_t pressSensorTime = 0;
 
-//#define EMULATE_RTC
 #ifdef EMULATE_RTC
 extern RTC_Millis myRTC;
 #else
@@ -31,7 +30,8 @@ void initMFA()
 
 void processMFA()
 {
-  
+
+#ifndef DISABLE_MANUFACTURER_MFA
     if ((digitalRead(MFA_MODE_PIN)==LOW)&&(prevMFAMode==HIGH))
     {
         //Pressed MFA Mode
@@ -40,13 +40,26 @@ void processMFA()
     if ((digitalRead(MFA_BLOCK_PIN)==LOW)&&(prevMFABlock==HIGH))
     {
         //Pressed MFA Block
+#ifndef MANUFACTURER_MFA_SWITCH
         pressMFABlock();
+#else
+        digifiz_parameters.mfaBlock = 0;
+#endif
     }
+
+#ifdef MANUFACTURER_MFA_SWITCH
+    if ((digitalRead(MFA_BLOCK_PIN)==HIGH)&&(prevMFABlock==LOW))
+    {
+        digifiz_parameters.mfaBlock = 1;
+    }
+#endif
+
     if ((digitalRead(MFA_RESET_PIN)==LOW)&&(prevMFAReset==HIGH))
     {
         //Pressed MFA Reset
         pressMFAReset();
     }
+#endif
     if ((digitalRead(MFA_SENSOR_PIN)==HIGH)&&(prevMFASensor==LOW))
     {
         //Pressed MFA Sensor(on Digifiz)

@@ -5,7 +5,6 @@ MD_MAX72XX mx2 = MD_MAX72XX(HARDWARE_TYPE, DATA_PIN2, CLK_PIN2, CS_PIN2, 3);
 
 extern digifiz_pars digifiz_parameters;
 
-//#define EMULATE_RTC
 #ifdef EMULATE_RTC
 extern RTC_Millis myRTC;
 #else

@@ -5,7 +5,7 @@
 #include <Wire.h>
 #include "Arduino.h"
 #include "eeprom.h"
-
+#include "setup.h"
 
 //0..64 normal parameters
 //128...128+64 read parameters

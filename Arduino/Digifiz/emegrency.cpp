@@ -1,7 +1,7 @@
 #include "emergency.h"
 
 uint8_t emergency_state = 0;
-uint16_t emergencyRPM = 2000;
+uint16_t emergencyRPM = 4000;
 uint32_t emergencyCounter;
 uint8_t last_emergency_state = 0;
 void initEmergencyModule()
@@ -33,6 +33,8 @@ uint8_t processOilPressure(int mRPM)
     {
         emergency_state = 1;
     }
+
+#ifndef EMERGENCY_DISABLE_SENSOR_CHECK
     if (((last_emergency_state==0))&&
         (digitalRead(OIL_1_8BAR_PIN)==LOW)
         &&(mRPM>emergencyRPM))  //Was a problem with Oil 1.8 bar sensor, and we reached RPM
@@ -40,7 +42,7 @@ uint8_t processOilPressure(int mRPM)
         emergency_state = 2;
         emergencyCounter = millis();
     }
-    
+   
     if (((millis()-emergencyCounter)>1000)&&(last_emergency_state==2)&&
         (digitalRead(OIL_1_8BAR_PIN)==LOW)
         &&(mRPM>emergencyRPM))  //It is more than second we are at 2000 RPM and there is no pressure
@@ -48,6 +50,7 @@ uint8_t processOilPressure(int mRPM)
         //OIL 1.8 error!
         emergency_state = 3;
     }
+#endif
     
     last_emergency_state = emergency_state;
     return emergency_state;

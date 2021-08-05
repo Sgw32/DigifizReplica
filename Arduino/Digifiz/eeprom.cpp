@@ -50,7 +50,7 @@ void initEEPROM()
     digifiz_parameters.brightnessLevel = 10;
     digifiz_parameters.tankCapacity = 60;
     digifiz_parameters.mfaState = 0;
-    digifiz_parameters.buzzerOff = 0;
+    digifiz_parameters.buzzerOff = 1;
     digifiz_parameters.maxRPM = 7000;
     digifiz_parameters.mfaBlock = 0; //0 or 1
     digifiz_parameters.averageConsumption[0] = 0;
@@ -59,7 +59,7 @@ void initEEPROM()
     digifiz_parameters.averageSpeed[1] = 0;
     digifiz_parameters.duration[0] = 0;
     digifiz_parameters.duration[1] = 0;
-    digifiz_parameters.displayDot = 1;
+    digifiz_parameters.displayDot = 0;
     digifiz_parameters.backlight_on = 0;
     Serial.begin(9600);
     //Serial.println("PHL EEPROM test");

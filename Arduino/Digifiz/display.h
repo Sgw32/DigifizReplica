@@ -6,6 +6,7 @@
 #include "MS5611.h"
 #include "adc.h"
 #include "mfa.h"
+#include "setup.h"
 
 
 // Turn on debug statements to the serial output

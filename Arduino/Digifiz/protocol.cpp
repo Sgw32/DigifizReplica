@@ -3,7 +3,6 @@
 
 uint32_t statusTime;
 
-//#define EMULATE_RTC
 #ifdef EMULATE_RTC
 extern RTC_Millis myRTC;
 #else

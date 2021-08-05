@@ -7,6 +7,7 @@
 #include "protocol.h"
 #include "buzzer.h"
 #include "mfa.h"
+#include "setup.h"
 
 //#include <DS3231.h>
 #include <RTClib.h>
@@ -15,7 +16,6 @@
 //Clock at 0x57
 //EEPROM at 0x50
 //DS3231 clock;
-//#define EMULATE_RTC
 
 #ifdef EMULATE_RTC
 RTC_Millis myRTC;
@@ -27,6 +27,7 @@ RTC_DS3231 myRTC;
 uint32_t rpm = 0;
 uint32_t spd_m = 0;
 float spd_m_speedometer = 0;
+int spd_m_speedometerCnt = 0; //spd_m_speedometerCnt
 int i = 0;
 int saveParametersCounter = 0;
 bool century = false;
@@ -34,6 +35,9 @@ bool h12Flag;
 bool pmFlag;
 
 float current_averageSpeed = 0;
+
+float averageRPM = 0;
+int averageRPMCnt = 0;
 
 long clockDot;
 DateTime startTime[2];
@@ -86,6 +90,9 @@ void setup()
   startTime[1] = startTime[1] - TimeSpan(digifiz_parameters.duration[1]*60); //minus minutes
   current_averageSpeed = digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock];
   spd_m_speedometer = 0;
+  spd_m_speedometerCnt = 0;
+  averageRPM = 0;
+  averageRPMCnt = 0;
 }
 
 ISR(TIMER4_COMPA_vect)
@@ -99,27 +106,34 @@ ISR(TIMER4_COMPA_vect)
     spd_m /= 100;
     current_averageSpeed += (spd_m-current_averageSpeed)*0.001;
   }
-  spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
-  rpm = readLastRPM(); //micros
+
+  spd_m_speedometerCnt++;
+  spd_m_speedometer += (float)spd_m;
+  rpm = readLastRPM(); 
   if (rpm>0)
   {
     rpm = 1000000/rpm;
-    //rpm *= 15;
     rpm *= digifiz_parameters.rpmCoefficient/100; //4 cylinder motor, 60 sec in min
-    //rpm /= 100; //TODO tests
   }
+  averageRPM += (rpm-averageRPM)*0.5;
+  
   if (getBuzzerEnabled())
   {
       buzzerToggle();
   }
+  
   processGasLevel();
   processCoolantTemperature();
   processOilTemperature();
   processAmbientTemperature();
   processBrightnessLevel();
-  setSpeedometerData((uint16_t)spd_m_speedometer);
+  if (spd_m_speedometerCnt==20)
+  {
+    setSpeedometerData((uint16_t)(spd_m_speedometer/20));
+    spd_m_speedometerCnt = 0;
+  }
   //setSpeedometerData(getRawBrightnessLevel());
-  setRPMData(rpm);
+  setRPMData(averageRPM);
   uint8_t fuel = getLitresInTank();
   if (fuel<10)
     setRefuelSign(true);
