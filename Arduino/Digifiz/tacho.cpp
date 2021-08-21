@@ -3,7 +3,7 @@
 uint32_t mRPMSenseData;
 uint32_t lastMillisRPM;
 
-MedianFilter2<uint32_t> medianFilterRPM(5);
+MedianDispertionFilter<uint32_t> medianFilterRPM(12);
 
 void PCInt20()
 {
@@ -33,6 +33,11 @@ void initTacho()
     medianFilterRPM.AddValue(0);
     medianFilterRPM.AddValue(0);
     medianFilterRPM.AddValue(0);
+}
+
+uint32_t getRPMDispertion()
+{
+  return medianFilterRPM.GetDispertion();
 }
 
 uint32_t readLastRPM()

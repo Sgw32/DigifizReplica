@@ -97,12 +97,12 @@ void setup()
   initADC(); //Init ADC ports for 
   initSpeedometer();
   initTacho();
-  initReadInterrupt();
   initComProtocol();
   initBuzzer();
   initMFA();
   initEmergencyModule();
   clockDot = millis();
+  initReadInterrupt();
 }
 
 ISR(TIMER4_COMPA_vect)
@@ -119,7 +119,7 @@ ISR(TIMER4_COMPA_vect)
 
   spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
   rpm = readLastRPM(); 
-  if (rpm>0)
+  if ((rpm>0)&&(getRPMDispertion()<30)) //30 or LESS!!!
   {
     rpm = 1000000/rpm;
     rpm *= digifiz_parameters.rpmCoefficient/100; //4 cylinder motor, 60 sec in min
