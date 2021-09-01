@@ -12,8 +12,10 @@ extern RTC_DS3231 myRTC;
 #endif
 
 extern DateTime startTime[2];
+extern bool clockRunning;
 int mRPMData = 4000;
 bool floatDot = 0;
+extern TimeSpan sinceStart;
 //int mHour = 0;
 //int mMinute = 0;
 
@@ -98,16 +100,10 @@ void setCheckEngine(bool onoff)
 }
 
 void displayMFAType(uint8_t mfaType)
-{
-    DateTime newTime = myRTC.now();
-    int hour = newTime.hour();
-    int minute = newTime.minute();
-    TimeSpan sinceStart = newTime - startTime[digifiz_parameters.mfaBlock];
-    digifiz_parameters.duration[digifiz_parameters.mfaBlock] = sinceStart.totalseconds()/60;
+{    
     switch(digifiz_parameters.mfaState)
     {
         case MFA_STATE_TRIP_DURATION:
-            
             setMFAClockData(sinceStart.hours(),sinceStart.minutes());
             break;
         case MFA_STATE_TRIP_DISTANCE:
@@ -170,47 +166,47 @@ void setMileage(uint32_t mileage)
   //  mx2.setColumn(5, 0b01111110); 
 }
 
-void setClockData(uint8_t hours,uint8_t minutes)
+void setClockData(uint8_t clock_hours,uint8_t clock_minutes)
 {
     uint8_t number[10]={0b01111111,0b01000011,0b10110111,0b11100111,0b11001011,0b11101101,0b11111101,0b01000111,0b11111111,0b11101111};
-    if (((hours / 10) % 10)!=0)
+    if (((clock_hours / 10) % 10)!=0)
     {
-    mx2.setColumn(8, number[(hours / 10) % 10]); //X-
-    mx2.setColumn(9, number[(hours / 1) % 10]); //-X
+    mx2.setColumn(8, number[(clock_hours / 10) % 10]); //X-
+    mx2.setColumn(9, number[(clock_hours / 1) % 10]); //-X
     }
     else
     {
     mx2.setColumn(8, number[0x00]); //X-
-    mx2.setColumn(9, number[(hours / 1) % 10]); //-X
+    mx2.setColumn(9, number[(clock_hours / 1) % 10]); //-X
     }
 
-    mx2.setColumn(10, number[(minutes / 10) % 10]); //X-
-    mx2.setColumn(11, number[(minutes / 1) % 10]); //-X
+    mx2.setColumn(10, number[(clock_minutes / 10) % 10]); //X-
+    mx2.setColumn(11, number[(clock_minutes / 1) % 10]); //-X
 }
 
-void setMFAClockData(uint8_t hrs,uint8_t mins)
+void setMFAClockData(uint8_t mfa_clock_hrs,uint8_t mfa_clock_mins)
 {
-    uint8_t hours = hrs;
-    uint8_t minutes = mins;
-    if (hours>99)
+    uint8_t mfa_clock_hours = mfa_clock_hrs;
+    uint8_t mfa_clock_minutes = mfa_clock_mins;
+    if (mfa_clock_hours>99)
     {
-        hours=99;
-        mins=99;
+        mfa_clock_hours=99;
+        mfa_clock_minutes=99;
     }
     uint8_t number[10]={0b01111111,0b01000011,0b10110111,0b11100111,0b11001011,0b11101101,0b11111101,0b01000111,0b11111111,0b11101111};
-    if (((hours / 10) % 10)!=0)
+    if (((mfa_clock_hours / 10) % 10)!=0)
     {
-    mx2.setColumn(12, number[(hours / 10) % 10]); //X-
-    mx2.setColumn(13, number[(hours / 1) % 10]); //-X
+    mx2.setColumn(12, number[(mfa_clock_hours / 10) % 10]); //X-
+    mx2.setColumn(13, number[(mfa_clock_hours / 1) % 10]); //-X
     }
     else
     {
     mx2.setColumn(12, number[0x00]); //X-
-    mx2.setColumn(13, number[(hours / 1) % 10]); //-X
+    mx2.setColumn(13, number[(mfa_clock_hours / 1) % 10]); //-X
     }
 
-    mx2.setColumn(14, number[(minutes / 10) % 10]); //X-
-    mx2.setColumn(15, number[(minutes / 1) % 10]); //-X
+    mx2.setColumn(14, number[(mfa_clock_minutes / 10) % 10]); //X-
+    mx2.setColumn(15, number[(mfa_clock_minutes / 1) % 10]); //-X
 }
 
 void setMFADisplayedNumber(uint16_t data)

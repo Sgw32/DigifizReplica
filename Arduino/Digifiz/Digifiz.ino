@@ -17,32 +17,39 @@
 //EEPROM at 0x50
 //DS3231 clock;
 
+int i = 0;
+int saveParametersCounter = 0;
+
+//Speed related data
+uint32_t spd_m = 0;
+float spd_m_speedometer = 0;
+int spd_m_speedometerCnt = 0; //spd_m_speedometerCnt
+float current_averageSpeed = 0;
+
+//RPM-related data
+float averageRPM = 0;
+int averageRPMCnt = 0;
+uint32_t rpm = 0;
+
+//Time-related variables
 #ifdef EMULATE_RTC
 RTC_Millis myRTC;
 #else
 RTC_DS3231 myRTC;
 RTC_Millis myRTC_doubled;
 #endif
-
-bool clockRunning;
-
-uint32_t rpm = 0;
-uint32_t spd_m = 0;
-float spd_m_speedometer = 0;
-int spd_m_speedometerCnt = 0; //spd_m_speedometerCnt
-int i = 0;
-int saveParametersCounter = 0;
+long clockDot;
+int test = 1;
+DateTime startTime[2];
+int current_hour = 99;
+int current_minute = 99;
+DateTime newTime;
+TimeSpan sinceStart = 0;
 bool century = false;
 bool h12Flag;
 bool pmFlag;
+bool clockRunning;
 
-float current_averageSpeed = 0;
-
-float averageRPM = 0;
-int averageRPMCnt = 0;
-
-long clockDot;
-DateTime startTime[2];
 
 extern digifiz_pars digifiz_parameters;
 
@@ -103,6 +110,7 @@ void setup()
   initEmergencyModule();
   clockDot = millis();
   initReadInterrupt();
+  setSpeedometerData(0);
 }
 
 ISR(TIMER4_COMPA_vect)
@@ -119,7 +127,7 @@ ISR(TIMER4_COMPA_vect)
 
   spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
   rpm = readLastRPM(); 
-  if ((rpm>0)&&(getRPMDispertion()<30)) //30 or LESS!!!
+  if ((rpm>0)) //  &&(getRPMDispertion()<30)) //30 or LESS!!!
   {
     rpm = 1000000/rpm;
     rpm *= digifiz_parameters.rpmCoefficient/100; //4 cylinder motor, 60 sec in min
@@ -159,10 +167,12 @@ void loop()
     clockDot = millis();
     if (clockRunning)
     {
-      DateTime newTime = myRTC.now();
-      int hour = newTime.hour();
-      int minute = newTime.minute();
-      setClockData(hour,minute);
+      newTime = myRTC.now();
+      current_hour = newTime.hour();
+      current_minute = newTime.minute();
+      sinceStart = newTime - startTime[digifiz_parameters.mfaBlock];
+      digifiz_parameters.duration[digifiz_parameters.mfaBlock] = sinceStart.totalseconds()/60;
+      setClockData(current_hour,current_minute);
     }
     else
     {
@@ -184,7 +194,6 @@ void loop()
     }
     
     checkEmergency(rpm);
-    
     setMFABlock(digifiz_parameters.mfaBlock); //in display h
     displayMFAType(digifiz_parameters.mfaState);
     setDot(false);
