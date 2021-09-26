@@ -37,7 +37,12 @@ void initTacho()
 
 uint32_t getRPMDispertion()
 {
-  return medianFilterRPM.GetDispertion();
+  return medianFilterRPM.GetDispertion()>>12;
+}
+
+uint32_t getRPMMean()
+{
+  return medianFilterRPM.GetMean()>>2;
 }
 
 uint32_t readLastRPM()

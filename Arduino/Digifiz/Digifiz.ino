@@ -19,7 +19,7 @@
 
 int i = 0;
 int saveParametersCounter = 0;
-
+uint16_t displaySpeedCnt = 0;
 //Speed related data
 uint32_t spd_m = 0;
 float spd_m_speedometer = 0;
@@ -127,13 +127,20 @@ ISR(TIMER4_COMPA_vect)
 
   spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
   rpm = readLastRPM(); 
-  if ((rpm>0)) //  &&(getRPMDispertion()<30)) //30 or LESS!!!
+  if (rpm>0)
   {
+    if((getRPMDispertion()<digifiz_parameters.medianDispFilterThreshold)) //30 or LESS!!!
+    {
     rpm = 1000000/rpm;
     rpm *= digifiz_parameters.rpmCoefficient/100; //4 cylinder motor, 60 sec in min
+    averageRPM += (rpm-averageRPM)*0.5;
+    }
   }
-  averageRPM += (rpm-averageRPM)*0.5;
-  
+  else
+  {
+    averageRPM += (0-averageRPM)*0.5;
+  }
+    
   if (getBuzzerEnabled())
   {
       buzzerToggle();
@@ -144,7 +151,12 @@ ISR(TIMER4_COMPA_vect)
   processOilTemperature();
   processAmbientTemperature();
   processBrightnessLevel();
-  setSpeedometerData((uint16_t)spd_m_speedometer);
+  displaySpeedCnt++;
+  if (displaySpeedCnt==4) // 2 Hz loop(as on original Digifiz)
+  {
+    setSpeedometerData((uint16_t)spd_m_speedometer);
+    displaySpeedCnt = 0;
+  }
   //setSpeedometerData(getRawBrightnessLevel());
   setRPMData(averageRPM);
   uint8_t fuel = getLitresInTank();

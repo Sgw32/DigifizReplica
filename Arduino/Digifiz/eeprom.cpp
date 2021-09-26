@@ -61,6 +61,9 @@ void load_defaults()
     digifiz_parameters.duration[1] = 0;
     digifiz_parameters.displayDot = 0;
     digifiz_parameters.backlight_on = 0; 
+    digifiz_parameters.coolantMinResistance = 60;
+    digifiz_parameters.coolantMaxResistance = 120;
+    digifiz_parameters.medianDispFilterThreshold = 65535; // value below will pass
 }
 
 void initEEPROM()

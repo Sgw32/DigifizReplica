@@ -171,21 +171,21 @@ T MedianDispertionFilter<T>::median3(T a, T b, T c)
 template<typename T>
 T MedianDispertionFilter<T>::GetDispertion() const
 {
-	T dispertion = 0;
+  T dispertion = 0;
   T mean = GetMean();
   for (int iCount = 0; iCount < _windowSize; ++iCount)
 	{
         dispertion += ((*(_buffer+iCount)).value-mean)*((*(_buffer+iCount)).value-mean);
   }
   dispertion/=_windowSize;
-	return dispertion;
+  return dispertion;
 }
 
 
 template<typename T>
 T MedianDispertionFilter<T>::GetMean() const
 {
-  T mean = 0;
+    T mean = 0;
     for (int iCount = 0; iCount < _windowSize; ++iCount)
     {
         mean += (*(_buffer+iCount)).value;

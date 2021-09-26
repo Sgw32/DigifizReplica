@@ -66,7 +66,7 @@ void blinking();
 void blinking2();
 void setClockData(uint8_t clock_hours,uint8_t clock_minutes);
 void setMFAClockData(uint8_t mfa_clock_hours,uint8_t mfa_clock_minutes);
-void setMFADisplayedNumber(uint16_t data);
+void setMFADisplayedNumber(int16_t data);
 void setFuel(uint8_t litres);
 void setRPMData(uint16_t data);
 void setSpeedometerData(uint16_t data);

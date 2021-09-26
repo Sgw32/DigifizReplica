@@ -1,10 +1,14 @@
 #ifndef SETUP_H
 #define SETUP_H
 
-//#define EMULATE_RTC
-//#define DISABLE_EEPROM
+#define EMULATE_RTC
+#define DISABLE_EEPROM
 #define DISABLE_MANUFACTURER_MFA
 #define MANUFACTURER_MFA_SWITCH
 #define EMERGENCY_DISABLE_SENSOR_CHECK
+
+#define OIL_RES_10000
+
+#define NEW_REVISION
 
 #endif

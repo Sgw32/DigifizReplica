@@ -107,11 +107,11 @@ void displayMFAType(uint8_t mfaType)
             setMFAClockData(sinceStart.hours(),sinceStart.minutes());
             break;
         case MFA_STATE_TRIP_DISTANCE:
-            setMFADisplayedNumber(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600);
+            setMFADisplayedNumber((uint16_t)digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600);
             setFloatDot(false);
             break;
         case MFA_STATE_TRIP_L100KM:
-            setMFADisplayedNumber(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100);
+            setMFADisplayedNumber((uint16_t)digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100);
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
@@ -119,11 +119,11 @@ void displayMFAType(uint8_t mfaType)
             setFloatDot(true);
             break;
         case MFA_STATE_OIL_TEMP:
-            setMFADisplayedNumber(getOilTemperature());
+            setMFADisplayedNumber((int16_t)(getOilTemperature()-30.0f));
             setFloatDot(true);
             break;
         case MFA_STATE_AIR_TEMP:
-            setMFADisplayedNumber(getAmbientTemperature());
+            setMFADisplayedNumber((int16_t)getAmbientTemperature());
             setFloatDot(true);
             break;
         default:
@@ -153,8 +153,16 @@ void setBrightness(uint8_t levels)
 
 void setMileage(uint32_t mileage)
 {
+  mileage = 943210;
+#ifndef NEW_REVISION
+//old
   uint8_t first_number[10]={0b11101110,0b01000011,0b10110110,0b01110110,0b01011010,0b01111100,0b11111100,0b01000111,0b11111111,0b01111111};
-  uint8_t number[10]={0b01111110,0b01000011,0b10110110,0b11100110,0b11001010,0b11101100,0b11111100,0b01000111,0b11111111,0b11101111};
+#else
+//"new"
+  uint8_t first_number[10]={0b11101110,0b01000011,0b10110110,0b11010110,0b01011010,0b11011100,0b11111100,0b01000111,0b11111111,0b11011111};
+#endif
+  uint8_t number[10]=      {0b01111110,0b01000011,0b10110110,0b11100110,0b11001010,0b11101100,0b11111100,0b01000111,0b11111111,0b11101111};
+
   mx2.setColumn(0, first_number[(mileage / 100000) % 10]); //(mileage / 100000) % 10
   mx2.setColumn(1, number[(mileage / 10000) % 10]); 
   mx2.setColumn(2, number[(mileage / 1000) % 10]); 
@@ -209,23 +217,55 @@ void setMFAClockData(uint8_t mfa_clock_hrs,uint8_t mfa_clock_mins)
     mx2.setColumn(15, number[(mfa_clock_minutes / 1) % 10]); //-X
 }
 
-void setMFADisplayedNumber(uint16_t data)
+void setMFADisplayedNumber(int16_t data)
 {   
-    uint8_t number[10]={0b01111111,0b01000011,0b10110111,0b11100111,0b11001011,0b11101101,0b11111101,0b01000111,0b11111111,0b11101111};
-    uint8_t dotMask = floatDot ? 0b11111110 : 0b11111111;
-    if (((data / 1000) % 10)!=0)
+    if (data>=0)
     {
-    mx2.setColumn(12, dotMask&number[(data / 1000) % 10]); //X-
-    mx2.setColumn(13, dotMask&number[(data / 100) % 10]); //-X
+      uint8_t number[10]={0b01111111,0b01000011,0b10110111,0b11100111,0b11001011,0b11101101,0b11111101,0b01000111,0b11111111,0b11101111};
+      uint8_t dotMask = floatDot ? 0b11111110 : 0b11111111;
+      if (((data / 1000) % 10)!=0)
+      {
+      mx2.setColumn(12, dotMask&number[(data / 1000) % 10]); //X-
+      mx2.setColumn(13, dotMask&number[(data / 100) % 10]); //-X
+      }
+      else
+      {
+      mx2.setColumn(12, dotMask&number[0x00]); //X-
+      mx2.setColumn(13, dotMask&number[(data / 100) % 10]); //-X
+      }
+  
+      mx2.setColumn(14, number[(data / 10) % 10]); //X-
+      mx2.setColumn(15, number[(data / 1) % 10]); //-X
     }
     else
     {
-    mx2.setColumn(12, dotMask&number[0x00]); //X-
-    mx2.setColumn(13, dotMask&number[(data / 100) % 10]); //-X
+      //minus values
+      uint8_t number[10]={0b01111111,0b01000011,0b10110111,0b11100111,0b11001011,0b11101101,0b11111101,0b01000111,0b11111111,0b11101111};
+      uint8_t minus_number = 0b10000001; //minus sign
+      
+      uint8_t dotMask = floatDot ? 0b11111110 : 0b11111111;
+      if (((data / 1000) % 10)!=0)
+      {
+      mx2.setColumn(12, dotMask&number[((uint8_t)(-data) / 1000) % 10]); //X- //display all number XXXX
+      mx2.setColumn(13, dotMask&number[((uint8_t)(-data) / 100) % 10]); //-X 
+      }
+      else
+      {      
+        if (((data / 100) % 10)!=0)
+        {
+          mx2.setColumn(12, dotMask&minus_number); //X- //display minus and number (-XXX)
+          mx2.setColumn(13, dotMask&number[((uint8_t)(-data) / 100) % 10]); //-X
+        }
+        else
+        {
+          mx2.setColumn(12, dotMask&0x01); //X- //display minus and number (-XX)
+          mx2.setColumn(13, dotMask&minus_number); //-X
+        }
+      }
+  
+      mx2.setColumn(14, number[((-data) / 10) % 10]); //X-
+      mx2.setColumn(15, number[((-data) / 1) % 10]); //-X
     }
-
-    mx2.setColumn(14, number[(data / 10) % 10]); //X-
-    mx2.setColumn(15, number[(data / 1) % 10]); //-X
 }
 
 void setFuel(uint8_t litres)

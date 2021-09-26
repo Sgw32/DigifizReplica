@@ -26,12 +26,15 @@ typedef struct digifiz_pars
     uint8_t mfaState; //used
     uint8_t buzzerOff; //used
     int maxRPM; //used
-    uint8_t mfaBlock;
+    uint8_t mfaBlock; //used
     float averageConsumption[2]; //used //MFA
     float averageSpeed[2]; //used //MFA
     int duration[2]; //used //minutes //MFA .
-    uint8_t displayDot;
-    uint8_t backlight_on;
+    uint8_t displayDot; //used
+    uint8_t backlight_on; //used
+    uint16_t coolantMinResistance;
+    uint16_t coolantMaxResistance;
+    uint16_t medianDispFilterThreshold; 
 };
 
 void load_defaults();

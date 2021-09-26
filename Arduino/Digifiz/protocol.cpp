@@ -155,22 +155,25 @@ void processData(int parameter,long value)
   {
     DateTime tme = myRTC.now();
     //commands
-    switch(par)
+    if (par==PARAMETER_SET_HOUR)
     {
-        case PARAMETER_SET_HOUR:
             DateTime newTime1 = DateTime(tme.year(), tme.month(), tme.day(), constrain(value,0,24),tme.minute(),0);
             myRTC.adjust(newTime1);
-            break;
-        case PARAMETER_SET_MINUTE:
-            DateTime newTime2 = DateTime(tme.year(), tme.month(), tme.day(), tme.hour() ,constrain(value,0,60),0);
-            myRTC.adjust(newTime2);
-            break;
-        case PARAMETER_RESET_DAILY_MILEAGE:
-            digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock] = 0;
-            break;
-        default:
-            
-            break;
+    }
+    else
+    {
+      if (par==PARAMETER_SET_MINUTE)
+      {
+          DateTime newTime2 = DateTime(tme.year(), tme.month(), tme.day(), tme.hour() ,constrain(value,0,60),0);
+          myRTC.adjust(newTime2);
+      }
+      else
+      {
+        if (par==PARAMETER_RESET_DAILY_MILEAGE)
+        {
+          digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock] = 0;
+        }
+      }
     }
     par-=PARAMETER_READ_ADDITION;
     

@@ -9,4 +9,5 @@
 void initTacho();
 uint32_t readLastRPM();
 uint32_t getRPMDispertion();
+uint32_t getRPMMean();
 #endif
