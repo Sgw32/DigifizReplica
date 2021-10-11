@@ -3,7 +3,7 @@
 uint32_t mRPMSenseData;
 uint32_t lastMillisRPM;
 
-MedianDispertionFilter<uint32_t> medianFilterRPM(12);
+MedianDispertionFilter<uint32_t> medianFilterRPM(5);
 
 void PCInt20()
 {

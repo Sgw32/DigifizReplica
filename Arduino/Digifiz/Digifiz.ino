@@ -133,7 +133,7 @@ ISR(TIMER4_COMPA_vect)
     {
     rpm = 1000000/rpm;
     rpm *= digifiz_parameters.rpmCoefficient/100; //4 cylinder motor, 60 sec in min
-    averageRPM += (rpm-averageRPM)*0.5;
+    averageRPM += (rpm-averageRPM)*0.2;
     }
   }
   else

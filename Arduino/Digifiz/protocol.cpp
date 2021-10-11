@@ -147,6 +147,18 @@ void processData(int parameter,long value)
         BTserial.println("PARAMETER_BACKLIGHT_ON");
         digifiz_parameters.backlight_on = value;
         break;
+      case PARAMETER_M_D_FILTER:
+        BTserial.println("PARAMETER_M_D_FILTER");
+        digifiz_parameters.medianDispFilterThreshold = value;
+        break;
+      case PARAMETER_COOLANT_MAX_R:
+        BTserial.println("PARAMETER_M_D_FILTER");
+        digifiz_parameters.coolantMaxResistance = value;
+        break;
+      case PARAMETER_COOLANT_MIN_R:
+        BTserial.println("PARAMETER_M_D_FILTER");
+        digifiz_parameters.coolantMinResistance = value;
+        break;
       default:
         break;
     }

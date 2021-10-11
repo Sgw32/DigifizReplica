@@ -7,16 +7,21 @@ digifiz_pars digifiz_parameters;
 bool checkMagicBytes()
 {    
     uint8_t test1,test2,test3,test4;
-    myMem.get(0,test1);
-    myMem.get(1,test2);
-    myMem.get(2,test3);
-    myMem.get(3,test4);
-    if ((test1=='D')&&
-        (test2=='I')&&
-        (test3=='G')&&
-        (test4=='I'))
+    uint8_t cnt = 0;
+    for (cnt=0;cnt!=10;cnt++) //What if we have a wrong negative results???
     {
-        return true;
+      //Give it 10 chances
+      myMem.get(0,test1);
+      myMem.get(1,test2);
+      myMem.get(2,test3);
+      myMem.get(3,test4);
+      if ((test1=='D')&&
+          (test2=='I')&&
+          (test3=='G')&&
+          (test4=='I'))
+      {
+          return true;
+      }
     }
     return false;
 }
@@ -60,7 +65,7 @@ void load_defaults()
     digifiz_parameters.duration[0] = 0;
     digifiz_parameters.duration[1] = 0;
     digifiz_parameters.displayDot = 0;
-    digifiz_parameters.backlight_on = 0; 
+    digifiz_parameters.backlight_on = 1; 
     digifiz_parameters.coolantMinResistance = 60;
     digifiz_parameters.coolantMaxResistance = 120;
     digifiz_parameters.medianDispFilterThreshold = 65535; // value below will pass

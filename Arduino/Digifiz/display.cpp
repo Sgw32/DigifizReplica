@@ -119,7 +119,7 @@ void displayMFAType(uint8_t mfaType)
             setFloatDot(true);
             break;
         case MFA_STATE_OIL_TEMP:
-            setMFADisplayedNumber((int16_t)(getOilTemperature()-30.0f));
+            setMFADisplayedNumber((int16_t)(getOilTemperature()));
             setFloatDot(true);
             break;
         case MFA_STATE_AIR_TEMP:
@@ -153,7 +153,7 @@ void setBrightness(uint8_t levels)
 
 void setMileage(uint32_t mileage)
 {
-  mileage = 943210;
+  //mileage = 943210;
 #ifndef NEW_REVISION
 //old
   uint8_t first_number[10]={0b11101110,0b01000011,0b10110110,0b01110110,0b01011010,0b01111100,0b11111100,0b01000111,0b11111111,0b01111111};
