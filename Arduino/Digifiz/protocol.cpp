@@ -124,19 +124,19 @@ void processData(int parameter,long value)
         digifiz_parameters.brightnessLevel = value;
         break;
       case PARAMETER_TANK_CAPACITY:
-        BTserial.println("PARAMETER_BRIGHTNESS_LEVEL");
+        BTserial.println("PARAMETER_TANK_CAPACITY");
         digifiz_parameters.tankCapacity = value;
         break;
       case PARAMETER_MFA_STATE:
-        BTserial.println("PARAMETER_BRIGHTNESS_LEVEL");
+        BTserial.println("PARAMETER_MFA_STATE");
         digifiz_parameters.mfaState = value;
         break;
       case PARAMETER_BUZZER_OFF:
-        BTserial.println("PARAMETER_BRIGHTNESS_LEVEL");
+        BTserial.println("PARAMETER_BUZZER_OFF");
         digifiz_parameters.buzzerOff = value;
         break;
       case PARAMETER_MAX_RPM:
-        BTserial.println("PARAMETER_BRIGHTNESS_LEVEL");
+        BTserial.println("PARAMETER_MAX_RPM");
         digifiz_parameters.maxRPM = value;
         break;
       case PARAMETER_DOT_OFF:
@@ -152,11 +152,11 @@ void processData(int parameter,long value)
         digifiz_parameters.medianDispFilterThreshold = value;
         break;
       case PARAMETER_COOLANT_MAX_R:
-        BTserial.println("PARAMETER_M_D_FILTER");
+        BTserial.println("PARAMETER_COOLANT_MAX_R");
         digifiz_parameters.coolantMaxResistance = value;
         break;
       case PARAMETER_COOLANT_MIN_R:
-        BTserial.println("PARAMETER_M_D_FILTER");
+        BTserial.println("PARAMETER_COOLANT_MIN_R");
         digifiz_parameters.coolantMinResistance = value;
         break;
       default:

@@ -4,7 +4,7 @@
 #include <RTClib.h>
 #include <Wire.h>
 #include "Arduino.h"
-#include "eeprom.h"
+#include "ext_eeprom.h"
 #include "setup.h"
 
 //0..64 normal parameters

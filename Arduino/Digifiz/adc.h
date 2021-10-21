@@ -2,7 +2,7 @@
 #define ADC_H
 
 #include "Arduino.h"
-#include "eeprom.h"
+#include "ext_eeprom.h"
 
 void initADC();
 

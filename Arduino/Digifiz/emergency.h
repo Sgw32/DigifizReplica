@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include <Wire.h>
 #include "Arduino.h"
-#include "eeprom.h"
+#include "ext_eeprom.h"
 #include "buzzer.h"
 #include "display.h"
 

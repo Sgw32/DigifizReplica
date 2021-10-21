@@ -3,7 +3,7 @@
 
 #include <Wire.h>
 #include "Arduino.h"
-#include "eeprom.h"
+#include "ext_eeprom.h"
 
 #define BUZZER_PIN 46 //PL3
 

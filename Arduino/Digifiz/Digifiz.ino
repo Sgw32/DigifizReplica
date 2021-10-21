@@ -3,7 +3,7 @@
 #include "emergency.h"
 #include "tacho.h"
 #include "adc.h"
-#include "eeprom.h"
+#include "ext_eeprom.h"
 #include "protocol.h"
 #include "buzzer.h"
 #include "mfa.h"

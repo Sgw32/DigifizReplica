@@ -1,6 +1,6 @@
 #ifndef MFA_H
 #define MFA_H
-#include "eeprom.h"
+#include "ext_eeprom.h"
 #include "setup.h"
 
 #define MFA_MODE_PIN A13 //PJ0

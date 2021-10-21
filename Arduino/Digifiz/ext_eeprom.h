@@ -1,7 +1,8 @@
-#ifndef EEPROM_H
-#define EEPROM_H
+#ifndef EXT_EEPROM_H
+#define EXT_EEPROM_H
 #include <Wire.h>
 #include <SparkFun_External_EEPROM.h>
+#include <EEPROM.h>
 #include "Arduino.h"
 #include "setup.h"
 
