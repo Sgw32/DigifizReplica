@@ -15,6 +15,7 @@ uint16_t getRawLightLevel();
 
 //Display helpers
 uint8_t getLitresInTank(); //0..99
+uint8_t getGallonsInTank(); //0..99
 uint8_t getDisplayedCoolantTemp(); //0..14
 
 
@@ -24,6 +25,9 @@ float getOilTemperature(); //celsius
 float getGasLevel(); //percents
 float getAmbientTemperature(); //celsius
 float getFuelConsumption();
+
+float getOilTemperatureFahrenheit(); //F
+float getAmbientTemperatureFahrenheit(); //F
 
 uint8_t getBrightnessLevel();
 uint16_t getRawBrightnessLevel();

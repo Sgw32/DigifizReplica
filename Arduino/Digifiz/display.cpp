@@ -119,12 +119,23 @@ void displayMFAType(uint8_t mfaType)
             setFloatDot(true);
             break;
         case MFA_STATE_OIL_TEMP:
-            setMFADisplayedNumber((int16_t)(getOilTemperature()));
-            setFloatDot(true);
+            #ifdef FAHRENHEIT
+              setMFADisplayedNumber((int16_t)getOilTemperatureFahrenheit());
+              setFloatDot(false);
+            #else
+              setMFADisplayedNumber((int16_t)(getOilTemperature()));
+              setFloatDot(true);
+            #endif
             break;
         case MFA_STATE_AIR_TEMP:
-            setMFADisplayedNumber((int16_t)getAmbientTemperature());
-            setFloatDot(true);
+            #ifdef FAHRENHEIT
+              setMFADisplayedNumber((int16_t)getAmbientTemperatureFahrenheit());
+              setFloatDot(false);
+            #else
+              setMFADisplayedNumber((int16_t)getAmbientTemperature());
+              setFloatDot(true);
+            #endif
+            
             break;
         default:
             break;
@@ -147,8 +158,13 @@ void setMFAType(uint8_t type)
 
 void setBrightness(uint8_t levels)
 {
+  #ifndef YELLOW_GREEN_LED
     mx.control(MD_MAX72XX::INTENSITY, constrain(levels,0,0xF));
     mx2.control(MD_MAX72XX::INTENSITY, constrain(levels,0,0xF));
+  #else
+    mx.control(MD_MAX72XX::INTENSITY, constrain(levels,0,0xF));
+    mx2.control(MD_MAX72XX::INTENSITY, constrain(levels,0,0xF));
+  #endif
 }
 
 void setMileage(uint32_t mileage)

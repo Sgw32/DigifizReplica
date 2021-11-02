@@ -81,7 +81,11 @@ uint16_t getRawBrightnessLevel()
 
 uint8_t getBrightnessLevel()
 {
+  //#ifndef YELLOW_GREEN_LED
   return constrain(lightLevel/4,2,15); //0..0.3V -> 0..80 (~255)
+  //#else
+  //return constrain(lightLevel/4+2,2,15); //0..0.3V -> 0..80 (~255)
+  //#endif
 }
 
 void processBrightnessLevel()
@@ -149,6 +153,12 @@ float getOilTemperature()
         return oilT +=0.1*(tempT-oilT);
 }
 
+
+float getOilTemperatureFahrenheit()
+{
+   float res = getOilTemperature();
+  return (res*1.8f)+32.0f;
+}
 
 void processCoolantTemperature()
 {
@@ -260,6 +270,11 @@ uint8_t getLitresInTank() //0..99
     return constrain(gasolineLevel*(float)tankCapacity,0,99); //where 99 of course means error
 }
 
+uint8_t getGallonsInTank() //0..99
+{
+    return constrain(gasolineLevel*(float)tankCapacity*0.264172f,0,99); //where 99 of course means error 
+}
+
 uint8_t getDisplayedCoolantTemp()  //0..14
 {
     //14 LEDs
@@ -282,6 +297,12 @@ float getAmbientTemperature()
         return airT;
     }
     return -999.9f;
+}
+
+float getAmbientTemperatureFahrenheit()
+{
+  float res = getAmbientTemperature();
+  return (res*1.8f)+32.0f;
 }
 
 float getFuelConsumption()

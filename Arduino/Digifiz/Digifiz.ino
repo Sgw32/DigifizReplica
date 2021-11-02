@@ -121,6 +121,9 @@ ISR(TIMER4_COMPA_vect)
   {
     spd_m = 1000000/spd_m ; //Hz
     spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
+    #ifdef MILES
+    spd_m *= 0.6214;
+    #endif
     spd_m /= 100;
     current_averageSpeed += (spd_m-current_averageSpeed)*0.001;
   }
@@ -159,7 +162,11 @@ ISR(TIMER4_COMPA_vect)
   }
   //setSpeedometerData(getRawBrightnessLevel());
   setRPMData(averageRPM);
+  #ifndef GALLONS
   uint8_t fuel = getLitresInTank();
+  #else
+  uint8_t fuel = getGallonsInTank();
+  #endif
   if (fuel<10)
     setRefuelSign(true);
   else
@@ -194,7 +201,11 @@ void loop()
     digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]+=spd_m;
     
     setMileage(digifiz_parameters.mileage/3600); //to km
+    #ifndef YELLOW_GREEN_LED
     setBrightness(digifiz_parameters.autoBrightness ? getBrightnessLevel() : digifiz_parameters.brightnessLevel);
+    #else
+    setBrightness(digifiz_parameters.autoBrightness ? (getBrightnessLevel()+4) : digifiz_parameters.brightnessLevel);
+    #endif
     saveParametersCounter++;
     setBacklight(digifiz_parameters.backlight_on ? true : false);
     if (saveParametersCounter==16)

@@ -6,36 +6,40 @@
 #include "Arduino.h"
 #include "setup.h"
 
+#define INTERNAL_OFFSET 32
+#define EXTERNAL_OFFSET 32
+
+
 typedef struct digifiz_pars
 {
-    uint16_t rpmCoefficient; //used //div 100
-    uint16_t speedCoefficient; //used //div 100
-    int coolantThermistorB; //used
-    int oilThermistorB; //used
-    int airThermistorB; //used
-    int tankMinResistance; //used
-    int tankMaxResistance; //used
-    int tauCoolant; //used
-    int tauOil; //used
-    int tauAir; //used
-    int tauTank; //used
-    uint32_t mileage; //used
-    uint32_t daily_mileage[2]; //used //MFA
-    uint8_t autoBrightness; 
-    uint8_t brightnessLevel; //used
-    uint8_t tankCapacity; //used
-    uint8_t mfaState; //used
-    uint8_t buzzerOff; //used
-    int maxRPM; //used
-    uint8_t mfaBlock; //used
-    float averageConsumption[2]; //used //MFA
-    float averageSpeed[2]; //used //MFA
-    int duration[2]; //used //minutes //MFA .
-    uint8_t displayDot; //used
-    uint8_t backlight_on; //used
-    uint16_t coolantMinResistance;
-    uint16_t coolantMaxResistance;
-    uint16_t medianDispFilterThreshold; 
+    uint16_t rpmCoefficient; //used //div 100 //16
+    uint16_t speedCoefficient; //used //div 100 //32
+    int coolantThermistorB; //used //34
+    int oilThermistorB; //used //36
+    int airThermistorB; //used //38
+    int tankMinResistance; //used //40
+    int tankMaxResistance; //used //42
+    int tauCoolant; //used //44
+    int tauOil; //used //46
+    int tauAir; //used //48
+    int tauTank; //used //50
+    uint32_t mileage; //used //54
+    uint32_t daily_mileage[2]; //used //MFA //58
+    uint8_t autoBrightness;  //59
+    uint8_t brightnessLevel; //used //60
+    uint8_t tankCapacity; //used //61
+    uint8_t mfaState; //used //62
+    uint8_t buzzerOff; //used //63
+    int maxRPM; //used //65
+    uint8_t mfaBlock; //used //66
+    float averageConsumption[2]; //used //MFA //70
+    float averageSpeed[2]; //used //MFA //74
+    int duration[2]; //used //minutes //MFA //76.
+    uint8_t displayDot; //used //77
+    uint8_t backlight_on; //used //78
+    uint16_t coolantMinResistance; //80
+    uint16_t coolantMaxResistance; //82
+    uint16_t medianDispFilterThreshold; //84 
 };
 
 void load_defaults();

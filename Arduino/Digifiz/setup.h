@@ -9,6 +9,12 @@
 
 #define OIL_RES_10000
 
+//#define YELLOW_GREEN_LED
+
 #define NEW_REVISION
+
+#define GALLONS
+#define MILES
+#define FAHRENHEIT
 
 #endif

@@ -1,7 +1,7 @@
 #include "ext_eeprom.h"
 
 ExternalEEPROM myMem;
-
+uint8_t external_faulty;
 digifiz_pars digifiz_parameters;
 
 bool checkMagicBytes()
@@ -11,10 +11,10 @@ bool checkMagicBytes()
     for (cnt=0;cnt!=10;cnt++) //What if we have a wrong negative results???
     {
       //Give it 10 chances
-      myMem.get(0,test1);
-      myMem.get(1,test2);
-      myMem.get(2,test3);
-      myMem.get(3,test4);
+      myMem.get(EXTERNAL_OFFSET+0,test1);
+      myMem.get(EXTERNAL_OFFSET+1,test2);
+      myMem.get(EXTERNAL_OFFSET+2,test3);
+      myMem.get(EXTERNAL_OFFSET+3,test4);
       if ((test1=='D')&&
           (test2=='I')&&
           (test3=='G')&&
@@ -33,10 +33,10 @@ bool checkInternalMagicBytes()
     for (cnt=0;cnt!=10;cnt++) //What if we have a wrong negative results???
     {
       //Give it 10 chances
-      EEPROM.get(0,test1);
-      EEPROM.get(1,test2);
-      EEPROM.get(2,test3);
-      EEPROM.get(3,test4);
+      EEPROM.get(INTERNAL_OFFSET+0,test1);
+      EEPROM.get(INTERNAL_OFFSET+1,test2);
+      EEPROM.get(INTERNAL_OFFSET+2,test3);
+      EEPROM.get(INTERNAL_OFFSET+3,test4);
       if ((test1=='D')&&
           (test2=='I')&&
           (test3=='G')&&
@@ -54,8 +54,11 @@ void saveParameters()
   #ifdef DISABLE_EEPROM
   return;
   #endif
-    myMem.put(4,digifiz_parameters);
-    //Serial.println("Saved!");
+  if (!external_faulty)
+  {
+    myMem.put(EXTERNAL_OFFSET+4,digifiz_parameters);
+  }
+  EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
 }
 
 void load_defaults()
@@ -96,6 +99,7 @@ void load_defaults()
 
 void initEEPROM()
 {
+    external_faulty = 0;
     load_defaults();
     Serial.begin(9600);
     //Serial.println("PHL EEPROM test");
@@ -106,18 +110,19 @@ void initEEPROM()
 
     if (myMem.begin() == false)
     {
+        external_faulty = true;
         //Serial.println("No memory detected. ");
         if (checkInternalMagicBytes())
         {
-          EEPROM.get(4,digifiz_parameters);
+          EEPROM.get(INTERNAL_OFFSET+4,digifiz_parameters);
         }
         else
         {
-          EEPROM.put(0,'D');
-          EEPROM.put(1,'I');
-          EEPROM.put(2,'G');
-          EEPROM.put(3,'I');
-          EEPROM.put(4,digifiz_parameters);
+          EEPROM.put(INTERNAL_OFFSET+0,'D');
+          EEPROM.put(INTERNAL_OFFSET+1,'I');
+          EEPROM.put(INTERNAL_OFFSET+2,'G');
+          EEPROM.put(INTERNAL_OFFSET+3,'I');
+          EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
         }
     }
     else
@@ -132,23 +137,23 @@ void initEEPROM()
           {
             //No magic bytes detected both in internal and external 
             //write example digifiz parameters
-            myMem.put(0,'D');
-            myMem.put(1,'I');
-            myMem.put(2,'G');
-            myMem.put(3,'I');
-            myMem.put(4,digifiz_parameters);
+            myMem.put(EXTERNAL_OFFSET+0,'D');
+            myMem.put(EXTERNAL_OFFSET+1,'I');
+            myMem.put(EXTERNAL_OFFSET+2,'G');
+            myMem.put(EXTERNAL_OFFSET+3,'I');
+            myMem.put(EXTERNAL_OFFSET+4,digifiz_parameters);
           }
           else
           { 
             //Magic bytes detected
             //read to digifiz_parameters
-            myMem.get(4,digifiz_parameters);
+            myMem.get(EXTERNAL_OFFSET+4,digifiz_parameters);
           }
-          EEPROM.put(0,'D');
-          EEPROM.put(1,'I');
-          EEPROM.put(2,'G');
-          EEPROM.put(3,'I');
-          EEPROM.put(4,digifiz_parameters);
+          EEPROM.put(INTERNAL_OFFSET+0,'D');
+          EEPROM.put(INTERNAL_OFFSET+1,'I');
+          EEPROM.put(INTERNAL_OFFSET+2,'G');
+          EEPROM.put(INTERNAL_OFFSET+3,'I');
+          EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
         }
         else
         {
@@ -157,24 +162,24 @@ void initEEPROM()
           {
             //Magic bytes detected in internal EEPROM only
             //write example digifiz parameters to external EEPROM
-            EEPROM.get(4,digifiz_parameters);
-            myMem.put(0,'D');
-            myMem.put(1,'I');
-            myMem.put(2,'G');
-            myMem.put(3,'I');
-            myMem.put(4,digifiz_parameters);
+            EEPROM.get(INTERNAL_OFFSET+4,digifiz_parameters);
+            myMem.put(EXTERNAL_OFFSET+0,'D');
+            myMem.put(EXTERNAL_OFFSET+1,'I');
+            myMem.put(EXTERNAL_OFFSET+2,'G');
+            myMem.put(EXTERNAL_OFFSET+3,'I');
+            myMem.put(EXTERNAL_OFFSET+4,digifiz_parameters);
           }
           else
           { 
             //Magic bytes detected in both in internal and external EEPROM(the main case)
             //read to digifiz_parameters
             //write to internal eeprom
-            myMem.get(4,digifiz_parameters);
-            EEPROM.put(0,'D');
-            EEPROM.put(1,'I');
-            EEPROM.put(2,'G');
-            EEPROM.put(3,'I');
-            EEPROM.put(4,digifiz_parameters);
+            myMem.get(EXTERNAL_OFFSET+4,digifiz_parameters);
+            EEPROM.put(INTERNAL_OFFSET+0,'D');
+            EEPROM.put(INTERNAL_OFFSET+1,'I');
+            EEPROM.put(INTERNAL_OFFSET+2,'G');
+            EEPROM.put(INTERNAL_OFFSET+3,'I');
+            EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
           }
         }
    }
