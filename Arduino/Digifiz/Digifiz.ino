@@ -164,13 +164,18 @@ ISR(TIMER4_COMPA_vect)
   setRPMData(averageRPM);
   #ifndef GALLONS
   uint8_t fuel = getLitresInTank();
-  #else
-  uint8_t fuel = getGallonsInTank();
-  #endif
   if (fuel<10)
     setRefuelSign(true);
   else
     setRefuelSign(false);
+  #else
+  uint8_t fuel = getGallonsInTank();
+  if (fuel<2)
+    setRefuelSign(true);
+  else
+    setRefuelSign(false);
+  #endif
+  
   setFuel(fuel);
   setCoolantData(getDisplayedCoolantTemp());
 }

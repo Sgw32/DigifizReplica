@@ -42,10 +42,11 @@ void processMFA()
         //Pressed MFA Block
 #ifndef MANUFACTURER_MFA_SWITCH
         pressMFABlock();
-#else
-        digifiz_parameters.mfaBlock = 0;
 #endif
     }
+#ifdef MANUFACTURER_MFA_SWITCH    
+    digifiz_parameters.mfaBlock = (digitalRead(MFA_BLOCK_PIN)==LOW) ? 1 : 0;
+#endif
 
 #ifdef MANUFACTURER_MFA_SWITCH
     if ((digitalRead(MFA_BLOCK_PIN)==HIGH)&&(prevMFABlock==LOW))

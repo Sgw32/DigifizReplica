@@ -82,7 +82,11 @@ void load_defaults()
     digifiz_parameters.tankCapacity = 60;
     digifiz_parameters.mfaState = 0;
     digifiz_parameters.buzzerOff = 1;
+#ifdef RPM_8000
+    digifiz_parameters.maxRPM = 8000;
+#else
     digifiz_parameters.maxRPM = 7000;
+#endif
     digifiz_parameters.mfaBlock = 0; //0 or 1
     digifiz_parameters.averageConsumption[0] = 0;
     digifiz_parameters.averageConsumption[1] = 0;
