@@ -1,4 +1,5 @@
 #include "display.h"
+#ifndef DIGIFIZ_ORIGINAL_DISPLAY
 
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, 2);
 MD_MAX72XX mx2 = MD_MAX72XX(HARDWARE_TYPE, DATA_PIN2, CLK_PIN2, CS_PIN2, 3);
@@ -403,3 +404,4 @@ void setCoolantData(uint16_t data)
     }
     mx.setColumn(8+blocks_lit, number[data%4+1]);
 }
+#endif

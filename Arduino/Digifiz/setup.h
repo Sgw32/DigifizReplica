@@ -11,12 +11,14 @@
 
 //#define YELLOW_GREEN_LED
     
-#define NEW_REVISION
+//#define NEW_REVISION
 
 #define GALLONS
 #define MILES
 #define FAHRENHEIT
 
 #define RPM_8000
+
+#define DIGIFIZ_ORIGINAL_DISPLAY
 
 #endif

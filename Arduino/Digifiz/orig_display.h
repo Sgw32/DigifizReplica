@@ -1,51 +1,15 @@
-#ifndef DISPLAY_H
-#define DISPLAY_H
-
+#ifndef ORIG_DISPLAY_H
+#define ORIG_DISPLAY_H
 #include "setup.h"
 
-#ifndef DIGIFIZ_ORIGINAL_DISPLAY
-#include <MD_MAX72xx.h>
+#ifdef DIGIFIZ_ORIGINAL_DISPLAY
+
 #include <RTClib.h>
 #include <Wire.h>
 #include "MS5611.h"
 #include "adc.h"
 #include "mfa.h"
 
-// Turn on debug statements to the serial output
-#define  DEBUG  1
-
-#if  DEBUG
-#define PRINT(s, x) { Serial.print(F(s)); Serial.print(x); }
-#define PRINTS(x) Serial.print(F(x))
-#define PRINTD(x) Serial.println(x, DEC)
-
-#else
-#define PRINT(s, x)
-#define PRINTS(x)
-#define PRINTD(x)
-
-#endif
-
-#define HARDWARE_TYPE MD_MAX72XX::GENERIC_HW
-#define MAX_DEVICES  2
-
-/*
-//Tests:
-#define CLK_PIN   13  // or SCK
-#define DATA_PIN  11  // or MOSI
-#define CS_PIN    10  // or SS
-
-#define CLK_PIN2   14  // or SCK
-#define DATA_PIN2  15  // or MOSI
-#define CS_PIN2    17  // or SS
-*/
-#define CLK_PIN   10  // or SCK
-#define DATA_PIN  12  // or MOSI
-#define CS_PIN    11    // or SS
-
-#define CLK_PIN2   6  // or SCK
-#define DATA_PIN2  8  // or MOSI
-#define CS_PIN2    7  // or SS
 
 #define  DELAYTIME  100  // in milliseconds
 
@@ -63,6 +27,7 @@
 #define BACKLIGHT_CTL_PIN 26 //PA4
 
 void initDisplay();
+void init_digifiz();
 void setRPM(int rpmdata);
 void blinking();
 void blinking2();
@@ -83,5 +48,6 @@ void setBrightness(uint8_t levels);
 void setRefuelSign(bool onoff);
 void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
+
 #endif
 #endif

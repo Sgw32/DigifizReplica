@@ -1,5 +1,6 @@
 #include "mfa.h"
 #include "display.h"
+#include "orig_display.h"
 
 uint8_t mfaMemorySelected = 0;
 uint8_t prevMFAMode = HIGH;

@@ -1,4 +1,5 @@
 #include "display.h"
+#include "orig_display.h"
 #include "speedometer.h"
 #include "emergency.h"
 #include "tacho.h"
@@ -100,6 +101,7 @@ void setup()
     startTime[1] = myRTC.now();
     startTime[1] = startTime[1] - TimeSpan(digifiz_parameters.duration[1]*60); //minus minutes
   }
+
   initDisplay(); //Start MAX7219 display driver
   initADC(); //Init ADC ports for 
   initSpeedometer();
