@@ -18,6 +18,10 @@
 //EEPROM at 0x50
 //DS3231 clock;
 
+#ifdef DIGIFIZ_ORIGINAL_DISPLAY
+extern uint8_t tr_status;
+#endif
+
 int i = 0;
 int saveParametersCounter = 0;
 uint16_t displaySpeedCnt = 0;
@@ -179,7 +183,14 @@ ISR(TIMER4_COMPA_vect)
   #endif
   
   setFuel(fuel);
+#ifndef DIGIFIZ_ORIGINAL_DISPLAY
   setCoolantData(getDisplayedCoolantTemp());
+#else
+  setCoolantData(getDisplayedCoolantTempOrig());
+    if (!(tr_status&0x80))
+    tr_status|=0x80;
+#endif
+
 }
 
 void loop() 

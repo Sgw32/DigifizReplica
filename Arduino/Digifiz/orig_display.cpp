@@ -14,22 +14,95 @@ int orig_mRPMData = 4000;
 bool orig_floatDot = 0;
 extern TimeSpan sinceStart;
 
-#define ORIG_DIGI_CLOCK_PIN 41
-#define ORIG_DIGI_STROBE_CLOCK_PIN 40
-#define ORIG_DIGI_DATA_PIN 8
+#define ORIG_DIGI_CLOCK_PIN A3
+#define ORIG_DIGI_STROBE_CLOCK_PIN 19
+#define ORIG_DIGI_DATA_PIN 18
 
-#define ORIG_DIGI_CLOCK_PIN_NAME PG0
-#define ORIG_DIGI_CLOCK_PORT PORTG
+#define ORIG_DIGI_CLOCK_PIN_NAME PF3
+#define ORIG_DIGI_CLOCK_PORT PORTF
 
-#define ORIG_DIGI_STROBE_CLOCK_PIN_NAME PG1
-#define ORIG_DIGI_STROBE_CLOCK_PORT PORTG
+#define ORIG_DIGI_STROBE_CLOCK_PIN_NAME PD2
+#define ORIG_DIGI_STROBE_CLOCK_PORT PORTD
 
-#define ORIG_DIGI_DATA_PIN_NAME PH5
-#define ORIG_DIGI_DATA_PORT PORTH
+#define ORIG_DIGI_DATA_PIN_NAME PD3
+#define ORIG_DIGI_DATA_PORT PORTD
 
 uint8_t tr_status = 0x00; // sending, clockbit, 000000
 uint16_t data_cnt = 0;
 //uint16_t data_payload[33] = {56327, 5, 31744, 79, 24584, 18119, 8199, 17220, 132, 4, 0, 0, 48512, 23947, 59137, 45854, 0, 0, 63488, 65083, 6, 0, 64504, 65007, 6, 0, 0, 0, 0, 0, 0, 0, 8};
+const uint8_t rpm_segments[71] = { 64
+                            ,65
+                            ,66
+                            ,67
+                            ,68
+                            ,69
+                            ,70
+                            ,71
+                            ,72
+                            ,73//900
+                            ,24
+                            ,25
+                            ,26
+                            ,27
+                            ,28
+                            ,29
+                            ,30
+                            ,31//1700
+                            ,18
+                            ,17
+                            ,159//2000
+                            ,158
+                            ,157
+                            ,156
+                            ,155
+                            ,154
+                            ,153
+                            ,152
+                            ,151//2800
+                            ,150
+                            ,149
+                            ,148
+                            ,147
+                            ,146
+                            ,145//3400
+                            ,253
+                            ,177//3600
+                            ,178
+                            ,179
+                            ,180
+                            ,181
+                            ,182
+                            ,183
+                            ,184
+                            ,185
+                            ,186
+                            ,187
+                            ,188
+                            ,189
+                            ,190
+                            ,191//5000
+                            ,49
+                            ,50
+                            ,63
+                            ,62
+                            ,61
+                            ,60
+                            ,59
+                            ,58
+                            ,57
+                            ,56 //6000
+                            ,105
+                            ,104
+                            ,103
+                            ,102
+                            ,101
+                            ,100
+                            ,99
+                            ,98
+                            ,97
+                            ,96//7000
+    };
+
 uint8_t bool_data_payload[520] = {
   
 1,1,1,
@@ -239,6 +312,13 @@ void initDisplay()
     digitalWrite(ORIG_DIGI_STROBE_CLOCK_PIN,HIGH);
     digitalWrite(ORIG_DIGI_DATA_PIN,HIGH);
     initDisplayClockTimer();
+    bool_data_payload[254]=0;
+    bool_data_payload[250]=0;
+    bool_data_payload[73]=0;
+    for (int i=0;i<255;i++)
+    {
+      bool_data_payload[rpm_segments[i]+3]=0;
+    }
     //Clock started
     delay(50);//as in Digifiz, 50 ms delay
     init_digifiz();
@@ -283,7 +363,7 @@ void setMFABlock(uint8_t block)
 
 void setRefuelSign(bool onoff)
 {
-
+  bool_data_payload[176+3]=onoff ? 1 : 0; //dur
 }
 
 void setCheckEngine(bool onoff)
@@ -340,6 +420,67 @@ void setMFAType(uint8_t type)
   {
       return;
   }  
+  switch (type)
+  {
+    case 0:
+      bool_data_payload[51+3]=1; //dur
+      bool_data_payload[19+3]=0; //km
+      bool_data_payload[52+3]=0; //l/100
+      bool_data_payload[20+3]=0; //kmh
+      bool_data_payload[21+3]=0; //oil
+      bool_data_payload[53+3]=0; //air
+      break;
+    case 1:
+      bool_data_payload[51+3]=0; //dur
+      bool_data_payload[19+3]=1; //km
+      bool_data_payload[52+3]=0; //l/100
+      bool_data_payload[20+3]=0; //kmh
+      bool_data_payload[21+3]=0; //oil
+      bool_data_payload[53+3]=0; //air
+      break;
+    case 2:
+      bool_data_payload[51+3]=0; //dur
+      bool_data_payload[19+3]=0; //km
+      bool_data_payload[52+3]=1; //l/100
+      bool_data_payload[20+3]=0; //kmh
+      bool_data_payload[21+3]=0; //oil
+      bool_data_payload[53+3]=0; //air
+      break;
+    case 3:
+      bool_data_payload[51+3]=0; //dur
+      bool_data_payload[19+3]=0; //km
+      bool_data_payload[52+3]=0; //l/100
+      bool_data_payload[20+3]=1; //kmh
+      bool_data_payload[21+3]=0; //oil
+      bool_data_payload[53+3]=0; //air
+      break;
+    case 4:
+      bool_data_payload[51+3]=0; //dur
+      bool_data_payload[19+3]=0; //km
+      bool_data_payload[52+3]=0; //l/100
+      bool_data_payload[20+3]=0; //kmh
+      bool_data_payload[21+3]=1; //oil
+      bool_data_payload[53+3]=0; //air
+      break;
+    case 5:
+      bool_data_payload[51+3]=0; //dur
+      bool_data_payload[19+3]=0; //km
+      bool_data_payload[52+3]=0; //l/100
+      bool_data_payload[20+3]=0; //kmh
+      bool_data_payload[21+3]=0; //oil
+      bool_data_payload[53+3]=1; //air
+      break;
+    case 6:
+      bool_data_payload[51+3]=0; //dur
+      bool_data_payload[19+3]=0; //km
+      bool_data_payload[52+3]=0; //l/100
+      bool_data_payload[20+3]=0; //kmh
+      bool_data_payload[21+3]=0; //oil
+      bool_data_payload[53+3]=0; //air
+      break;
+    default:
+      break;
+  }
 }
 
 void setBrightness(uint8_t levels)
@@ -349,62 +490,321 @@ void setBrightness(uint8_t levels)
 
 void setMileage(uint32_t mileage)
 {
-  
+  uint16_t segments1[7] = {75,74,74,74,74,107,106};
+  uint16_t segments2[7] = {79,76,77,109,110,111,78};
+  uint16_t segments3[7] = {83,80,81,113,114,115,82};
+  uint16_t segments4[7] = {87,84,85,117,118,119,86};
+  uint16_t segments5[7] = {91,88,89,121,122,123,90};
+  uint16_t segments6[7] = {95,92,93,125,126,127,94};
+  uint16_t number[10]={0b00111111,0b00100001,0b01011011,0b01110011,0b01100101,0b01110110,0b01111110,0b00100011,0b01111111,0b01110111};
+  if (((mileage / 100000) % 10)!=0)
+  {
+    for (uint8_t i=0;i!=7;i++)
+    {
+      bool_data_payload[segments1[i]+3] = number[(mileage / 100000) % 10]&(1<<i);
+      bool_data_payload[segments2[i]+3] = number[(mileage / 10000) % 10]&(1<<i);
+      bool_data_payload[segments3[i]+3] = number[(mileage / 1000) % 10]&(1<<i);
+      bool_data_payload[segments4[i]+3] = number[(mileage / 100) % 10]&(1<<i);
+      bool_data_payload[segments5[i]+3] = number[(mileage / 10) % 10]&(1<<i);
+      bool_data_payload[segments6[i]+3] = number[(mileage / 1) % 10]&(1<<i);
+    }
+  }
+  else
+  {
+    if (((mileage / 10000) % 10)!=0)
+    {
+      for (uint8_t i=0;i!=7;i++)
+      {
+        bool_data_payload[segments1[i]+3] = 0;
+        bool_data_payload[segments2[i]+3] = number[(mileage / 10000) % 10]&(1<<i);
+        bool_data_payload[segments3[i]+3] = number[(mileage / 1000) % 10]&(1<<i);
+        bool_data_payload[segments4[i]+3] = number[(mileage / 100) % 10]&(1<<i);
+        bool_data_payload[segments5[i]+3] = number[(mileage / 10) % 10]&(1<<i);
+        bool_data_payload[segments6[i]+3] = number[(mileage / 1) % 10]&(1<<i);
+      }
+    }
+    else
+    {
+      if (((mileage / 1000) % 10)!=0)
+      {
+        for (uint8_t i=0;i!=7;i++)
+        {
+          bool_data_payload[segments1[i]+3] = 0;
+          bool_data_payload[segments2[i]+3] = 0;
+          bool_data_payload[segments3[i]+3] = number[(mileage / 1000) % 10]&(1<<i);
+          bool_data_payload[segments4[i]+3] = number[(mileage / 100) % 10]&(1<<i);
+          bool_data_payload[segments5[i]+3] = number[(mileage / 10) % 10]&(1<<i);
+          bool_data_payload[segments6[i]+3] = number[(mileage / 1) % 10]&(1<<i);
+        }
+      }
+      else
+      {
+        if (((mileage / 100) % 10)!=0)
+        {
+          for (uint8_t i=0;i!=7;i++)
+          {
+            bool_data_payload[segments1[i]+3] = 0;
+            bool_data_payload[segments2[i]+3] = 0;
+            bool_data_payload[segments3[i]+3] = 0;
+            bool_data_payload[segments4[i]+3] = number[(mileage / 100) % 10]&(1<<i);
+            bool_data_payload[segments5[i]+3] = number[(mileage / 10) % 10]&(1<<i);
+            bool_data_payload[segments6[i]+3] = number[(mileage / 1) % 10]&(1<<i);
+          }
+        }
+        else
+        {
+          if (((mileage / 10) % 10)!=0)
+          {
+            for (uint8_t i=0;i!=7;i++)
+            {
+              bool_data_payload[segments1[i]+3] = 0;
+              bool_data_payload[segments2[i]+3] = 0;
+              bool_data_payload[segments3[i]+3] = 0;
+              bool_data_payload[segments4[i]+3] = 0;
+              bool_data_payload[segments5[i]+3] = number[(mileage / 10) % 10]&(1<<i);
+              bool_data_payload[segments6[i]+3] = number[(mileage / 1) % 10]&(1<<i);
+            }
+          }
+          else
+          {
+            for (uint8_t i=0;i!=7;i++)
+            {
+              bool_data_payload[segments1[i]+3] = 0;
+              bool_data_payload[segments2[i]+3] = 0;
+              bool_data_payload[segments3[i]+3] = 0;
+              bool_data_payload[segments4[i]+3] = 0;
+              bool_data_payload[segments5[i]+3] = 0;
+              bool_data_payload[segments6[i]+3] = number[(mileage / 1) % 10]&(1<<i);
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 void setClockData(uint8_t clock_hours,uint8_t clock_minutes)
 {
-  
+    uint16_t segments1[7] = {3,0,1,33,34,35,2};
+    uint16_t segments2[7] = {7,4,5,37,38,39,6};
+    uint16_t segments3[7] = {11,8,9,41,42,43,10};
+    uint16_t segments4[7] = {15,12,13,45,46,47,14};
+    uint16_t number[10]={0b00111111,0b00100001,0b01011011,0b01110011,0b01100101,0b01110110,0b01111110,0b00100011,0b01111111,0b01110111};
+    if (((clock_hours / 10) % 10)!=0)
+    {
+        for (uint8_t i=0;i!=7;i++)
+        {
+            bool_data_payload[segments1[i]+3] = number[(clock_hours / 10) % 10]&(1<<i);
+            bool_data_payload[segments2[i]+3] = number[(clock_hours / 1) % 10]&(1<<i);
+        }  
+    }
+    else
+    {
+        for (uint8_t i=0;i!=7;i++)
+        {
+            bool_data_payload[segments1[i]+3] = 0;
+            bool_data_payload[segments2[i]+3] = number[(clock_hours / 1) % 10]&(1<<i);
+        }  
+    }
+
+    for (uint8_t i=0;i!=7;i++)
+    {
+        bool_data_payload[segments3[i]+3] = number[(clock_minutes / 10) % 10]&(1<<i);
+        bool_data_payload[segments4[i]+3] = number[(clock_minutes / 1) % 10]&(1<<i);
+    } 
 }
 
 void setMFAClockData(uint8_t mfa_clock_hrs,uint8_t mfa_clock_mins)
 {
     uint8_t mfa_clock_hours = mfa_clock_hrs;
     uint8_t mfa_clock_minutes = mfa_clock_mins;
+    uint16_t segments1[7] = {195,192,193,225,226,227,194};
+    uint16_t segments2[7] = {199,196,197,229,230,231,198};
+    uint16_t segments3[7] = {204,201,202,234,235,236,203};
+    uint16_t segments4[7] = {208,205,206,238,239,240,207};
+    uint16_t number[10]={0b00111111,0b00100001,0b01011011,0b01110011,0b01100101,0b01110110,0b01111110,0b00100011,0b01111111,0b01110111};
+
     if (mfa_clock_hours>99)
     {
         mfa_clock_hours=99;
         mfa_clock_minutes=99;
     }
+    
+    if (((mfa_clock_hours / 10) % 10)!=0)
+    {
+        for (uint8_t i=0;i!=7;i++)
+        {
+            bool_data_payload[segments1[i]+3] = number[(mfa_clock_hours / 10) % 10]&(1<<i);
+            bool_data_payload[segments2[i]+3] = number[(mfa_clock_hours / 1) % 10]&(1<<i);
+        }  
+    }
+    else
+    {
+        for (uint8_t i=0;i!=7;i++)
+        {
+            bool_data_payload[segments1[i]+3] = 0;
+            bool_data_payload[segments2[i]+3] = number[(mfa_clock_hours / 1) % 10]&(1<<i);
+        }  
+    }
+
+    for (uint8_t i=0;i!=7;i++)
+    {
+        bool_data_payload[segments3[i]+3] = number[(mfa_clock_minutes / 10) % 10]&(1<<i);
+        bool_data_payload[segments4[i]+3] = number[(mfa_clock_minutes / 1) % 10]&(1<<i);
+    }  
 }
 
 void setMFADisplayedNumber(int16_t data)
 {   
+    uint16_t segments1[7] = {195,192,193,225,226,227,194};
+    uint16_t segments2[7] = {199,196,197,229,230,231,198};
+    uint16_t segments3[7] = {204,201,202,234,235,236,203};
+    uint16_t segments4[7] = {208,205,206,238,239,240,207};
+    uint16_t number[10]={0b00111111,0b00100001,0b01011011,0b01110011,0b01100101,0b01110110,0b01111110,0b00100011,0b01111111,0b01110111};
+
+    bool_data_payload[232]= orig_floatDot ? 1 : 0;
     
+    if (data>=0)
+    {
+      if (((data / 1000) % 10)!=0)
+      {
+        for (uint8_t i=0;i!=7;i++)
+        {
+            bool_data_payload[segments1[i]+3] = number[(data / 1000) % 10]&(1<<i);
+            bool_data_payload[segments2[i]+3] = number[(data / 100) % 10]&(1<<i);
+        }  
+      }
+      else
+      {
+        for (uint8_t i=0;i!=7;i++)
+        {
+            bool_data_payload[segments1[i]+3] = 0;
+            bool_data_payload[segments2[i]+3] = number[(data / 100) % 10]&(1<<i);
+        }  
+      }
+      for (uint8_t i=0;i!=7;i++)
+      {
+          bool_data_payload[segments3[i]+3] = number[((data) / 10) % 10]&(1<<i);
+          bool_data_payload[segments4[i]+3] = number[((data) / 1) % 10]&(1<<i);
+      }  
+    }
+    else
+    {
+      //minus values
+      uint8_t minus_number = 0b01000000; //minus sign
+      
+      if (((data / 1000) % 10)!=0)
+      {
+        for (uint8_t i=0;i!=7;i++)
+        {
+            bool_data_payload[segments1[i]+3] = number[(-data / 1000) % 10]&(1<<i);
+            bool_data_payload[segments2[i]+3] = number[(-data / 100) % 10]&(1<<i);
+        }  
+      }
+      else
+      {      
+        if (((data / 100) % 10)!=0)
+        {
+          for (uint8_t i=0;i!=7;i++)
+          {
+              bool_data_payload[segments1[i]+3] = minus_number&(1<<i);
+              bool_data_payload[segments2[i]+3] = number[(-data / 100) % 10]&(1<<i);
+          }  
+        }
+        else
+        {
+          for (uint8_t i=0;i!=7;i++)
+          {
+              bool_data_payload[segments1[i]+3] = 0;
+              bool_data_payload[segments2[i]+3] = minus_number&(1<<i);
+          }  
+        }
+      }
+      for (uint8_t i=0;i!=7;i++)
+      {
+          bool_data_payload[segments3[i]+3] = number[((-data) / 10) % 10]&(1<<i);
+          bool_data_payload[segments4[i]+3] = number[((-data) / 1) % 10]&(1<<i);
+      }  
+    }
 }
 
 void setFuel(uint8_t litres)
 {
-    
+    uint16_t segments1[7] = {129,222,223,255,160,161,128};
+    uint16_t segments2[7] = {133,130,131,163,164,165,132};
+    uint16_t number[10]={0b00111111,0b00100001,0b01011011,0b01110011,0b01100101,0b01110110,0b01111110,0b00100011,0b01111111,0b01110111};
+    uint8_t data = litres;
+    if (((data / 10) % 10)!=0)
+    {
+        for (uint8_t i=0;i!=7;i++)
+        {
+            bool_data_payload[segments1[i]+3] = number[(data / 10) % 10]&(1<<i);
+            bool_data_payload[segments2[i]+3] = number[(data / 1) % 10]&(1<<i);
+        }
+    }
+    else
+    {
+        for (uint8_t i=0;i!=7;i++)
+        {
+            bool_data_payload[segments1[i]+3] = 0;
+            bool_data_payload[segments2[i]+3] = number[(data / 1) % 10]&(1<<i);
+        }
+    }    
 }
 
 void setRPMData(uint16_t data)
 {
-    uint8_t number[9]={0b00000000,0b00000010,0b00000110,0b00001110,0b00011110,0b00111110,0b01111110,0b11111110,0b11111111};
-    long long leds_lit = data;
-    leds_lit*=48;
-    leds_lit/=digifiz_parameters.maxRPM;
-    //leds_lit=leds_lit;
-    int blocks_lit = leds_lit / 8;
-    if (blocks_lit>6) 
-      blocks_lit=6; 
-  
+    //return; 
+    long long rpm = data;
+    rpm*=70;
+    rpm/=digifiz_parameters.maxRPM;
+    if (rpm>sizeof(rpm_segments))
+      return;
+    for (int i=rpm;i<70;i++)
+    {
+      bool_data_payload[rpm_segments[i]+3]=0;
+    }
+    for (int i=rpm;i>0;i--)
+    {
+      bool_data_payload[rpm_segments[i]+3]=1;
+    }
+    bool_data_payload[rpm_segments[0]+3]=1;
 }
 
 void setSpeedometerData(uint16_t data)
 {
-    uint8_t number[10]={0b01111111,0b01000011,0b10110110,0b11100110,0b11001010,0b11101100,0b11111100,0b01000111,0b11111111,0b11101111};
+    uint16_t segments1[7] = {252,221,221,221,221,220,221};
+    uint16_t segments2[7] = {250,249,248,218,219,216,217};
+    uint16_t segments3[7] = {244,245,246,214,215,212,213};
+    uint16_t number[10]={0b00111111,0b00100001,0b01011011,0b01110011,0b01100101,0b01110110,0b01111110,0b00100011,0b01111111,0b01110111};
     if (((data / 100) % 10)!=0)
     {
-    
+        for (uint8_t i=0;i!=7;i++)
+        {
+            bool_data_payload[segments1[i]+3] = number[(data / 100) % 10]&(1<<i);
+            bool_data_payload[segments2[i]+3] = number[(data / 10) % 10]&(1<<i);
+            bool_data_payload[segments3[i]+3] = number[(data / 1) % 10]&(1<<i);
+        }
     }
     else
     {
         if (((data / 10) % 10)!=0)
         {
+            for (uint8_t i=0;i!=7;i++)
+            {
+                bool_data_payload[segments1[i]+3] = 0;
+                bool_data_payload[segments2[i]+3] = number[(data / 10) % 10]&(1<<i);
+                bool_data_payload[segments3[i]+3] = number[(data / 1) % 10]&(1<<i);
+            }
         }
         else
         {
+            for (uint8_t i=0;i!=7;i++)
+            {
+                bool_data_payload[segments1[i]+3] = 0;
+                bool_data_payload[segments2[i]+3] = 0;
+                bool_data_payload[segments3[i]+3] = number[(data / 1) % 10]&(1<<i);
+            }
         }
     }
 }
@@ -413,11 +813,15 @@ void setDot(bool value)
 {
   if (!digifiz_parameters.displayDot)
   {
+    bool_data_payload[40+3] = 1;
     return;
   }
+  bool_data_payload[40+3] = value ? 1 : 0;
+  
   if (digifiz_parameters.mfaState==MFA_STATE_TRIP_DURATION)
   {
-      
+    bool_data_payload[200+3] = value ? 1 : 0;
+    bool_data_payload[232+3] = value ? 1 : 0;
   }
 }
 
@@ -428,10 +832,16 @@ void setFloatDot(bool value)
 
 void setCoolantData(uint16_t data)
 {
-    uint8_t number[5]={0b0000,0b0001,0b0011,0b0111,0b1111};
-    //data is from 0..14
-    int blocks_lit = data / 4; //DIG22_0...DIG22_4
-    blocks_lit = constrain(blocks_lit,0,3);
+    const uint16_t coolant_segments[20]={143,142,141,140,139,138,137,136,135,134,166,167,168,169,170,171,172,173,174,175};
+    //data is from 0..20
+    for (int i=data;i<20;i++)
+    {
+      bool_data_payload[coolant_segments[i]+3]=0;
+    }
+    for (int i=data;i>0;i--)
+    {
+      bool_data_payload[coolant_segments[i]+3]=1;
+    }
     
 }
 #endif

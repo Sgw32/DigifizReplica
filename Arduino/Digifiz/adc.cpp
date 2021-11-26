@@ -279,8 +279,16 @@ uint8_t getDisplayedCoolantTemp()  //0..14
 {
     //14 LEDs
     return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance)/
-            (digifiz_parameters.coolantMaxResistance - digifiz_parameters.coolantMinResistance)*14.0f),0,14); //TODO parameters 
+            (digifiz_parameters.coolantMaxResistance - digifiz_parameters.coolantMinResistance)*14.0f),0,14); 
 }
+
+uint8_t getDisplayedCoolantTempOrig()  //0..14
+{
+    //20 LCD segments
+    return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance)/
+            (digifiz_parameters.coolantMaxResistance - digifiz_parameters.coolantMinResistance)*20.0f),0,20); 
+}
+
 
 float getAmbientTemperature()
 {
