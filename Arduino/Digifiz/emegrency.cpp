@@ -8,20 +8,21 @@ void initEmergencyModule()
 {
     pinMode(OIL_0_3BAR_PIN, INPUT);
     pinMode(OIL_1_8BAR_PIN, INPUT);
-    pinMode(CHECK_ENGINE_IN, INPUT);
+    //pinMode(CHECK_ENGINE_IN, INPUT);
+    DDRJ&=~(1<<PJ2);
     pinMode(OIL_LED_PIN,OUTPUT);
     emergencyCounter = millis();
 }
 
 uint8_t processCHECKEngine()
 {
-    if (digitalRead(CHECK_ENGINE_IN)==LOW)
+    if (PINJ&(1<<PJ2))
     {
-        setCheckEngine(true);
+        setCheckEngine(false);
     }
     else
     {
-        setCheckEngine(false);
+        setCheckEngine(true);
     }
     return 0;
 }
@@ -36,7 +37,7 @@ uint8_t processOilPressure(int mRPM)
 
 #ifndef EMERGENCY_DISABLE_SENSOR_CHECK
     if (((last_emergency_state==0))&&
-        (digitalRead(OIL_1_8BAR_PIN)==LOW)
+        (digitalRead(OIL_1_8BAR_PIN)==HIGH)
         &&(mRPM>emergencyRPM))  //Was a problem with Oil 1.8 bar sensor, and we reached RPM
     {
         emergency_state = 2;
@@ -44,7 +45,7 @@ uint8_t processOilPressure(int mRPM)
     }
    
     if (((millis()-emergencyCounter)>1000)&&(last_emergency_state==2)&&
-        (digitalRead(OIL_1_8BAR_PIN)==LOW)
+        (digitalRead(OIL_1_8BAR_PIN)==HIGH)
         &&(mRPM>emergencyRPM))  //It is more than second we are at 2000 RPM and there is no pressure
     {
         //OIL 1.8 error!
@@ -63,6 +64,7 @@ void checkEmergency(int mRPM)
     if (emergency_state==0)
     {
         digitalWrite(OIL_LED_PIN,LOW);
+        buzzerOff();
     }
     if (emergency_state==1)
     {

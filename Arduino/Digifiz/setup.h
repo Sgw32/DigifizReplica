@@ -9,16 +9,36 @@
 
 #define OIL_RES_10000
 
-//#define YELLOW_GREEN_LED
+//more brightness
+#define YELLOW_GREEN_LED 
     
-//#define NEW_REVISION
+#define NEW_REVISION
+
+#define EEPROM_SAVE_INTERVAL 32
 
 #define GALLONS
 #define MILES
-#define FAHRENHEIT
+#define FAHRENHEIT  
 
 #define RPM_8000
 
-#define DIGIFIZ_ORIGINAL_DISPLAY
+#define DEFAULT_MILEAGE   0L //78893L //103256L
+
+//#define TESTMODE
+//#define DIGIFIZ_ORIGINAL_DISPLAY
+
+#define COOLANT_R_AT_NORMAL_T 1000.0f //VW OEM
+
+#define OIL_R_AT_NORMAL_T 10000.0f //Digifiz replica OEM sensors by PHL
+//#define OIL_R_AT_NORMAL_T 1000.0f //VW OEM
+//#define AMBIENT_R_AT_NORMAL_T 10000.0f //Digifiz replica OEM sensors by PHL
+#define AMBIENT_R_AT_NORMAL_T 2991.39f //AutoVAZ sensors
+
+#define COOLANT_THERMISTOR_B 4000 //OEM VW
+#define AIR_THERMISTOR_B 4000 //OEM
+//#define AIR_THERMISTOR_B 3812 //AutoVAZ sensors
+#define OIL_THERMISTOR_B 4000 //OEM
+
+#define CRC_FRAGMENT_SIZE 84
 
 #endif

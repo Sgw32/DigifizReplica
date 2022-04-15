@@ -1,4 +1,4 @@
-#include "display.h"
+#include "display.h"  
 #include "orig_display.h"
 #include "speedometer.h"
 #include "emergency.h"
@@ -55,7 +55,7 @@ bool h12Flag;
 bool pmFlag;
 bool clockRunning;
 
-
+extern uint8_t uptimeDisplayEnabled;
 extern digifiz_pars digifiz_parameters;
 
 void initReadInterrupt()
@@ -133,8 +133,10 @@ ISR(TIMER4_COMPA_vect)
     spd_m /= 100;
     current_averageSpeed += (spd_m-current_averageSpeed)*0.001;
   }
-
+#ifndef TESTMODE
   spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
+#endif
+
   rpm = readLastRPM(); 
   if (rpm>0)
   {
@@ -161,9 +163,15 @@ ISR(TIMER4_COMPA_vect)
   processAmbientTemperature();
   processBrightnessLevel();
   displaySpeedCnt++;
-  if (displaySpeedCnt==4) // 2 Hz loop(as on original Digifiz)
+  if (displaySpeedCnt==4) // 2 Hz loop(as on original Digifiz)  
   {
+    //setSpeedometerData(getCurrentMemoryBlock());
     setSpeedometerData((uint16_t)spd_m_speedometer);
+#ifdef TESTMODE
+  spd_m_speedometer+=1;
+  if (spd_m_speedometer==1000)
+    spd_m_speedometer=0;
+#endif
     displaySpeedCnt = 0;
   }
   //setSpeedometerData(getRawBrightnessLevel());
@@ -215,18 +223,23 @@ void loop()
     {
       setClockData(99,99);
     }
+
+    if (averageRPM>200)
+      digifiz_parameters.uptime += 1;
+    
     digifiz_parameters.mileage+=spd_m;
     digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]+=spd_m;
+    setMileage(uptimeDisplayEnabled ? (digifiz_parameters.uptime/3600) : (digifiz_parameters.mileage/3600)); //to km
     
-    setMileage(digifiz_parameters.mileage/3600); //to km
     #ifndef YELLOW_GREEN_LED
     setBrightness(digifiz_parameters.autoBrightness ? getBrightnessLevel() : digifiz_parameters.brightnessLevel);
     #else
     setBrightness(digifiz_parameters.autoBrightness ? (getBrightnessLevel()+4) : digifiz_parameters.brightnessLevel);
     #endif
+    
     saveParametersCounter++;
     setBacklight(digifiz_parameters.backlight_on ? true : false);
-    if (saveParametersCounter==16)
+    if (saveParametersCounter==EEPROM_SAVE_INTERVAL)
     {
         digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock] = current_averageSpeed;
         digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] = getFuelConsumption()*digifiz_parameters.tankCapacity;

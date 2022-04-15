@@ -1,4 +1,5 @@
 #include "speedometer.h"
+#include "setup.h"
 
 uint32_t mSpdData;
 uint32_t lastMillis;

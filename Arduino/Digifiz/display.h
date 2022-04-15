@@ -83,5 +83,6 @@ void setBrightness(uint8_t levels);
 void setRefuelSign(bool onoff);
 void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
+void setServiceDisplayData(uint8_t data);
 #endif
 #endif

@@ -23,5 +23,6 @@ void pressMFAReset();
 void pressMFASensorShort();
 void pressMFASensorLong();
 void pressMFASensorSuperLong();
+void pressMFASensorSuperSuperLong();
 
 #endif

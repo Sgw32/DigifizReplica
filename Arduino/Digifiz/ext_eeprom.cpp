@@ -4,6 +4,8 @@ ExternalEEPROM myMem;
 uint8_t external_faulty;
 digifiz_pars digifiz_parameters;
 
+uint8_t memory_block_selected = 0;
+
 bool checkMagicBytes()
 {    
     uint8_t test1,test2,test3,test4;
@@ -54,27 +56,47 @@ void saveParameters()
   #ifdef DISABLE_EEPROM
   return;
   #endif
+  computeCRC();
   if (!external_faulty)
   {
-    myMem.put(EXTERNAL_OFFSET+4,digifiz_parameters);
+    myMem.put(EXTERNAL_OFFSET+4+EEPROM_GAP_SIZE*memory_block_selected,digifiz_parameters);
   }
-  EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
+  EEPROM.put(INTERNAL_OFFSET+4+EEPROM_GAP_SIZE*memory_block_selected,digifiz_parameters);
+  memory_block_selected++;
+  if (memory_block_selected==EEPROM_DOUBLING)
+    memory_block_selected=0;
+}
+
+void computeCRC()
+{
+  uint8_t res = 0;
+  uint8_t* digi_buf = (uint8_t*)&digifiz_parameters;
+  for (int i=0;i!=CRC_FRAGMENT_SIZE;i++)
+  {
+    res^=digi_buf[i];
+  }
+  digifiz_parameters.crc = res;
+}
+
+uint8_t getCurrentMemoryBlock()
+{
+  return memory_block_selected;
 }
 
 void load_defaults()
 {
     digifiz_parameters.rpmCoefficient = 3000;
     digifiz_parameters.speedCoefficient = 100;
-    digifiz_parameters.coolantThermistorB = 4000;
-    digifiz_parameters.oilThermistorB = 4000;
-    digifiz_parameters.airThermistorB = 4000;
+    digifiz_parameters.coolantThermistorB = COOLANT_THERMISTOR_B;
+    digifiz_parameters.oilThermistorB = OIL_THERMISTOR_B;
+    digifiz_parameters.airThermistorB = AIR_THERMISTOR_B;
     digifiz_parameters.tankMinResistance = 35;
     digifiz_parameters.tankMaxResistance = 265;
     digifiz_parameters.tauCoolant = 2;
     digifiz_parameters.tauOil = 2;
     digifiz_parameters.tauAir = 2;
     digifiz_parameters.tauTank = 2;
-    digifiz_parameters.mileage = 0;
+    digifiz_parameters.mileage = DEFAULT_MILEAGE*3600L;
     digifiz_parameters.daily_mileage[0] = 0;
     digifiz_parameters.daily_mileage[1] = 0;
     digifiz_parameters.autoBrightness = 1;
@@ -99,6 +121,10 @@ void load_defaults()
     digifiz_parameters.coolantMinResistance = 60;
     digifiz_parameters.coolantMaxResistance = 120;
     digifiz_parameters.medianDispFilterThreshold = 65535; // value below will pass
+    digifiz_parameters.coolantThermistorDefRes = 10000;
+    digifiz_parameters.uptime = 0;
+    digifiz_parameters.manufMFAEnabled = 1;
+    computeCRC();
 }
 
 void initEEPROM()
@@ -118,7 +144,18 @@ void initEEPROM()
         //Serial.println("No memory detected. ");
         if (checkInternalMagicBytes())
         {
-          EEPROM.get(INTERNAL_OFFSET+4,digifiz_parameters);
+          for (int j=0;j!=EEPROM_DOUBLING;j++)
+          {
+            EEPROM.get(INTERNAL_OFFSET+4+EEPROM_GAP_SIZE*j,digifiz_parameters);
+            uint8_t* digi_buf = (uint8_t*)&digifiz_parameters;
+            uint8_t crc = 0;
+            for(int i=0;i!=CRC_FRAGMENT_SIZE;i++)
+            {
+              crc^=digi_buf[i];
+            }
+            if (crc==digifiz_parameters.crc)
+              break;  
+          }
         }
         else
         {
@@ -151,7 +188,19 @@ void initEEPROM()
           { 
             //Magic bytes detected
             //read to digifiz_parameters
-            myMem.get(EXTERNAL_OFFSET+4,digifiz_parameters);
+            //myMem.get(EXTERNAL_OFFSET+4,digifiz_parameters);
+            for (int j=0;j!=EEPROM_DOUBLING;j++)
+            {
+              myMem.get(INTERNAL_OFFSET+4+EEPROM_GAP_SIZE*j,digifiz_parameters);
+              uint8_t* digi_buf = (uint8_t*)&digifiz_parameters;
+              uint8_t crc = 0;
+              for(int i=0;i!=CRC_FRAGMENT_SIZE;i++)
+              {
+                crc^=digi_buf[i];
+              }
+              if (crc==digifiz_parameters.crc)
+                break;  
+            }
           }
           EEPROM.put(INTERNAL_OFFSET+0,'D');
           EEPROM.put(INTERNAL_OFFSET+1,'I');
@@ -166,7 +215,18 @@ void initEEPROM()
           {
             //Magic bytes detected in internal EEPROM only
             //write example digifiz parameters to external EEPROM
-            EEPROM.get(INTERNAL_OFFSET+4,digifiz_parameters);
+            for (int j=0;j!=EEPROM_DOUBLING;j++)
+            {
+              EEPROM.get(INTERNAL_OFFSET+4+EEPROM_GAP_SIZE*j,digifiz_parameters);
+              uint8_t* digi_buf = (uint8_t*)&digifiz_parameters;
+              uint8_t crc = 0;
+              for(int i=0;i!=CRC_FRAGMENT_SIZE;i++)
+              {
+                crc^=digi_buf[i];
+              }
+              if (crc==digifiz_parameters.crc)
+                break;  
+            }
             myMem.put(EXTERNAL_OFFSET+0,'D');
             myMem.put(EXTERNAL_OFFSET+1,'I');
             myMem.put(EXTERNAL_OFFSET+2,'G');
@@ -178,7 +238,18 @@ void initEEPROM()
             //Magic bytes detected in both in internal and external EEPROM(the main case)
             //read to digifiz_parameters
             //write to internal eeprom
-            myMem.get(EXTERNAL_OFFSET+4,digifiz_parameters);
+            for (int j=0;j!=EEPROM_DOUBLING;j++)
+            {
+              myMem.get(INTERNAL_OFFSET+4+EEPROM_GAP_SIZE*j,digifiz_parameters);
+              uint8_t* digi_buf = (uint8_t*)&digifiz_parameters;
+              uint8_t crc = 0;
+              for(int i=0;i!=CRC_FRAGMENT_SIZE;i++)
+              {
+                crc^=digi_buf[i];
+              }
+              if (crc==digifiz_parameters.crc)
+                break;  
+            }
             EEPROM.put(INTERNAL_OFFSET+0,'D');
             EEPROM.put(INTERNAL_OFFSET+1,'I');
             EEPROM.put(INTERNAL_OFFSET+2,'G');

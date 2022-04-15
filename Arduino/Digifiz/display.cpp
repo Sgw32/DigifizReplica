@@ -17,6 +17,8 @@ extern bool clockRunning;
 int mRPMData = 4000;
 bool floatDot = 0;
 extern TimeSpan sinceStart;
+
+bool checkEngineActive;
 //int mHour = 0;
 //int mMinute = 0;
 
@@ -29,6 +31,11 @@ void initDisplay()
     pinMode(MFA1_PIN,OUTPUT);
     pinMode(MFA2_PIN,OUTPUT);
     pinMode(BACKLIGHT_CTL_PIN,OUTPUT);
+}
+
+void setServiceDisplayData(uint8_t data)
+{
+  
 }
 
 void setRPM(int rpmdata)
@@ -97,7 +104,10 @@ void setRefuelSign(bool onoff)
 
 void setCheckEngine(bool onoff)
 {
-    
+    checkEngineActive = onoff;
+    //mx.setPoint(5,1,onoff);
+    //mx.setPoint(7,1,onoff);
+    //mx.setPoint(0,1,onoff);
 }
 
 void displayMFAType(uint8_t mfaType)
@@ -108,11 +118,11 @@ void displayMFAType(uint8_t mfaType)
             setMFAClockData(sinceStart.hours(),sinceStart.minutes());
             break;
         case MFA_STATE_TRIP_DISTANCE:
-            setMFADisplayedNumber((uint16_t)digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600);
+            setMFADisplayedNumber((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
             setFloatDot(false);
             break;
         case MFA_STATE_TRIP_L100KM:
-            setMFADisplayedNumber((uint16_t)digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100);
+            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
@@ -145,16 +155,17 @@ void displayMFAType(uint8_t mfaType)
 
 void setMFAType(uint8_t type)
 {
+  uint8_t checkAdd = (checkEngineActive ? 0b10100001 : 0);
   if (type>6)
   {
       mx.setColumn(0,0);
-      mx.setColumn(1,0);
+      mx.setColumn(1,checkAdd);
       return;
   }
   uint8_t mfa1_led[6]={0b00000000,0b00000000,0b00001110,0b00110000,0b11000000,0b00000001};
   uint8_t mfa2_led[6]={0b00001000,0b00000100,0b00000000,0b00000000,0b00000000,0b00000010};
   mx.setColumn(0, mfa1_led[type]);
-  mx.setColumn(1, mfa2_led[type]);
+  mx.setColumn(1, checkAdd|mfa2_led[type]);
 }
 
 void setBrightness(uint8_t levels)

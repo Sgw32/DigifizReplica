@@ -10,6 +10,8 @@ uint8_t prevMFASensor = LOW;
 uint8_t sensorPressed = 0;
 uint32_t pressSensorTime = 0;
 
+uint8_t uptimeDisplayEnabled = 0;
+
 #ifdef EMULATE_RTC
 extern RTC_Millis myRTC;
 #else
@@ -33,35 +35,23 @@ void processMFA()
 {
 
 #ifndef DISABLE_MANUFACTURER_MFA
-    if ((digitalRead(MFA_MODE_PIN)==LOW)&&(prevMFAMode==HIGH))
+    if (digifiz_parameters.manufMFAEnabled)
     {
-        //Pressed MFA Mode
-        pressMFAMode();
-    }
-    if ((digitalRead(MFA_BLOCK_PIN)==LOW)&&(prevMFABlock==HIGH))
-    {
-        //Pressed MFA Block
-#ifndef MANUFACTURER_MFA_SWITCH
-        pressMFABlock();
-#endif
-    }
-#ifdef MANUFACTURER_MFA_SWITCH    
-    digifiz_parameters.mfaBlock = (digitalRead(MFA_BLOCK_PIN)==LOW) ? 1 : 0;
-#endif
-
-#ifdef MANUFACTURER_MFA_SWITCH
-    if ((digitalRead(MFA_BLOCK_PIN)==HIGH)&&(prevMFABlock==LOW))
-    {
-        digifiz_parameters.mfaBlock = 1;
+      if ((digitalRead(MFA_MODE_PIN)==LOW)&&(prevMFAMode==HIGH))
+      {
+          //Pressed MFA Mode
+          pressMFAMode();
+      } 
+      digifiz_parameters.mfaBlock = (digitalRead(MFA_BLOCK_PIN)==LOW) ? 1 : 0;
+      
+      if ((digitalRead(MFA_RESET_PIN)==LOW)&&(prevMFAReset==HIGH))
+      {
+          //Pressed MFA Reset
+          pressMFAReset();
+      }
     }
 #endif
-
-    if ((digitalRead(MFA_RESET_PIN)==LOW)&&(prevMFAReset==HIGH))
-    {
-        //Pressed MFA Reset
-        pressMFAReset();
-    }
-#endif
+    
     if ((digitalRead(MFA_SENSOR_PIN)==HIGH)&&(prevMFASensor==LOW))
     {
         //Pressed MFA Sensor(on Digifiz)
@@ -79,6 +69,8 @@ void processMFA()
             pressMFASensorLong();
         else if ((millis() - pressSensorTime)<7000)
             pressMFASensorSuperLong();
+        else if ((millis() - pressSensorTime)>7000)
+            pressMFASensorSuperSuperLong();
     }
     
     prevMFAMode = digitalRead(MFA_MODE_PIN);
@@ -100,6 +92,14 @@ void pressMFASensorLong()
 void pressMFASensorSuperLong()
 {
     pressMFAReset();
+}
+
+void pressMFASensorSuperSuperLong()
+{
+  if (uptimeDisplayEnabled==0)
+    uptimeDisplayEnabled=1;
+  else  
+    uptimeDisplayEnabled=0;
 }
 
 void pressMFAMode()

@@ -64,7 +64,7 @@ void processData(int parameter,long value)
     switch(par)
     {
       case PARAMETER_RPMCOEFFICIENT:
-        BTserial.println("PARAMETER_RPMCOEqFFICIENT");
+        BTserial.println("PARAMETER_RPMCOEFFICIENT");
         digifiz_parameters.rpmCoefficient = value;
         break;
       case PARAMETER_SPEEDCOEEFICIENT:

@@ -1,7 +1,7 @@
 #include "adc.h"
 #include "setup.h"
 
-const float R1_Coolant = 1000; //for Coolant
+const float R1_Coolant = COOLANT_R_AT_NORMAL_T; //for Coolant
 
 #ifndef NEW_REVISION
 const float R2_Ambient = 10000.0f; //for Coolant
@@ -14,8 +14,10 @@ const float R2_Oil = 220;
 #else
 const float R2_Oil = 220;
 #endif
-const float R1_Oil = 10000; //for Coolant
-const float R1_Ambient = 10000; //for Coolant
+
+const float R1_Oil = OIL_R_AT_NORMAL_T; //for Coolant
+const float R1_Ambient = AMBIENT_R_AT_NORMAL_T; //for Coolant
+
 float logR2, R2, coolantT, oilT, airT;
 float coolantB = 4000;
 float oilB = 4000;
