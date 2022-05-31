@@ -134,17 +134,27 @@ void displayMFAType(uint8_t mfaType)
               setMFADisplayedNumber((int16_t)getOilTemperatureFahrenheit());
               setFloatDot(false);
             #else
+            #ifdef KELVIN  
+              setMFADisplayedNumber((int16_t)(getOilTemperature()+273.15f));
+              setFloatDot(false);
+            #else
               setMFADisplayedNumber((int16_t)(getOilTemperature()));
               setFloatDot(true);
+            #endif
             #endif
             break;
         case MFA_STATE_AIR_TEMP:
             #ifdef FAHRENHEIT
-              setMFADisplayedNumber((int16_t)getAmbientTemperatureFahrenheit());
+              setMFADisplayedNumber((int16_t)getAmbientTemperature`Fahrenheit());
+              setFloatDot(false);
+            #else
+            #ifdef KELVIN  
+              setMFADisplayedNumber((int16_t)(getAmbientTemperature()+273.15f));
               setFloatDot(false);
             #else
               setMFADisplayedNumber((int16_t)getAmbientTemperature());
               setFloatDot(true);
+            #endif
             #endif
             
             break;
