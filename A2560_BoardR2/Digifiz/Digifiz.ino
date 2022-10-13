@@ -123,6 +123,7 @@ ISR(TIMER4_COMPA_vect)
 {
   i=i+1;
   spd_m = readLastSpeed();
+  //spd_m = 10000;
   if (spd_m>0)
   {
     spd_m = 1000000/spd_m ; //Hz
@@ -131,7 +132,6 @@ ISR(TIMER4_COMPA_vect)
     spd_m *= 0.6214;
     #endif
     spd_m /= 100;
-    current_averageSpeed += (spd_m-current_averageSpeed)*0.001;
   }
 #ifndef TESTMODE
   spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
@@ -167,6 +167,7 @@ ISR(TIMER4_COMPA_vect)
   {
     //setSpeedometerData(getCurrentMemoryBlock());
     setSpeedometerData((uint16_t)spd_m_speedometer);
+    current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;
 #ifdef TESTMODE
   spd_m_speedometer+=1;
   if (spd_m_speedometer==1000)

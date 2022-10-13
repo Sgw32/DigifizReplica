@@ -57,11 +57,13 @@ void saveParameters()
   return;
   #endif
   computeCRC();
+  cli();
   if (!external_faulty)
   {
     myMem.put(EXTERNAL_OFFSET+4+EEPROM_GAP_SIZE*memory_block_selected,digifiz_parameters);
   }
   EEPROM.put(INTERNAL_OFFSET+4+EEPROM_GAP_SIZE*memory_block_selected,digifiz_parameters);
+  sei();
   memory_block_selected++;
   if (memory_block_selected==EEPROM_DOUBLING)
     memory_block_selected=0;

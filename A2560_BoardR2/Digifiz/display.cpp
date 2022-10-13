@@ -126,8 +126,8 @@ void displayMFAType(uint8_t mfaType)
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
-            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]*10));
-            setFloatDot(true);
+            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
+            setFloatDot(false);
             break;
         case MFA_STATE_OIL_TEMP:
             #ifdef FAHRENHEIT
@@ -145,7 +145,7 @@ void displayMFAType(uint8_t mfaType)
             break;
         case MFA_STATE_AIR_TEMP:
             #ifdef FAHRENHEIT
-              setMFADisplayedNumber((int16_t)getAmbientTemperature`Fahrenheit());
+              setMFADisplayedNumber((int16_t)getAmbientTemperatureFahrenheit());
               setFloatDot(false);
             #else
             #ifdef KELVIN  
