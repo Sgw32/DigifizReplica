@@ -35,7 +35,7 @@ void processMFA()
 {
 
 #ifndef DISABLE_MANUFACTURER_MFA
-    if (digifiz_parameters.manufMFAEnabled)
+    if (digifiz_parameters.digifiz_options&OPTION_MFA_MANUFACTURER)
     {
       if ((digitalRead(MFA_MODE_PIN)==LOW)&&(prevMFAMode==HIGH))
       {

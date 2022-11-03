@@ -45,8 +45,10 @@ typedef struct digifiz_pars
     uint8_t crc; //crc
     uint16_t coolantThermistorDefRes; 
     uint32_t uptime;
-    uint8_t manufMFAEnabled; 
+    uint32_t digifiz_options; 
 };
+
+#define OPTION_MFA_MANUFACTURER 1
 
 void load_defaults();
 void initEEPROM();
