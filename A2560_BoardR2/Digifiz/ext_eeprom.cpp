@@ -137,7 +137,7 @@ void initEEPROM()
 {
     external_faulty = 0;
     load_defaults();
-    Serial.begin(9600);
+    //Serial.begin(9600);
     //Serial.println("PHL EEPROM test");
     #ifdef DISABLE_EEPROM
     return;

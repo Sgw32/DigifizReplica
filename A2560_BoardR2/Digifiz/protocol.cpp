@@ -1,6 +1,8 @@
+#include "setup.h"
 #include "protocol.h"
 #include "mfa.h"
 #include "adc.h"
+
 #define BTserial Serial
 #define UIODserial Serial1
 
@@ -15,14 +17,13 @@ extern RTC_Millis myRTC;
 extern RTC_DS3231 myRTC;
 #endif
 
-#define USE_UIOD
-
 void initComProtocol()
 {
     BTserial.begin(9600);
     changeBLEName();
 #ifdef USE_UIOD
-    UIODserial.begin(115200);
+    UIODserial.begin(9600);
+    //UIODserial.setTimeout(100);
 #endif
     statusTime = millis();
 }
@@ -231,42 +232,58 @@ void processData(int parameter,long value)
       case PARAMETER_GET_ACCUMULATED_UPTIME:
         BTserial.println("PARAMETER_GET_ACCUMULATED_UPTIME");
         BTserial.println(digifiz_parameters.uptime);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.uptime);
+        #endif
         break;
       case PARAMETER_GET_COOLANT_TEMPERATURE:
         BTserial.println("PARAMETER_GET_COOLANT_TEMPERATURE");
         BTserial.println(getCoolantTemperature());
+        #ifdef USE_UIOD
         UIODserial.println(getCoolantTemperature());
+        #endif
         break;
       case PARAMETER_GET_FUEL_IN_TANK:
         BTserial.println("PARAMETER_GET_FUEL_IN_TANK");
         BTserial.println(getLitresInTank());
+        #ifdef USE_UIOD
         UIODserial.println(getLitresInTank());
+        #endif
         break;
       case PARAMETER_GET_SPEED:
         BTserial.println("PARAMETER_GET_SPEED");
         BTserial.println(spd_m_speedometer);
+        #ifdef USE_UIOD
         UIODserial.println(spd_m_speedometer);
+        #endif
         break;
       case PARAMETER_GET_RPM:
         BTserial.println("PARAMETER_GET_RPM");
         BTserial.println(averageRPM);
+        #ifdef USE_UIOD
         UIODserial.println(averageRPM);
+        #endif
         break;
       case PARAMETER_GET_DAY:
         BTserial.println("PARAMETER_GET_DAY");
         BTserial.println(myRTC.now().day());
+        #ifdef USE_UIOD
         UIODserial.println(myRTC.now().day());
+        #endif
         break;
       case PARAMETER_GET_MONTH:
         BTserial.println("PARAMETER_GET_MONTH");
         BTserial.println(myRTC.now().month());
+        #ifdef USE_UIOD
         UIODserial.println(myRTC.now().month());
+        #endif
         break;
       case PARAMETER_GET_YEAR:
         BTserial.println("PARAMETER_GET_YEAR");
         BTserial.println(myRTC.now().year());
+        #ifdef USE_UIOD
         UIODserial.println(myRTC.now().year());
+        #endif
         break;
       default:
         break;
@@ -280,108 +297,148 @@ void processData(int parameter,long value)
       case PARAMETER_RPMCOEFFICIENT:
         BTserial.println("PARAMETER_RPMCOEFFICIENT");
         BTserial.println(digifiz_parameters.rpmCoefficient);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.rpmCoefficient);
+        #endif
         break;
       case PARAMETER_SPEEDCOEEFICIENT:
         BTserial.println("PARAMETER_SPEEDCOEEFICIENT");
         BTserial.println(digifiz_parameters.speedCoefficient);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.speedCoefficient);
+        #endif
         break;
       case PARAMETER_COOLANTTHERMISTORB:
         BTserial.println("PARAMETER_COOLANTTHERMISTORB");
         BTserial.println(digifiz_parameters.coolantThermistorB);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.coolantThermistorB);
+        #endif
         break;  
       case PARAMETER_OILTHERMISTORB:
         BTserial.println("PARAMETER_OILTHERMISTORB");
         BTserial.println(digifiz_parameters.oilThermistorB);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.oilThermistorB);
+        #endif
         break;  
       case PARAMETER_AIRTHERMISTORB:
         BTserial.println("PARAMETER_AIRTHERMISTORB");
         BTserial.println(digifiz_parameters.airThermistorB);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.airThermistorB);
+        #endif
         break;  
       case PARAMETER_TANKMINRESISTANCE:
         BTserial.println("PARAMETER_TANKMINRESISTANCE");
         BTserial.println(digifiz_parameters.tankMinResistance);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.tankMinResistance);
+        #endif
         break;  
       case PARAMETER_TANKMAXRESISTANCE:
         BTserial.println("PARAMETER_TANKMAXRESISTANCE");
         BTserial.println(digifiz_parameters.tankMaxResistance);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.tankMaxResistance);
+        #endif
         break; 
       case PARAMETER_TAU_COOLANT:
         BTserial.println("PARAMETER_TAU_COOLANT");
         BTserial.println(digifiz_parameters.tauCoolant);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.tauCoolant);
+        #endif
         break;
       case PARAMETER_TAU_OIL:
         BTserial.println("PARAMETER_TAU_OIL");
         BTserial.println(digifiz_parameters.tauOil);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.tauOil);
+        #endif
         break;
       case PARAMETER_TAU_AIR:
         BTserial.println("PARAMETER_TAU_AIR");
         BTserial.println(digifiz_parameters.tauAir);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.tauAir);
+        #endif
         break;
       case PARAMETER_TAU_TANK:
         BTserial.println("PARAMETER_TAU_TANK");
         BTserial.println(digifiz_parameters.tauTank);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.tauTank);
+        #endif
         break;
       case PARAMETER_MILEAGE:
         BTserial.println("PARAMETER_MILEAGE");
         BTserial.println(digifiz_parameters.mileage);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.mileage);
+        #endif
         break;
       case PARAMETER_DAILY_MILEAGE:
         BTserial.println("PARAMETER_DAILY_MILEAGE");
         BTserial.println(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]);
+        #endif
         break;
       case PARAMETER_AUTO_BRIGHTNESS:
         BTserial.println("PARAMETER_AUTO_BRIGHTNESS");
         BTserial.println(digifiz_parameters.autoBrightness);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.autoBrightness);
+        #endif
         break;
       case PARAMETER_BRIGHTNESS_LEVEL:
         BTserial.println("PARAMETER_BRIGHTNESS_LEVEL");
         BTserial.println(digifiz_parameters.brightnessLevel);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.brightnessLevel);
+        #endif
         break;
       case PARAMETER_TANK_CAPACITY:
         BTserial.println("PARAMETER_TANK_CAPACITY");
         BTserial.println(digifiz_parameters.tankCapacity);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.tankCapacity);
+        #endif
         break;
       case PARAMETER_MFA_STATE:
         BTserial.println("PARAMETER_MFA_STATE");
         BTserial.println(digifiz_parameters.mfaState);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.mfaState);
+        #endif
         break;
       case PARAMETER_BUZZER_OFF:
         BTserial.println("PARAMETER_BUZZER_OFF");
         BTserial.println(digifiz_parameters.buzzerOff);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.buzzerOff);
+        #endif
         break;
       case PARAMETER_MAX_RPM:
         BTserial.println("PARAMETER_MAX_RPM");
         BTserial.println(digifiz_parameters.maxRPM);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.maxRPM);
+        #endif
         break;
       case PARAMETER_BACKLIGHT_ON:
         BTserial.println("PARAMETER_BACKLIGHT_ON");
         BTserial.println(digifiz_parameters.backlight_on);
+        #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.backlight_on);
+        #endif
         break;
       default:
         break;
     }
   }
-  saveParameters();
+  //saveParameters();
 }
 
 
@@ -403,12 +460,13 @@ void protocolParse()
       if (BTserial.read() == '\n') 
       {
         // sends confirmation
-        //BTserial.println("received");
         // constrain the values to 0 - 255
         parameter = constrain(parameter, 0, 255);
         //value = constrain(value, 0, 65535);
         if(value<0)
           value=0;
+        //BTserial.println(parameter);
+        //BTserial.println(value);
         processData(parameter,value);
       }
       while(BTserial.available() > 0) {
@@ -416,21 +474,15 @@ void protocolParse()
       }
    }
 #ifdef USE_UIOD
+#ifdef UIOD_PARSE_INPUT
    if (UIODserial.available() > 0) 
    {
-      // look for the next valid integer in the incoming serial stream:
       int parameter = UIODserial.parseInt(); 
-      // do it again:
       long value = UIODserial.parseInt(); 
-      // look for the newline. That's the end of your
-      // sentence:
+  
       if (UIODserial.read() == '\n') 
       {
-        // sends confirmation
-        //BTserial.println("received");
-        // constrain the values to 0 - 255
         parameter = constrain(parameter, 0, 255);
-        //value = constrain(value, 0, 65535);
         if(value<0)
           value=0;
         processData(parameter,value);
@@ -439,5 +491,6 @@ void protocolParse()
         char t = UIODserial.read();
       }
    }
+#endif
 #endif
 }

@@ -21,6 +21,9 @@
 //#define FAHRENHEIT  
 //#define KELVIN
 
+//#define USE_UIOD
+#define UIOD_PARSE_INPUT
+
 #define RPM_8000
 
 #define DEFAULT_MILEAGE   0L //78893L //103256L
