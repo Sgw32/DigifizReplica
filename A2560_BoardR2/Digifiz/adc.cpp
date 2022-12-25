@@ -193,7 +193,10 @@ float getIntakeVoltage()
 
 float getIntakePressure()
 {
-    float intp = (float)analogRead(pressurePin);
+    float intp;
+    for (int i=0;i!=100;i++)
+     intp += (float)analogRead(pressurePin);
+    intp/=100;
     return 84749.0f-20152.0f*intp/1023.0f*5.0f;
 }
 
@@ -205,22 +208,21 @@ float getCurrentIntakeFuelConsumption()
     float lp100km = 0.0f;
     if (kP>0)
     {
-    //float intakeT = constrain(getAmbientTemperature(),-20.0f,30.0f)+273.0f; //intakeT in K
-    float intakeT = 273.0f;
-    const float Rtd = 8.314f; //thermodynamic constant
-    const float MM = 28.97f; //air molecular mass
-    const float engineV = 1.6f; //engine displacement
-    const float volEfficiency = 0.65; //65% volumetric efficiency
-    float corrPressure = averageRPM*kP/intakeT/2.0f; //corrected reduced pressure
-    float maf = (corrPressure/60.0f)*volEfficiency*MM*engineV/Rtd;//mass fuel intake g/second
-    const float gasolineDensity = 0.76; //g/cm3
-    float lps = maf/gasolineDensity/1000.0f/14.7f;
-    float lph = lps*3600.0f; //liters per hour
-    lp100km = lph*100.0f/spd_m_speedometer;
+      //float intakeT = constrain(getAmbientTemperature(),-20.0f,30.0f)+273.0f; //intakeT in K
+      float intakeT = 273.0f;
+      const float Rtd = 8.314f; //thermodynamic constant
+      const float MM = 28.97f; //air molecular mass
+      const float engineV = 1.6f; //engine displacement
+      const float volEfficiency = 0.65; //65% volumetric efficiency
+      float corrPressure = averageRPM*kP/intakeT/2.0f; //corrected reduced pressure
+      float maf = (corrPressure/60.0f)*volEfficiency*MM*engineV/Rtd;//mass fuel intake g/second
+      const float gasolineDensity = 0.76; //g/cm3
+      float lps = maf/gasolineDensity/1000.0f/14.7f;
+      float lph = lps*3600.0f; //liters per hour
+      lp100km = lph;
+      //lp100km = lph*100.0f/spd_m_speedometer;
     }
-
-
-    return constrain(kP,0,100.0f);
+    return constrain(lp100km,0,100.0f);
     //return constrain(kP,0,100.0f);
 }
 

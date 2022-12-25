@@ -156,7 +156,7 @@ ISR(TIMER4_COMPA_vect)
   }
 
   //For test fuel intake
-  averageRPM = 3000.0f;
+  //averageRPM = 3000.0f;
     
   if (getBuzzerEnabled())
   {
@@ -236,6 +236,7 @@ void loop()
     
     digifiz_parameters.mileage+=spd_m;
     digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]+=spd_m;
+    digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] = getCurrentIntakeFuelConsumption();//getFuelConsumption()*digifiz_parameters.tankCapacity;
     setMileage(uptimeDisplayEnabled ? (digifiz_parameters.uptime/3600) : (digifiz_parameters.mileage/3600)); //to km
     
     #ifndef YELLOW_GREEN_LED
@@ -249,7 +250,6 @@ void loop()
     if (saveParametersCounter==EEPROM_SAVE_INTERVAL)
     {
         digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock] = current_averageSpeed;
-        digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] = getFuelConsumption()*digifiz_parameters.tankCapacity;
         saveParameters();
         saveParametersCounter=0;
     }
