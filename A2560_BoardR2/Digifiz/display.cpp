@@ -122,7 +122,8 @@ void displayMFAType(uint8_t mfaType)
             setFloatDot(false);
             break;
         case MFA_STATE_TRIP_L100KM:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
+            //setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
+            setMFADisplayedNumber((uint16_t)(getCurrentIntakeFuelConsumption()*100.0f));
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
