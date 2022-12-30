@@ -1,5 +1,6 @@
 #include "display.h"  
 #include "orig_display.h"
+#include "lcd_display.h"
 #include "speedometer.h"
 #include "emergency.h"
 #include "tacho.h"
@@ -19,6 +20,10 @@
 //DS3231 clock;
 
 #ifdef DIGIFIZ_ORIGINAL_DISPLAY
+extern uint8_t tr_status;
+#endif
+
+#ifdef DIGIFIZ_LCD_DISPLAY
 extern uint8_t tr_status;
 #endif
 
@@ -192,7 +197,7 @@ ISR(TIMER4_COMPA_vect)
   #endif
   
   setFuel(fuel);
-#ifndef DIGIFIZ_ORIGINAL_DISPLAY
+#if !defined(DIGIFIZ_ORIGINAL_DISPLAY) && !defined(DIGIFIZ_LCD_DISPLAY)
   setCoolantData(getDisplayedCoolantTemp());
 #else
   setCoolantData(getDisplayedCoolantTempOrig());
