@@ -112,6 +112,8 @@ void setup()
   }
 
   initDisplay(); //Start MAX7219 display driver
+
+  
   initADC(); //Init ADC ports for 
   initSpeedometer();
   initTacho();
@@ -120,8 +122,10 @@ void setup()
   initMFA();
   initEmergencyModule();
   clockDot = millis();
+  
   initReadInterrupt();
-  setSpeedometerData(0);
+  //setSpeedometerData(321);
+  //delay(1000);
 }
 
 ISR(TIMER4_COMPA_vect)
@@ -161,7 +165,6 @@ ISR(TIMER4_COMPA_vect)
   {
       buzzerToggle();
   }
-  
   processGasLevel();
   processCoolantTemperature();
   processOilTemperature();
@@ -195,20 +198,20 @@ ISR(TIMER4_COMPA_vect)
   else
     setRefuelSign(false);
   #endif
-  
   setFuel(fuel);
-#if !defined(DIGIFIZ_ORIGINAL_DISPLAY) && !defined(DIGIFIZ_LCD_DISPLAY)
-  setCoolantData(getDisplayedCoolantTemp());
-#else
-  setCoolantData(getDisplayedCoolantTempOrig());
-    if (!(tr_status&0x80))
-    tr_status|=0x80;
-#endif
-
+  #if !defined(DIGIFIZ_ORIGINAL_DISPLAY) && !defined(DIGIFIZ_LCD_DISPLAY)
+    setCoolantData(getDisplayedCoolantTemp());
+  #else
+    setCoolantData(getDisplayedCoolantTempOrig());
+      if (!(tr_status&0x80))
+      tr_status|=0x80;
+    //fireDigifiz();
+  #endif  
 }
 
 void loop() 
 {
+  fireDigifiz();
   if ((millis()-clockDot)>500)
   {
       setDot(true);

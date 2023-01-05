@@ -1,4 +1,5 @@
 #include "emergency.h"
+#include "lcd_display.h"
 
 uint8_t emergency_state = 0;
 uint16_t emergencyRPM = 2500;

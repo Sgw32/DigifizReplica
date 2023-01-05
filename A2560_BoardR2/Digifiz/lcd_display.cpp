@@ -135,7 +135,7 @@ void setRefuelSign(bool onoff)
 
 void setCheckEngine(bool onoff)
 {
-    lx.setDigifizBufferSegment(24, 0x08,onoff ? 1 : 0);
+    //lx.setDigifizBufferSegment(31, 0x08,onoff ? 1 : 0);
 }
 
 void displayMFAType(uint8_t mfaType)
@@ -484,6 +484,8 @@ void setRPMData(uint16_t data)
     
     if (rpm>80)
       return;
+    if (rpm==0)
+      rpm=1;
     //RPM = segments count
     uint8_t full_blocks_count = (rpm>>3); // divide by 8
     for (uint8_t i=0;i!=10;i++)
@@ -525,6 +527,11 @@ void setSpeedometerData(uint16_t data)
           lx.setDigifizBufferMasked(28, number_spd[(data / 1) % 10], 0xFF);
         }
     }
+}
+
+void fireDigifiz()
+{
+  lx.fireDigifiz();
 }
 
 void setDot(bool value)

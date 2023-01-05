@@ -10,7 +10,6 @@
 #include "adc.h"
 #include "mfa.h"
 
-
 #define  DELAYTIME  100  // in milliseconds
 
 #define MFA_AIR_TEMP 0
@@ -48,6 +47,6 @@ void setBrightness(uint8_t levels);
 void setRefuelSign(bool onoff);
 void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
-
+void fireDigifiz();
 #endif
 #endif

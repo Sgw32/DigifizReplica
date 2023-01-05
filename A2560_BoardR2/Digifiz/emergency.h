@@ -8,7 +8,6 @@
 #include "buzzer.h"
 #include "display.h"
 #include "orig_display.h"
-#include "lcd_display.h"
 
 #define OIL_0_3BAR_PIN A1 //PF1
 #define OIL_1_8BAR_PIN A2 //PF2
