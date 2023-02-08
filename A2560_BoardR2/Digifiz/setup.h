@@ -22,7 +22,7 @@
 //#define KELVIN
 
 //#define USE_UIOD
-#define UIOD_PARSE_INPUT
+//#define UIOD_PARSE_INPUT
 
 #define RPM_8000
 
