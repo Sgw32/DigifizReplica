@@ -340,7 +340,7 @@ void setRPMData(uint16_t data)
     }
 
     //TODO: this is optional and redundant, consider accurate exclusion for 2+blocks_lit
-    for (uint8_t col=2+blocks_lit; col<8; col++)
+    for (uint8_t col=2+blocks_lit+1; col<8; col++)
     {
     mx.setColumn(col, 0x00);
     }

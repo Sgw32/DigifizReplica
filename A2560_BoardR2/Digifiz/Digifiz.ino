@@ -90,6 +90,11 @@ void setup()
   averageRPM = 0;
   averageRPMCnt = 0;
 
+  pinMode(GPIO1_TO_GND_PIN,OUTPUT);
+  pinMode(GPIO2_TO_GND_PIN,OUTPUT);
+  digitalWrite(GPIO1_TO_GND_PIN,HIGH);
+  digitalWrite(GPIO2_TO_GND_PIN,HIGH);
+
   delay(100);
   Wire.begin(); // Start the I2C interface
   
@@ -124,6 +129,8 @@ void setup()
   clockDot = millis();
   
   initReadInterrupt();
+
+  
   //setSpeedometerData(321);
   //delay(1000);
 }
@@ -211,7 +218,9 @@ ISR(TIMER4_COMPA_vect)
 
 void loop() 
 {
+  #ifdef DIGIFIZ_LCD_DISPLAY
   fireDigifiz();
+  #endif
   if ((millis()-clockDot)>500)
   {
       setDot(true);

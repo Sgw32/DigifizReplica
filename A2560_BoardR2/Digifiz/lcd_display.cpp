@@ -83,6 +83,19 @@ void init_digifiz()
     //setup the controller
     lx.init();
     lx.clear();
+
+    lx.setDigifizBufferSegment(24, 0x02,1); //Battery
+    //lx.setDigifizBufferSegment(24, 0x04,1); //MFA1
+    //lx.setDigifizBufferSegment(24, 0x01,1); //MFA2
+    lx.setDigifizBufferSegment(24, 0x08,1); //Oil
+    lx.setDigifizBufferSegment(10, 0x80,1); //lights
+    lx.setDigifizBufferSegment(11, 0x80,1); //heat lights
+    lx.setDigifizBufferSegment(12, 0x80,1);  //back lights heat
+    lx.setDigifizBufferSegment(13, 0x80,1);  // back window heat
+    lx.setDigifizBufferSegment(14, 0x80,1); //main beam
+    lx.setDigifizBufferSegment(15, 0x80,1); //turn left
+    lx.setDigifizBufferSegment(22, 0x08,1); //brakes
+    lx.setDigifizBufferSegment(15, 0x08,1); //turn right
 }
 
 void initDisplay()
@@ -91,7 +104,7 @@ void initDisplay()
 }
 
 void setRPM(int rpmdata)
-{
+{ 
     orig_mRPMData=rpmdata;
 }
 

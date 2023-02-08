@@ -30,20 +30,23 @@
 
 //#define TESTMODE
 //#define DIGIFIZ_ORIGINAL_DISPLAY
-#define DIGIFIZ_LCD_DISPLAY
+//#define DIGIFIZ_LCD_DISPLAY
 
 #define COOLANT_R_AT_NORMAL_T 1000.0f //VW OEM
 
-#define OIL_R_AT_NORMAL_T 10000.0f //Digifiz replica OEM sensors by PHL
-//#define OIL_R_AT_NORMAL_T 1000.0f //VW OEM
-#define AMBIENT_R_AT_NORMAL_T 10000.0f //Digifiz replica OEM sensors by PHL
-//#define AMBIENT_R_AT_NORMAL_T 2991.39f //AutoVAZ sensors
+//#define OIL_R_AT_NORMAL_T 10000.0f //Digifiz replica OEM sensors by PHL
+#define OIL_R_AT_NORMAL_T 1000.0f //VW OEM
+//#define AMBIENT_R_AT_NORMAL_T 10000.0f //Digifiz replica OEM sensors by PHL
+#define AMBIENT_R_AT_NORMAL_T 2991.39f //AutoVAZ sensors
 
 #define COOLANT_THERMISTOR_B 4000 //OEM VW
-#define AIR_THERMISTOR_B 4000 //OEM
-//#define AIR_THERMISTOR_B 3812 //AutoVAZ sensors
+//#define AIR_THERMISTOR_B 4000 //OEM
+#define AIR_THERMISTOR_B 3812 //AutoVAZ sensors
 #define OIL_THERMISTOR_B 4000 //OEM
 
 #define CRC_FRAGMENT_SIZE 84
+
+#define GPIO1_TO_GND_PIN 41
+#define GPIO2_TO_GND_PIN 40
 
 #endif
