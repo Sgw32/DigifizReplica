@@ -1,12 +1,12 @@
-#ifndef DISPLAY_H
-#define DISPLAY_H
+#ifndef AUDI_DISPLAY_H
+#define AUDI_DISPLAY_H
 
 #include "setup.h"
 
-#ifndef DIGIFIZ_ORIGINAL_DISPLAY
-#ifndef DIGIFIZ_LCD_DISPLAY
-#ifndef AUDI_DISPLAY
+#ifdef AUDI_DISPLAY
+
 #include <MD_MAX72xx.h>
+#include "STLED316S.h"
 #include <RTClib.h>
 #include <Wire.h>
 #include "MS5611.h"
@@ -45,9 +45,10 @@
 #define DATA_PIN  12  // or MOSI
 #define CS_PIN    11    // or SS
 
-#define CLK_PIN2   6  // or SCK
-#define DATA_PIN2  8  // or MOSI
-#define CS_PIN2    7  // or SS
+#define CLK_PIN_STLED   7
+#define DATA_PIN_STLED  6  
+#define STB_SPD_PIN_STLED 8 
+#define STB_CLK_PIN_STLED 9
 
 #define  DELAYTIME  100  // in milliseconds
 
@@ -64,6 +65,19 @@
 #define BRIGHTNESS_IN_PIN A9 //PK1
 #define BACKLIGHT_CTL_PIN 26 //PA4
 
+#define BRIGHTNESS_IN_PIN A9 //PK1
+#define BACKLIGHT_CTL_PIN 26 //PA4
+
+#define REFUEL_SIGN_DDR DDRJ //PA4
+#define REFUEL_SIGN_PORT PORTJ //PA4
+#define REFUEL_SIGN_PIN PJ5 //PA4
+
+#define CHECK_ENGINE_PORT_DDR DDRJ //PA4
+#define CHECK_ENGINE_PORT PORTJ //PA4
+#define CHECK_ENGINE_PIN PJ4 //PA4
+
+#define NBR_OF_DIGIT  6
+
 void initDisplay();
 void setRPM(int rpmdata);
 void blinking();
@@ -78,6 +92,8 @@ void setCoolantData(uint16_t data);
 void setDot(bool value);
 void setFloatDot(bool value);
 void setMileage(uint32_t mileage);
+void setDailyMileage(uint32_t mileage);
+void setAuxDigit(uint8_t digit);
 void setMFAType(uint8_t mfaType);
 void displayMFAType(uint8_t mfaType);
 void setMFABlock(uint8_t block);
@@ -86,7 +102,5 @@ void setRefuelSign(bool onoff);
 void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
 void setServiceDisplayData(uint8_t data);
-#endif
-#endif
 #endif
 #endif

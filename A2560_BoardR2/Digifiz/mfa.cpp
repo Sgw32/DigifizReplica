@@ -2,6 +2,7 @@
 #include "display.h"
 #include "orig_display.h"
 #include "lcd_display.h"
+#include "audi_display.h"
 
 uint8_t mfaMemorySelected = 0;
 uint8_t prevMFAMode = HIGH;

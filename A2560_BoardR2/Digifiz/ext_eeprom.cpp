@@ -107,7 +107,11 @@ void load_defaults()
     digifiz_parameters.mfaState = 0;
     digifiz_parameters.buzzerOff = 1;
 #ifdef RPM_8000
+#ifdef AUDI_DISPLAY
+    digifiz_parameters.maxRPM = 7000; //Audi digifiz supports only 7000 RPM
+#else
     digifiz_parameters.maxRPM = 8000;
+#endif
 #else
     digifiz_parameters.maxRPM = 7000;
 #endif
@@ -170,6 +174,9 @@ void initEEPROM()
           EEPROM.put(INTERNAL_OFFSET+2,'G');
           EEPROM.put(INTERNAL_OFFSET+3,'I');
           EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
+          saveParameters();
+          saveParameters();
+          saveParameters();
         }
     }
     else
@@ -189,6 +196,9 @@ void initEEPROM()
             myMem.put(EXTERNAL_OFFSET+2,'G');
             myMem.put(EXTERNAL_OFFSET+3,'I');
             myMem.put(EXTERNAL_OFFSET+4,digifiz_parameters);
+            saveParameters();
+            saveParameters();
+            saveParameters();
           }
           else
           { 
@@ -213,6 +223,9 @@ void initEEPROM()
           EEPROM.put(INTERNAL_OFFSET+2,'G');
           EEPROM.put(INTERNAL_OFFSET+3,'I');
           EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
+          saveParameters();
+          saveParameters();
+          saveParameters();
         }
         else
         {
@@ -238,6 +251,9 @@ void initEEPROM()
             myMem.put(EXTERNAL_OFFSET+2,'G');
             myMem.put(EXTERNAL_OFFSET+3,'I');
             myMem.put(EXTERNAL_OFFSET+4,digifiz_parameters);
+            saveParameters();
+            saveParameters();
+            saveParameters();
           }
           else
           { 
@@ -261,6 +277,9 @@ void initEEPROM()
             EEPROM.put(INTERNAL_OFFSET+2,'G');
             EEPROM.put(INTERNAL_OFFSET+3,'I');
             EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
+            saveParameters();
+            saveParameters();
+            saveParameters();
           }
         }
    }

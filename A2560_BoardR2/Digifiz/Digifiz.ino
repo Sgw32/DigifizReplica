@@ -10,6 +10,7 @@
 #include "buzzer.h"
 #include "mfa.h"
 #include "setup.h"
+#include "audi_display.h"
 
 //#include <DS3231.h>
 #include <RTClib.h>
