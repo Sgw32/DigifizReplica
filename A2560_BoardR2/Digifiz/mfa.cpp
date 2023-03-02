@@ -137,12 +137,16 @@ void pressMFAReset()
         case MFA_STATE_TRIP_MEAN_SPEED:
             digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock] = 0;
             break;
+#ifndef AUDI_DISPLAY
         case MFA_STATE_OIL_TEMP:
             //no
             break;
         case MFA_STATE_AIR_TEMP:
             //no
             break;
+#else
+
+#endif
         default:
             break;
     }

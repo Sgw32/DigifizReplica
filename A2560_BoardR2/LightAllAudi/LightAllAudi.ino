@@ -16,7 +16,7 @@ void setup()
 
 void loop() 
 {
-  setMFAType(mfa);
+  /*setMFAType(mfa);
   mfa++;
   if (mfa==4)
     mfa=0;
@@ -31,10 +31,11 @@ void loop()
   setSpeedometerData(mileage&0xFF);
   //setCoolantData(mileage%18);
   setCoolantData(mileage%18);
-  setBarData(17-mileage%18);
+  setBarData(17-mileage%18);*/
+  
   //setBarData(17);
-  /*setAll(0);
+  setAll(0);
   delay(100);
   setAll(1);
-  delay(100);*/
+  delay(100);
 }

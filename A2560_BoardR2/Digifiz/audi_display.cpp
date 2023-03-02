@@ -24,6 +24,8 @@ bool backlightStatus;
 uint8_t fuel_ind = 0;
 uint8_t backlight1 = 0b11110101;
 uint8_t barData_mem = 0;
+uint8_t clockHoursAudi = 0;
+uint8_t clockMinsAudi = 0;
 
 void initDisplay()
 {
@@ -135,49 +137,27 @@ void displayMFAType(uint8_t mfaType)
 {    
     switch(digifiz_parameters.mfaState)
     {
-        case MFA_STATE_TRIP_DURATION:
-            setMFAClockData(sinceStart.hours(),sinceStart.minutes());
-            break;
-        case MFA_STATE_TRIP_DISTANCE:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
-            setFloatDot(false);
-            break;
         case MFA_STATE_TRIP_L100KM:
+            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
+            setFloatDot(true);
+            break; 
+        case MFA_STATE_TRIP_CURRENT_L100KM:
             setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
             setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
             setFloatDot(false);
+            break; 
+        case MFA_STATE_TRIP_DISTANCE:
+            setMFADisplayedNumber((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
+            setFloatDot(false);
+            break;  
+        case MFA_STATE_TRIP_DURATION:
+            setMFAClockData(sinceStart.hours(),sinceStart.minutes());
             break;
-        case MFA_STATE_OIL_TEMP:
-            #ifdef FAHRENHEIT
-              setMFADisplayedNumber((int16_t)getOilTemperatureFahrenheit());
-              setFloatDot(false);
-            #else
-            #ifdef KELVIN  
-              setMFADisplayedNumber((int16_t)(getOilTemperature()+273.15f));
-              setFloatDot(false);
-            #else
-              setMFADisplayedNumber((int16_t)(getOilTemperature()));
-              setFloatDot(true);
-            #endif
-            #endif
-            break;
-        case MFA_STATE_AIR_TEMP:
-            #ifdef FAHRENHEIT
-              setMFADisplayedNumber((int16_t)getAmbientTemperatureFahrenheit());
-              setFloatDot(false);
-            #else
-            #ifdef KELVIN  
-              setMFADisplayedNumber((int16_t)(getAmbientTemperature()+273.15f));
-              setFloatDot(false);
-            #else
-              setMFADisplayedNumber((int16_t)getAmbientTemperature());
-              setFloatDot(true);
-            #endif
-            #endif
-            
+        case MFA_STATE_TRIP_TIME:
+            setMFAClockData(clockHoursAudi,clockMinsAudi);
             break;
         default:
             break;
@@ -186,14 +166,14 @@ void displayMFAType(uint8_t mfaType)
 
 void setMFAType(uint8_t type)
 {
-  if (type>3)
+  if (type>5)
   {
       mx.setColumn(0,0);
       mx.setColumn(1,0);
       return;
   }
-    uint8_t mfa1_led[4]={0b00001110,0b0110000,0b11000001,0b00000000};
-    uint8_t mfa2_led[4]={0b0,0b0,0b0,0b00001010};
+    uint8_t mfa1_led[6]={0b00000010,0b00001110,0b0110000,0b11000001,0b00000000,0b00000000};
+    uint8_t mfa2_led[6]={0b0,0b0,0b0,0b0,0b00001010,0b00000010};
   mx.setColumn(0, mfa1_led[type]);
   if (backlightStatus)
     mx.setColumn(1, backlight1|mfa2_led[type]);
@@ -259,7 +239,8 @@ void setAuxDigit(uint8_t digit)
 
 void setClockData(uint8_t clock_hours,uint8_t clock_minutes)
 {
-   
+   clockHoursAudi = clock_hours;
+   clockMinsAudi = clock_minutes;
 }
 
 void setMFAClockData(uint8_t mfa_clock_hrs,uint8_t mfa_clock_mins)
@@ -284,7 +265,9 @@ void setMFAClockData(uint8_t mfa_clock_hrs,uint8_t mfa_clock_mins)
 
 void setMFADisplayedNumber(int16_t data)
 {
-    
+    uint8_t mfa_clock_hours = (data/100)%100;
+    uint8_t mfa_clock_minutes = (data)%100;
+    setMFAClockData(mfa_clock_hours,mfa_clock_minutes);
 }
 
 void setFuel(uint8_t litres)
