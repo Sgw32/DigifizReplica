@@ -197,6 +197,7 @@ float getIntakePressure()
     for (int i=0;i!=100;i++)
      intp += (float)analogRead(pressurePin);
     intp/=100;
+    //intp = 512;
     return 84749.0f-20152.0f*intp/1023.0f*5.0f;
 }
 
@@ -208,8 +209,8 @@ float getCurrentIntakeFuelConsumption()
     float lp100km = 0.0f;
     if (kP>0)
     {
-      //float intakeT = constrain(getAmbientTemperature(),-20.0f,30.0f)+273.0f; //intakeT in K
-      float intakeT = 273.0f;
+      float intakeT = constrain(getAmbientTemperature(),-20.0f,30.0f)+273.0f; //intakeT in K
+      //float intakeT = 273.0f;
       const float Rtd = 8.314f; //thermodynamic constant
       const float MM = 28.97f; //air molecular mass
       const float engineV = 1.6f; //engine displacement
@@ -219,8 +220,11 @@ float getCurrentIntakeFuelConsumption()
       const float gasolineDensity = 0.76; //g/cm3
       float lps = maf/gasolineDensity/1000.0f/14.7f;
       float lph = lps*3600.0f; //liters per hour
-      lp100km = lph;
-      //lp100km = lph*100.0f/spd_m_speedometer;
+      //lp100km = lph;
+      if (spd_m_speedometer>10.0f)
+        lp100km = lph*100.0f/spd_m_speedometer;
+      else
+          lp100km = lph;
     }
     return constrain(lp100km,0,100.0f);
     //return constrain(kP,0,100.0f);

@@ -166,6 +166,9 @@ void initEEPROM()
           EEPROM.put(INTERNAL_OFFSET+2,'G');
           EEPROM.put(INTERNAL_OFFSET+3,'I');
           EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
+          saveParameters();
+          saveParameters();
+          saveParameters();
         }
     }
     else
@@ -185,6 +188,9 @@ void initEEPROM()
             myMem.put(EXTERNAL_OFFSET+2,'G');
             myMem.put(EXTERNAL_OFFSET+3,'I');
             myMem.put(EXTERNAL_OFFSET+4,digifiz_parameters);
+            saveParameters();
+            saveParameters();
+            saveParameters();
           }
           else
           { 
@@ -209,6 +215,9 @@ void initEEPROM()
           EEPROM.put(INTERNAL_OFFSET+2,'G');
           EEPROM.put(INTERNAL_OFFSET+3,'I');
           EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
+          saveParameters();
+          saveParameters();
+          saveParameters();
         }
         else
         {
@@ -234,6 +243,9 @@ void initEEPROM()
             myMem.put(EXTERNAL_OFFSET+2,'G');
             myMem.put(EXTERNAL_OFFSET+3,'I');
             myMem.put(EXTERNAL_OFFSET+4,digifiz_parameters);
+            saveParameters();
+            saveParameters();
+            saveParameters();
           }
           else
           { 
@@ -257,6 +269,9 @@ void initEEPROM()
             EEPROM.put(INTERNAL_OFFSET+2,'G');
             EEPROM.put(INTERNAL_OFFSET+3,'I');
             EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
+            saveParameters();
+            saveParameters();
+            saveParameters();
           }
         }
    }

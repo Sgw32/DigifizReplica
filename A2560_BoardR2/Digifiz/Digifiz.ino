@@ -138,7 +138,7 @@ ISR(TIMER4_COMPA_vect)
 #endif
 
   //For test fuel intake
-  spd_m_speedometer = 60.0f;
+  //spd_m_speedometer = 60.0f;
 
   rpm = readLastRPM(); 
   if (rpm>0)
@@ -156,7 +156,7 @@ ISR(TIMER4_COMPA_vect)
   }
 
   //For test fuel intake
-  //averageRPM = 3000.0f;
+  //193averageRPM = 3000.0f;
     
   if (getBuzzerEnabled())
   {
