@@ -26,6 +26,7 @@ uint8_t backlight1 = 0b11110101;
 uint8_t barData_mem = 0;
 uint8_t clockHoursAudi = 0;
 uint8_t clockMinsAudi = 0;
+uint8_t audiOptions = 0x6;
 
 void initDisplay()
 {
@@ -60,6 +61,11 @@ void setServiceDisplayData(uint8_t data)
   
 }
 
+void setAudiOptions(uint8_t options)
+{
+  audiOptions = options;
+}
+
 void setRPM(int rpmdata)
 {
     mRPMData=rpmdata;
@@ -69,7 +75,8 @@ void setBacklight(bool onoff)
 {
   backlightStatus = onoff;
   stled.setLED(LEDall, onoff); //always
-  stled2.setLED(LEDall, onoff);
+  stled2.setLED(audiOptions, true);
+  stled2.setLED(~audiOptions, false);
 }
 
 void blinking()
@@ -307,7 +314,10 @@ void setSpeedometerData(uint16_t data)
     uint8_t dig2 = (data/10)%10;
     uint8_t dig1 = data%10;
     uint32_t num=dig1*100+dig2*10+dig3;
-    stled2.dispDec(num);
+    //stled2.setNumberMask(0b00110); //21
+    //stled2.setNumberMask(0b00010); //1
+    //stled2.setNumberMask(0b00000); // no numbers
+    stled2.dispUdec(data);
 }
 
 void setBarData(uint8_t data)

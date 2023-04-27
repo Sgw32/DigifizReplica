@@ -254,10 +254,38 @@ void STLED316S_Common::dispNumber(uint8_t digitPtr, uint32_t nbr, uint8_t minNbr
                 _dispDataBuffer[digitPtr] = _digitTable[0];
             } 
         } else {
-            _dispDataBuffer[digitPtr] = _digitTable[(nbr/nbrSel)%10];
+            _dispDataBuffer[digitPtr] = (_numberMask&(1<<digitPtr)) ? _digitTable[(nbr/nbrSel)%10] : _digitTable[17]; 
         }
         digitPtr--;
     }
+}
+
+/**
+ * @brief Display number reverse order
+ * 
+ * @param digitPtr Digit starting position
+ * @param nbr Number to display
+ * @param minNbrOfDigit Minimum number of digits of the number
+ */
+void STLED316S_Common::dispNumberRev(uint8_t digitPtr, uint32_t nbr, uint8_t minNbrOfDigit)
+{
+    while(digitPtr > 0) {
+        uint32_t nbrSel = pow10(digitPtr - 1);
+
+        if(nbr < nbrSel) {
+            if(digitPtr <= minNbrOfDigit) {
+                _dispDataBuffer[4-digitPtr] = _digitTable[0];
+            } 
+        } else {
+            _dispDataBuffer[4-digitPtr] = _digitTable[(nbr/nbrSel)%10]; 
+        }
+        digitPtr--;
+    }
+}
+
+void STLED316S_Common::setNumberMask(uint8_t mask)
+{
+  _numberMask = mask;
 }
 
 /******************************************************************************/
@@ -439,7 +467,7 @@ void STLED316S_Common::dispRAW(uint8_t *raw)
  */
 void STLED316S_Common::dispUdec(uint32_t nbr)
 {
-    dispNumber(_nbrOfDigit,nbr,1);
+    dispNumberRev(_nbrOfDigit,nbr,1);
     
     writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
 }

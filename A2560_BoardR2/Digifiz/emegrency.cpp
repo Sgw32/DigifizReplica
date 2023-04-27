@@ -3,7 +3,7 @@
 #include "audi_display.h"
 
 uint8_t emergency_state = 0;
-uint16_t emergencyRPM = 2500;
+uint16_t emergencyRPM = 3000;
 uint32_t emergencyCounter;
 uint8_t last_emergency_state = 0;
 void initEmergencyModule()

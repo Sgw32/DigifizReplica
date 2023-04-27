@@ -182,7 +182,9 @@ ISR(TIMER4_COMPA_vect)
   if (displaySpeedCnt==4) // 2 Hz loop(as on original Digifiz)  
   {
     //setSpeedometerData(getCurrentMemoryBlock());
+    
     setSpeedometerData((uint16_t)spd_m_speedometer);
+    //setSpeedometerData(getBrightnessLevel());
     current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;
 #ifdef TESTMODE
   spd_m_speedometer+=1;
@@ -225,6 +227,7 @@ void loop()
   if ((millis()-clockDot)>500)
   {
       setDot(true);
+      
   }
   if ((millis()-clockDot)>1000)
   {
@@ -260,18 +263,23 @@ void loop()
     
     saveParametersCounter++;
     setBacklight(digifiz_parameters.backlight_on ? true : false);
+    //setAudiOptions(0x9);
     if (saveParametersCounter==EEPROM_SAVE_INTERVAL)
     {
         digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock] = current_averageSpeed;
         digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] = getFuelConsumption()*digifiz_parameters.tankCapacity;
         saveParameters();
         saveParametersCounter=0;
+        //pressMFABlock();
+        //setAudiOptions(0x6);
     }
     
     checkEmergency(rpm);
-    setMFABlock(digifiz_parameters.mfaBlock); //in display h
+    setMFABlock(digifiz_parameters.mfaBlock ? 0 : 1); //in display h
     displayMFAType(digifiz_parameters.mfaState);
     setDot(false);
+    
+    
   }
   setMFAType(digifiz_parameters.mfaState);
   processMFA();

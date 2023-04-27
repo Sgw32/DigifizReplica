@@ -102,5 +102,7 @@ void setRefuelSign(bool onoff);
 void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
 void setServiceDisplayData(uint8_t data);
+
+void setAudiOptions(uint8_t options);
 #endif
 #endif

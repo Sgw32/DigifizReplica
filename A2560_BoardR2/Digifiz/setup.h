@@ -10,7 +10,7 @@
 #define OIL_RES_10000
 
 //more brightness
-#define YELLOW_GREEN_LED 
+//#define YELLOW_GREEN_LED 
     
 #define NEW_REVISION
 

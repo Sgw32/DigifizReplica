@@ -96,6 +96,10 @@ void init_digifiz()
     lx.setDigifizBufferSegment(15, 0x80,1); //turn left
     lx.setDigifizBufferSegment(22, 0x08,1); //brakes
     lx.setDigifizBufferSegment(15, 0x08,1); //turn right
+
+    pinMode(MFA1_PIN,OUTPUT);
+    pinMode(MFA2_PIN,OUTPUT);
+    pinMode(BACKLIGHT_CTL_PIN,OUTPUT);
 }
 
 void initDisplay()
