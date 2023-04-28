@@ -34,11 +34,16 @@ uint8_t coolantPin = A10; // Coolant temp sensor
 uint8_t gasolinePin = A11; //Gasoline sensor
 uint8_t oilPin = A14; //Gasoline sensor
 uint8_t airPin = A15; //Gasoline sensor
+uint8_t pressurePin = A5;
 
 uint8_t tankCapacity = 60;
 uint16_t lightLevel;
+
+extern float averageRPM;
 //#define TAU_GASOLINE 0.02f
 //#define TAU_COOLANT 0.02f
+
+extern float spd_m_speedometer;
 
 #define TAU 0.01
 
@@ -178,6 +183,51 @@ void processOilTemperature()
     float temp1 = (log(R2/R1_Oil)/oilB);
     temp1 += 1/(25.0f+273.15f);
     oilT += tauOil*(1.0f/temp1 - 273.15f - oilT);
+}
+
+float getIntakeVoltage()
+{
+    float intp = (float)analogRead(pressurePin);
+    return intp/1023.0f*5.0f;
+}
+
+float getIntakePressure()
+{
+    float intp;
+    for (int i=0;i!=100;i++)
+     intp += (float)analogRead(pressurePin);
+    intp/=100;
+    //intp = 512;
+    return 84749.0f-20152.0f*intp/1023.0f*5.0f;
+}
+
+float getCurrentIntakeFuelConsumption()
+{
+    //http://sergeyk.kiev.ua/avto/car_fuel_calc/
+    //https://github.com/oesmith/obdgpslogger/blob/master/doc/mpg-calculation
+    float kP = constrain(getIntakePressure()/1000.0f,0.0f,120.0f); // pressure in kPa 
+    float lp100km = 0.0f;
+    if (kP>0)
+    {
+      float intakeT = constrain(getAmbientTemperature(),-20.0f,30.0f)+273.0f; //intakeT in K
+      //float intakeT = 273.0f;
+      const float Rtd = 8.314f; //thermodynamic constant
+      const float MM = 28.97f; //air molecular mass
+      const float engineV = 1.6f; //engine displacement
+      const float volEfficiency = 0.65; //65% volumetric efficiency
+      float corrPressure = averageRPM*kP/intakeT/2.0f; //corrected reduced pressure
+      float maf = (corrPressure/60.0f)*volEfficiency*MM*engineV/Rtd;//mass fuel intake g/second
+      const float gasolineDensity = 0.76; //g/cm3
+      float lps = maf/gasolineDensity/1000.0f/14.7f;
+      float lph = lps*3600.0f; //liters per hour
+      //lp100km = lph;
+      if (spd_m_speedometer>10.0f)
+        lp100km = lph*100.0f/spd_m_speedometer;
+      else
+          lp100km = lph;
+    }
+    return constrain(lp100km,0,100.0f);
+    //return constrain(kP,0,100.0f);
 }
 
 void processGasLevel()

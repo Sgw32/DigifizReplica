@@ -27,6 +27,10 @@ float getGasLevel(); //percents
 float getAmbientTemperature(); //celsius
 float getFuelConsumption();
 
+float getIntakePressure();
+float getCurrentIntakeFuelConsumption();
+float getIntakeVoltage();
+
 float getOilTemperatureFahrenheit(); //F
 float getAmbientTemperatureFahrenheit(); //F
 
