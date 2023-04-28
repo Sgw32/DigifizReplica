@@ -222,6 +222,7 @@ ISR(TIMER4_COMPA_vect)
 void loop() 
 {
   #ifdef DIGIFIZ_LCD_DISPLAY
+  processLCDIndicators();
   fireDigifiz();
   #endif
   if ((millis()-clockDot)>500)
@@ -270,7 +271,7 @@ void loop()
         digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] = getFuelConsumption()*digifiz_parameters.tankCapacity;
         saveParameters();
         saveParametersCounter=0;
-        //pressMFABlock();
+        //pressMFAMode();
         //setAudiOptions(0x6);
     }
     

@@ -13,6 +13,7 @@ void initEmergencyModule()
     //pinMode(CHECK_ENGINE_IN, INPUT);
     DDRJ&=~(1<<PJ2);
     pinMode(OIL_LED_PIN,OUTPUT);
+    digitalWrite(OIL_LED_PIN, LOW);
     emergencyCounter = millis();
 }
 
@@ -65,17 +66,32 @@ void checkEmergency(int mRPM)
     processCHECKEngine();
     if (emergency_state==0)
     {
+      #ifdef USE_DISPLAY_LEDS
         digitalWrite(OIL_LED_PIN,LOW);
+      #endif
+      #ifdef DIGIFIZ_LCD_DISPLAY
+        setLCDOilIndicator(false);
+      #endif
         buzzerOff();
     }
     if (emergency_state==1)
     {
+      #ifdef USE_DISPLAY_LEDS
         digitalWrite(OIL_LED_PIN,HIGH); //emergency, but for 0.3 bar sensor only
+      #endif
+      #ifdef DIGIFIZ_LCD_DISPLAY
+        setLCDOilIndicator(true);
+      #endif
         buzzerOff();
     }
     if (emergency_state==3)
     {
+      #ifdef USE_DISPLAY_LEDS
         digitalWrite(OIL_LED_PIN,HIGH); //emergency, pressure system
+      #endif
+      #ifdef DIGIFIZ_LCD_DISPLAY
+        setLCDOilIndicator(true);
+      #endif
         buzzerOn();
     }
 }

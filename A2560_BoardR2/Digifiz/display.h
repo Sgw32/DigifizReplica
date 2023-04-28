@@ -64,6 +64,8 @@
 #define BRIGHTNESS_IN_PIN A9 //PK1
 #define BACKLIGHT_CTL_PIN 26 //PA4
 
+#define USE_DISPLAY_LEDS
+
 void initDisplay();
 void setRPM(int rpmdata);
 void blinking();

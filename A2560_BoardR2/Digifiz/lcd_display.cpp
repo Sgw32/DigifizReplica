@@ -84,22 +84,64 @@ void init_digifiz()
     lx.init();
     lx.clear();
 
-    lx.setDigifizBufferSegment(24, 0x02,1); //Battery
+    lx.setDigifizBufferSegment(24, 0x02,0); //Battery
     //lx.setDigifizBufferSegment(24, 0x04,1); //MFA1
     //lx.setDigifizBufferSegment(24, 0x01,1); //MFA2
-    lx.setDigifizBufferSegment(24, 0x08,1); //Oil
-    lx.setDigifizBufferSegment(10, 0x80,1); //lights
-    lx.setDigifizBufferSegment(11, 0x80,1); //heat lights
-    lx.setDigifizBufferSegment(12, 0x80,1);  //back lights heat
-    lx.setDigifizBufferSegment(13, 0x80,1);  // back window heat
-    lx.setDigifizBufferSegment(14, 0x80,1); //main beam
-    lx.setDigifizBufferSegment(15, 0x80,1); //turn left
-    lx.setDigifizBufferSegment(22, 0x08,1); //brakes
-    lx.setDigifizBufferSegment(15, 0x08,1); //turn right
+    lx.setDigifizBufferSegment(24, 0x08,0); //Oil
+    lx.setDigifizBufferSegment(10, 0x80,0); //lights
+    lx.setDigifizBufferSegment(11, 0x80,0); //heat lights
+    lx.setDigifizBufferSegment(12, 0x80,0);  //back lights heat
+    lx.setDigifizBufferSegment(13, 0x80,0);  // back window heat
+    lx.setDigifizBufferSegment(14, 0x80,0); //main beam
+    lx.setDigifizBufferSegment(15, 0x80,0); //turn left
+    lx.setDigifizBufferSegment(22, 0x08,0); //brakes
+    lx.setDigifizBufferSegment(15, 0x08,0); //turn right
 
     pinMode(MFA1_PIN,OUTPUT);
     pinMode(MFA2_PIN,OUTPUT);
     pinMode(BACKLIGHT_CTL_PIN,OUTPUT);
+
+    DDRG&=~(1<<0);
+    DDRG&=~(1<<1);
+    DDRF&=~(1<<0);
+    DDRL&=~(1<<1);
+
+    PORTG&=~(1<<0);
+    PORTG&=~(1<<1);
+    PORTF&=~(1<<0);
+    PORTL&=~(1<<1);
+    
+    lx.setDigifizBufferSegment(24, 0x02,(PING&(1<<0)) ? 0 : 1); //Battery
+    lx.setDigifizBufferSegment(10, 0x80,(PING&(1<<1)) ? 0 : 1); //lights
+    lx.setDigifizBufferSegment(14, 0x80,(PINF&(1<<0)) ? 0 : 1); //main beam
+    lx.setDigifizBufferSegment(15, 0x80,(PINL&(1<<1)) ? 0 : 1); //turn left
+    lx.setDigifizBufferSegment(22, 0x08,0); //brakes
+    lx.setDigifizBufferSegment(15, 0x08,(PINL&(1<<1)) ? 0 : 1); //turn right
+}
+
+void setLCDOilIndicator(bool onoff)
+{
+  lx.setDigifizBufferSegment(24, 0x08,onoff ? 1 : 0); //Oil
+}
+
+void setLCDBrakesIndicator(bool onoff)
+{
+    lx.setDigifizBufferSegment(22, 0x08,onoff ? 1 : 0); //Oil
+}
+
+void setLCDHeatLightsIndicator(bool onoff)
+{
+    lx.setDigifizBufferSegment(11, 0x80,onoff ? 1 : 0); //Oil
+}
+
+void setLCDBackLightsHeatIndicator(bool onoff)
+{
+    lx.setDigifizBufferSegment(12, 0x80,onoff ? 1 : 0); //Oil
+}
+
+void setLCDBackWindowHeatIndicator(bool onoff)
+{
+    lx.setDigifizBufferSegment(13, 0x80,onoff ? 1 : 0); //Oil
 }
 
 void initDisplay()
@@ -131,15 +173,25 @@ void setMFABlock(uint8_t block)
 {
   if (block&0x1)
   {
+#ifdef USE_DISPLAY_LEDS
       digitalWrite(MFA1_PIN,HIGH);
       digitalWrite(MFA2_PIN,LOW);
+#else
+      digitalWrite(MFA1_PIN,LOW);
+      digitalWrite(MFA2_PIN,LOW);
+#endif
       lx.setDigifizBufferSegment(24, 0x04,1); 
       lx.setDigifizBufferSegment(24, 0x01,0);
   }
   else
   {
+#ifdef USE_DISPLAY_LEDS
       digitalWrite(MFA1_PIN,LOW);
       digitalWrite(MFA2_PIN,HIGH);
+#else
+      digitalWrite(MFA1_PIN,LOW);
+      digitalWrite(MFA2_PIN,LOW);
+#endif
       lx.setDigifizBufferSegment(24, 0x04,0); 
       lx.setDigifizBufferSegment(24, 0x01,1); 
   }
@@ -147,7 +199,7 @@ void setMFABlock(uint8_t block)
 
 void setRefuelSign(bool onoff)
 {
-    lx.setDigifizBufferSegment(23, 0x08,1);
+    lx.setDigifizBufferSegment(23, 0x08,onoff ? 1 : 0);
 }
 
 void setCheckEngine(bool onoff)
@@ -163,11 +215,11 @@ void displayMFAType(uint8_t mfaType)
             setMFAClockData(sinceStart.hours(),sinceStart.minutes());
             break;
         case MFA_STATE_TRIP_DISTANCE:
-            setMFADisplayedNumber((uint16_t)digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600);
+            setMFADisplayedNumber((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
             setFloatDot(false);
             break;
         case MFA_STATE_TRIP_L100KM:
-            setMFADisplayedNumber((uint16_t)digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100);
+            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
@@ -549,6 +601,16 @@ void setSpeedometerData(uint16_t data)
 void fireDigifiz()
 {
   lx.fireDigifiz();
+}
+
+void processLCDIndicators()
+{
+  lx.setDigifizBufferSegment(24, 0x02,(PING&(1<<0)) ? 0 : 1); //Battery
+  lx.setDigifizBufferSegment(10, 0x80,(PING&(1<<1)) ? 0 : 1); //lights
+  lx.setDigifizBufferSegment(14, 0x80,(PINF&(1<<0)) ? 0 : 1); //main beam
+  lx.setDigifizBufferSegment(15, 0x80,(PINL&(1<<1)) ? 1 : 0); //turn left
+  lx.setDigifizBufferSegment(22, 0x08,0); //brakes
+  lx.setDigifizBufferSegment(15, 0x08,(PINL&(1<<1)) ? 1 : 0); //turn right
 }
 
 void setDot(bool value)

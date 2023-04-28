@@ -25,6 +25,8 @@
 #define BRIGHTNESS_IN_PIN A9 //PK1
 #define BACKLIGHT_CTL_PIN 26 //PA4
 
+//#define USE_DISPLAY_LEDS
+
 void initDisplay();
 void init_digifiz();
 void setRPM(int rpmdata);
@@ -47,6 +49,14 @@ void setBrightness(uint8_t levels);
 void setRefuelSign(bool onoff);
 void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
+void setLCDOilIndicator(bool onoff);
+void processLCDIndicators();
+
+void setLCDBrakesIndicator(bool onoff);
+void setLCDHeatLightsIndicator(bool onoff);
+void setLCDBackLightsHeatIndicator(bool onoff);
+void setLCDBackWindowHeatIndicator(bool onoff);
+
 void fireDigifiz();
 #endif
 #endif
