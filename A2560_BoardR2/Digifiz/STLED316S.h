@@ -170,6 +170,7 @@ class STLED316S_Common
         void dispRAW(DIGITnum_t DIGITnum, uint8_t raw);
         void dispRAW(uint8_t *raw);
         void dispUdec(uint32_t nbr);
+        void dispUdecRev(uint32_t nbr);
         void dispHex(uint32_t data);
         void dispFloat(float nbr, uint8_t decimal);
         void dispDec(int32_t nbr);
@@ -177,6 +178,7 @@ class STLED316S_Common
         void setBrightnessLED(LEDnum_t LEDnum, uint8_t brightness);
         void setLED(LEDnum_t LEDnum, bool state);
         void setNumberMask(uint8_t mask);
+        void dispRefreshAll();
         uint16_t readKeyScan(void);
 
         virtual void writeData(uint8_t *data, uint8_t lenght);

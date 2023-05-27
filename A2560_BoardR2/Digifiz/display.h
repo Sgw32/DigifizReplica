@@ -66,7 +66,7 @@
 
 #define USE_DISPLAY_LEDS
 
-void initDisplay();
+void initDisplay(); 
 void setRPM(int rpmdata);
 void blinking();
 void blinking2();

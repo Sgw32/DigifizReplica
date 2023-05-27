@@ -38,7 +38,8 @@ uint8_t processOilPressure(int mRPM)
         emergency_state = 1;
     }
 
-#ifndef EMERGENCY_DISABLE_SENSOR_CHECK
+#if !defined(EMERGENCY_DISABLE_SENSOR_CHECK) && !defined(AUDI_DISPLAY)
+    //Audi Digifiz also does not have 1.8 bar sensor
     if (((last_emergency_state==0))&&
         (digitalRead(OIL_1_8BAR_PIN)==HIGH)
         &&(mRPM>emergencyRPM))  //Was a problem with Oil 1.8 bar sensor, and we reached RPM
@@ -62,6 +63,9 @@ uint8_t processOilPressure(int mRPM)
 
 void checkEmergency(int mRPM)
 {
+  #ifdef TESTMODE
+    digitalWrite(OIL_LED_PIN,HIGH); //emergency, pressure system
+  #else
     emergency_state = processOilPressure(mRPM);
     processCHECKEngine();
     if (emergency_state==0)
@@ -94,4 +98,6 @@ void checkEmergency(int mRPM)
       #endif
         buzzerOn();
     }
+  #endif
+    
 }

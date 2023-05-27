@@ -40,7 +40,7 @@
 #define PARAMETER_COMMAND_MFA_BLOCK 30
 #define PARAMETER_READ_ADDITION 128
 #define PARAMETER_SET_HOUR 255
-#define PARAMETER_SET_MINUTE 254
+#define PARAMETER_SET_MINUTE 254 
 #define PARAMETER_RESET_DAILY_MILEAGE 253
 #define PARAMETER_RESET_DIGIFIZ 252
 
@@ -60,10 +60,12 @@
 #define PARAMETER_GET_YEAR 239
 #define PARAMETER_GET_HOUR 238
 #define PARAMETER_GET_MINUTE 237
+#define PARAMETER_GET_GPIO_PINS 236
 
 void initComProtocol();
 void changeBLEName();
 void protocolParse();
 void processData(int par, long value);
+void processGPIOPinsValue(long value);
 
 #endif

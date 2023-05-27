@@ -29,6 +29,9 @@ void initDisplay()
     mx2.begin();
     mx.clear();
     mx2.clear();
+
+    setBrightness(1);
+    
     pinMode(MFA1_PIN,OUTPUT);
     pinMode(MFA2_PIN,OUTPUT);
     pinMode(BACKLIGHT_CTL_PIN,OUTPUT);

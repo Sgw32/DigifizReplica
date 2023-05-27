@@ -91,11 +91,13 @@ void setup()
   averageRPM = 0;
   averageRPMCnt = 0;
 
+  #ifdef USE_DISPLAY_LEDS
   pinMode(GPIO1_TO_GND_PIN,OUTPUT);
   pinMode(GPIO2_TO_GND_PIN,OUTPUT);
   digitalWrite(GPIO1_TO_GND_PIN,HIGH);
   digitalWrite(GPIO2_TO_GND_PIN,HIGH);
-
+  #endif
+  
   delay(100);
   Wire.begin(); // Start the I2C interface
   
@@ -173,7 +175,9 @@ ISR(TIMER4_COMPA_vect)
   }
 
   //For test fuel intake
-  //193averageRPM = 3000.0f;
+  #ifdef TESTMODE
+  averageRPM = 3000.0f;
+  #endif
     
   if (getBuzzerEnabled())
   {
@@ -194,7 +198,7 @@ ISR(TIMER4_COMPA_vect)
     current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;
 #ifdef TESTMODE
   spd_m_speedometer+=1;
-  if (spd_m_speedometer==1000)
+  if (spd_m_speedometer==25)
     spd_m_speedometer=0;
 #endif
     displaySpeedCnt = 0;
@@ -229,6 +233,9 @@ void loop()
 {
   #ifdef DIGIFIZ_LCD_DISPLAY
   processLCDIndicators();
+  fireDigifiz();
+  #endif
+  #ifdef AUDI_DISPLAY
   fireDigifiz();
   #endif
   if ((millis()-clockDot)>500)

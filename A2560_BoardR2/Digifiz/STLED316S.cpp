@@ -135,6 +135,12 @@ void STLED316S::writeData(uint8_t *data, uint8_t lenght)
     digitalWrite(_STBpin, HIGH);//STB_H();
 }
 
+
+void STLED316S_Common::dispRefreshAll()
+{
+    writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
+}
+
 /**
  * @brief Reading data byte from STLED316S
  * 
@@ -273,6 +279,7 @@ void STLED316S_Common::dispNumberRev(uint8_t digitPtr, uint32_t nbr, uint8_t min
         uint32_t nbrSel = pow10(digitPtr - 1);
 
         if(nbr < nbrSel) {
+            _dispDataBuffer[4-digitPtr] = _digitTable[17];
             if(digitPtr <= minNbrOfDigit) {
                 _dispDataBuffer[4-digitPtr] = _digitTable[0];
             } 
@@ -439,7 +446,7 @@ void STLED316S_Common::dispRAW(DIGITnum_t DIGITnum, uint8_t raw)
     if(DIGITnum==DIGITall) for(i=0;i<_nbrOfDigit;i++) _dispDataBuffer[i+1] = raw;
     else _dispDataBuffer[DIGITnum] = raw;
     
-    writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
+    //writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
 }
 
 /**
@@ -457,7 +464,7 @@ void STLED316S_Common::dispRAW(uint8_t *raw)
         _dispDataBuffer[i+1] = *raw_data;
         raw_data++;
     }
-    writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
+    //writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
 }
 
 /**
@@ -467,9 +474,22 @@ void STLED316S_Common::dispRAW(uint8_t *raw)
  */
 void STLED316S_Common::dispUdec(uint32_t nbr)
 {
+    dispNumber(_nbrOfDigit,nbr,1);
+    
+    //writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
+}
+
+
+/**
+ * @brief Display a unsigned decimal number in rev order
+ * 
+ * @param nbr : Unsigned Decimal Number
+ */
+void STLED316S_Common::dispUdecRev(uint32_t nbr)
+{
     dispNumberRev(_nbrOfDigit,nbr,1);
     
-    writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
+    //writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
 }
 
 /**
@@ -482,7 +502,7 @@ void STLED316S_Common::dispHex(uint32_t data)
     _dispDataBuffer[1] = _digitTable[data&0x0000000F];
     _dispDataBuffer[2] = _digitTable[(data&0x000000F0)>>4];
     
-    writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
+    //writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
 }
 
 /**
@@ -514,7 +534,7 @@ void STLED316S_Common::dispFloat(float nbr, uint8_t decimal)
     _dispDataBuffer[decimal + 1] |= _digDP;
 
     //Send to driver
-    writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
+    //writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
 }
 
 /**
@@ -539,7 +559,7 @@ void STLED316S_Common::dispDec(int32_t nbr)
     dispNumber(digitPtr, nbrAbs, _nbrOfDigit);
 
     //Send to driver
-    writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
+    //writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
 }
 
 /**
@@ -562,7 +582,7 @@ void STLED316S_Common::setDP(DIGITnum_t DIGITnum, uint8_t state)
         else _dispDataBuffer[DIGITnum] &= ~_digDP;
     }
     
-    writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
+    //writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
 }
 
 

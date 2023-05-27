@@ -96,6 +96,12 @@ void blinking()
     }
 }
 
+void fireDigifiz()
+{
+    stled.dispRefreshAll();
+    stled2.dispRefreshAll();
+}
+
 void blinking2()
 {
     // Uses the test function of the MAX72xx to blink the display on and off.
@@ -193,15 +199,15 @@ void setBrightness(uint8_t levels)
   #ifndef YELLOW_GREEN_LED
     mx.control(MD_MAX72XX::INTENSITY, constrain(levels,0,0xF));
     stled.setBrightness(DIGITall, levels);
-    stled.setBrightnessLED(LEDall, levels);
+    stled.setBrightnessLED(LEDall, 15);
     stled2.setBrightness(DIGITall, levels);
-    stled2.setBrightnessLED(LEDall, levels);
+    stled2.setBrightnessLED(LEDall, 15);
   #else
     mx.control(MD_MAX72XX::INTENSITY, constrain(levels,0,0xF));
     stled.setBrightness(DIGITall, levels);
-    stled.setBrightnessLED(LEDall, levels);
+    stled.setBrightnessLED(LEDall, 15);
     stled2.setBrightness(DIGITall, levels);
-    stled2.setBrightnessLED(LEDall, levels);
+    stled2.setBrightnessLED(LEDall, 15);
   #endif
 }
 
@@ -267,7 +273,7 @@ void setMFAClockData(uint8_t mfa_clock_hrs,uint8_t mfa_clock_mins)
     uint8_t dig1 = mfa_clock_minutes/10;
     //uint8_t number[10]=      {0b01111110,0b00001100,0b10110110,0b10011110,0b11001100,0b11011010,0b11111010,0b00001110,0b11111110,0b11011110};
     uint32_t num=(uint32_t)dig2*1000+(uint32_t)dig1*100+(uint32_t)dig4*10+(uint32_t)dig3+(uint32_t)dig5*10000+(uint32_t)dig6*100000;
-    stled.dispDec(num);
+    stled.dispUdec(num);
 }
 
 void setMFADisplayedNumber(int16_t data)
@@ -317,7 +323,7 @@ void setSpeedometerData(uint16_t data)
     //stled2.setNumberMask(0b00110); //21
     //stled2.setNumberMask(0b00010); //1
     //stled2.setNumberMask(0b00000); // no numbers
-    stled2.dispUdec(data);
+    stled2.dispUdecRev(data);
 }
 
 void setBarData(uint8_t data)

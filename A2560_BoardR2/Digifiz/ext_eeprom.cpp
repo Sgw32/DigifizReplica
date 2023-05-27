@@ -1,6 +1,6 @@
 #include "ext_eeprom.h"
 
-ExternalEEPROM myMem;
+ExternalEEPROM myMem; //myMem is external EEPROM (24LC512)
 uint8_t external_faulty;
 digifiz_pars digifiz_parameters;
 
@@ -10,19 +10,22 @@ bool checkMagicBytes()
 {    
     uint8_t test1,test2,test3,test4;
     uint8_t cnt = 0;
-    for (cnt=0;cnt!=10;cnt++) //What if we have a wrong negative results???
+    for (int j=0;j!=EEPROM_DOUBLING;j++)
     {
-      //Give it 10 chances
-      myMem.get(EXTERNAL_OFFSET+0,test1);
-      myMem.get(EXTERNAL_OFFSET+1,test2);
-      myMem.get(EXTERNAL_OFFSET+2,test3);
-      myMem.get(EXTERNAL_OFFSET+3,test4);
-      if ((test1=='D')&&
-          (test2=='I')&&
-          (test3=='G')&&
-          (test4=='I'))
+      for (cnt=0;cnt!=10;cnt++) //What if we have a wrong negative results???
       {
-          return true;
+        //Give it 10 chances
+        myMem.get(EXTERNAL_OFFSET+0+EEPROM_GAP_SIZE*j,test1);
+        myMem.get(EXTERNAL_OFFSET+1+EEPROM_GAP_SIZE*j,test2);
+        myMem.get(EXTERNAL_OFFSET+2+EEPROM_GAP_SIZE*j,test3);
+        myMem.get(EXTERNAL_OFFSET+3+EEPROM_GAP_SIZE*j,test4);
+        if ((test1=='D')&&
+            (test2=='I')&&
+            (test3=='G')&&
+            (test4=='I'))
+        {
+            return true;
+        }
       }
     }
     return false;
@@ -32,19 +35,22 @@ bool checkInternalMagicBytes()
 {    
     uint8_t test1,test2,test3,test4;
     uint8_t cnt = 0;
-    for (cnt=0;cnt!=10;cnt++) //What if we have a wrong negative results???
+    for (int j=0;j!=EEPROM_DOUBLING;j++)
     {
-      //Give it 10 chances
-      EEPROM.get(INTERNAL_OFFSET+0,test1);
-      EEPROM.get(INTERNAL_OFFSET+1,test2);
-      EEPROM.get(INTERNAL_OFFSET+2,test3);
-      EEPROM.get(INTERNAL_OFFSET+3,test4);
-      if ((test1=='D')&&
-          (test2=='I')&&
-          (test3=='G')&&
-          (test4=='I'))
+      for (cnt=0;cnt!=10;cnt++) //What if we have a wrong negative results???
       {
-          return true;
+        //Give it 10 chances
+        EEPROM.get(INTERNAL_OFFSET+0+EEPROM_GAP_SIZE*j,test1);
+        EEPROM.get(INTERNAL_OFFSET+1+EEPROM_GAP_SIZE*j,test2);
+        EEPROM.get(INTERNAL_OFFSET+2+EEPROM_GAP_SIZE*j,test3);
+        EEPROM.get(INTERNAL_OFFSET+3+EEPROM_GAP_SIZE*j,test4);
+        if ((test1=='D')&&
+            (test2=='I')&&
+            (test3=='G')&&
+            (test4=='I'))
+        {
+            return true;
+        }
       }
     }
     return false;
@@ -87,7 +93,11 @@ uint8_t getCurrentMemoryBlock()
 
 void load_defaults()
 {
+#ifndef AUDI_DISPLAY
     digifiz_parameters.rpmCoefficient = 3000;
+#else
+    digifiz_parameters.rpmCoefficient = 1500;
+#endif
     digifiz_parameters.speedCoefficient = 100;
     digifiz_parameters.coolantThermistorB = COOLANT_THERMISTOR_B;
     digifiz_parameters.oilThermistorB = OIL_THERMISTOR_B;
@@ -103,7 +113,11 @@ void load_defaults()
     digifiz_parameters.daily_mileage[1] = 0;
     digifiz_parameters.autoBrightness = 1;
     digifiz_parameters.brightnessLevel = 10;
-    digifiz_parameters.tankCapacity = 60;
+#ifdef AUDI_DISPLAY
+    digifiz_parameters.tankCapacity = 70;
+#else
+    digifiz_parameters.tankCapacity = 55;
+#endif
     digifiz_parameters.mfaState = 0;
     digifiz_parameters.buzzerOff = 1;
 #ifdef RPM_8000
@@ -140,7 +154,7 @@ void load_defaults()
 void initEEPROM()
 {
     external_faulty = 0;
-    load_defaults();
+    load_defaults(); //from table, not from memory
     //Serial.begin(9600);
     //Serial.println("PHL EEPROM test");
     #ifdef DISABLE_EEPROM
@@ -148,13 +162,15 @@ void initEEPROM()
     #endif
     Wire.begin();
 
-    if (myMem.begin() == false)
+    if (myMem.begin() == false) //not found in I2C chain
     {
-        external_faulty = true;
+        //These lines of code execute on most of Digifiz Replica manufactured, 
+        //since I do not put external memory on most of them(economical reasons...) 
+        external_faulty = true; //mark external as faulty
         //Serial.println("No memory detected. ");
-        if (checkInternalMagicBytes())
+        if (checkInternalMagicBytes()) //check if we have internal memory present.
         {
-          for (int j=0;j!=EEPROM_DOUBLING;j++)
+          for (int j=0;j!=EEPROM_DOUBLING;j++) //try to read correct fragment "EEPROM_DOUBLING" times
           {
             EEPROM.get(INTERNAL_OFFSET+4+EEPROM_GAP_SIZE*j,digifiz_parameters);
             uint8_t* digi_buf = (uint8_t*)&digifiz_parameters;
@@ -163,17 +179,19 @@ void initEEPROM()
             {
               crc^=digi_buf[i];
             }
-            if (crc==digifiz_parameters.crc)
+            if (crc==digifiz_parameters.crc) //fragment is good, stop here. 
               break;  
           }
         }
         else
         {
+          //We have corrupted all "EEPROM_DOUBLING" slots in memory, rewrite all the data
           EEPROM.put(INTERNAL_OFFSET+0,'D');
           EEPROM.put(INTERNAL_OFFSET+1,'I');
           EEPROM.put(INTERNAL_OFFSET+2,'G');
           EEPROM.put(INTERNAL_OFFSET+3,'I');
           EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
+          //save it 3 times
           saveParameters();
           saveParameters();
           saveParameters();
@@ -257,7 +275,7 @@ void initEEPROM()
           }
           else
           { 
-            //Magic bytes detected in both in internal and external EEPROM(the main case)
+            //Magic bytes detected in both in internal and external EEPROM(the main case in first DRs manufactured)
             //read to digifiz_parameters
             //write to internal eeprom
             for (int j=0;j!=EEPROM_DOUBLING;j++)

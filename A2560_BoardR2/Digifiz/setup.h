@@ -3,14 +3,14 @@
 
 //#define EMULATE_RTC
 //#define DISABLE_EEPROM
-#define DISABLE_MANUFACTURER_MFA
+//#define DISABLE_MANUFACTURER_MFA
 #define MANUFACTURER_MFA_SWITCH
 //#define EMERGENCY_DISABLE_SENSOR_CHECK
 
 #define OIL_RES_10000
 
 //more brightness
-//#define YELLOW_GREEN_LED 
+#define YELLOW_GREEN_LED 
     
 #define NEW_REVISION
 
@@ -22,16 +22,30 @@
 //#define KELVIN
 
 //#define USE_UIOD
-//#define UIOD_PARSE_INPUT
+#define USE_BTSERIAL //default for LED Digifiz Replica, not for UIOD
+//#define UIOD_PARSE_INPUT //default for UIOD
+
+//DEFAULT for miniUIOD and BTserial:
+#define BTserial Serial
+#define UIODserial Serial1
+
+//DEFAULT for miniUIOD if ONLY
+//#define BTserial Serial1
+//#define UIODserial Serial1
+
+
+//DEFAULT for UIOD Digifiz Replica
+//#define BTserial Serial
+//#define UIODserial Serial
 
 #define RPM_8000
 
 #define DEFAULT_MILEAGE   0L //78893L //103256L
 
-//#define TESTMODE
+#define TESTMODE
 //#define DIGIFIZ_ORIGINAL_DISPLAY
-#define DIGIFIZ_LCD_DISPLAY
-//#define AUDI_DISPLAY
+//#define DIGIFIZ_LCD_DISPLAY
+#define AUDI_DISPLAY
 
 #define COOLANT_R_AT_NORMAL_T 1000.0f //VW OEM
 

@@ -605,12 +605,12 @@ void fireDigifiz()
 
 void processLCDIndicators()
 {
-  lx.setDigifizBufferSegment(24, 0x02,(PING&(1<<0)) ? 0 : 1); //Battery
+  lx.setDigifizBufferSegment(24, 0x02,(PING&(1<<0)) ? 1 : 0); //Battery
   lx.setDigifizBufferSegment(10, 0x80,(PING&(1<<1)) ? 0 : 1); //lights
   lx.setDigifizBufferSegment(14, 0x80,(PINF&(1<<0)) ? 0 : 1); //main beam
-  lx.setDigifizBufferSegment(15, 0x80,(PINL&(1<<1)) ? 1 : 0); //turn left
+  lx.setDigifizBufferSegment(15, 0x80,(PINL&(1<<0)) ? 1 : 0); //turn left
   lx.setDigifizBufferSegment(22, 0x08,0); //brakes
-  lx.setDigifizBufferSegment(15, 0x08,(PINL&(1<<1)) ? 1 : 0); //turn right
+  lx.setDigifizBufferSegment(15, 0x08,(PINL&(1<<0)) ? 1 : 0); //turn right
 }
 
 void setDot(bool value)
