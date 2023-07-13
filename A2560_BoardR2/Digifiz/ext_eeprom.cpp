@@ -143,10 +143,25 @@ void load_defaults()
     digifiz_parameters.medianDispFilterThreshold = 65535; // value below will pass
     digifiz_parameters.coolantThermistorDefRes = 10000;
     digifiz_parameters.uptime = 0;
-#ifdef MANUFACTURER_MFA_SWITCH
-    digifiz_parameters.digifiz_options = 1;
-#else
     digifiz_parameters.digifiz_options = 0;
+#ifdef MANUFACTURER_MFA_SWITCH
+    digifiz_parameters.digifiz_options |= OPTION_MFA_MANUFACTURER;
+#endif
+    
+#ifdef GALLONS
+    digifiz_parameters.digifiz_options |= OPTION_GALLONS;
+#endif
+
+#ifdef MILES
+    digifiz_parameters.digifiz_options |= OPTION_MILES;
+#endif
+
+#ifdef FAHRENHEIT 
+    digifiz_parameters.digifiz_options |= OPTION_FAHRENHEIT;
+#endif
+
+#ifdef KELVIN 
+    digifiz_parameters.digifiz_options |= OPTION_KELVIN;
 #endif
     computeCRC();
 }

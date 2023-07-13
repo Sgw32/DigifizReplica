@@ -474,7 +474,7 @@ void STLED316S_Common::dispRAW(uint8_t *raw)
  */
 void STLED316S_Common::dispUdec(uint32_t nbr)
 {
-    dispNumber(_nbrOfDigit,nbr,1);
+    dispNumber(_nbrOfDigit,nbr,_nbrOfDigit);
     
     //writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
 }

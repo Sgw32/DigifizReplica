@@ -49,6 +49,11 @@ typedef struct digifiz_pars
 };
 
 #define OPTION_MFA_MANUFACTURER 1
+#define OPTION_MILES 2
+#define OPTION_GALLONS 4
+#define OPTION_FAHRENHEIT 8
+#define OPTION_KELVIN 16
+#define OPTION_LBAR 32
 
 void load_defaults();
 void initEEPROM();

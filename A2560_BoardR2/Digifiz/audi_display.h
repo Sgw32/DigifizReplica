@@ -31,6 +31,8 @@
 #define HARDWARE_TYPE MD_MAX72XX::GENERIC_HW
 #define MAX_DEVICES  2
 
+#define USE_DISPLAY_LEDS
+
 /*
 //Tests:
 #define CLK_PIN   13  // or SCK
@@ -102,7 +104,8 @@ void setRefuelSign(bool onoff);
 void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
 void setServiceDisplayData(uint8_t data);
-
+void setMilesKMH(bool onoff);
+void setLBar(bool onoff);
 void setAudiOptions(uint8_t options);
 
 void fireDigifiz();

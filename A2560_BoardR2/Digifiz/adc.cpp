@@ -327,7 +327,7 @@ uint8_t getGallonsInTank() //0..99
     return constrain(gasolineLevel*(float)tankCapacity*0.264172f,0,99); //where 99 of course means error 
 }
 
-uint8_t getDisplayedCoolantTemp()  //0..14
+uint8_t getDisplayedCoolantTemp()  //0..14, 0..16
 {
 #ifndef AUDI_DISPLAY
     //14 LEDs

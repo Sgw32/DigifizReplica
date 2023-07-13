@@ -29,23 +29,23 @@
 #define BTserial Serial
 #define UIODserial Serial1
 
-//DEFAULT for miniUIOD if ONLY
+//DEFAULT for miniUIOD if ONLY mUIOD is installed!!!
 //#define BTserial Serial1
 //#define UIODserial Serial1
 
 
-//DEFAULT for UIOD Digifiz Replica
+//DEFAULT for UIOD Digifiz Replica (LCD one)
 //#define BTserial Serial
 //#define UIODserial Serial
 
 #define RPM_8000
 
-#define DEFAULT_MILEAGE   0L //78893L //103256L
+#define DEFAULT_MILEAGE   125000L //78893L //103256L
 
-#define TESTMODE
+//#define TESTMODE
 //#define DIGIFIZ_ORIGINAL_DISPLAY
 //#define DIGIFIZ_LCD_DISPLAY
-#define AUDI_DISPLAY
+//#define AUDI_DISPLAY
 
 #define COOLANT_R_AT_NORMAL_T 1000.0f //VW OEM
 

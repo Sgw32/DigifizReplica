@@ -227,23 +227,38 @@ void displayMFAType(uint8_t mfaType)
             setFloatDot(true);
             break;
         case MFA_STATE_OIL_TEMP:
-            #ifdef FAHRENHEIT
+            if (digifiz_parameters.digifiz_options&OPTION_FAHRENHEIT)
+            {
               setMFADisplayedNumber((int16_t)getOilTemperatureFahrenheit());
               setFloatDot(false);
-            #else
+            }
+            else if (digifiz_parameters.digifiz_options&OPTION_KELVIN)
+            {
+              setMFADisplayedNumber((int16_t)(getOilTemperature()+273.15f));
+              setFloatDot(false);
+            }
+            else
+            {
               setMFADisplayedNumber((int16_t)(getOilTemperature()));
               setFloatDot(true);
-            #endif
+            }
             break;
         case MFA_STATE_AIR_TEMP:
-            #ifdef FAHRENHEIT
+            if (digifiz_parameters.digifiz_options&OPTION_FAHRENHEIT)
+            {
               setMFADisplayedNumber((int16_t)getAmbientTemperatureFahrenheit());
               setFloatDot(false);
-            #else
+            }
+            else if (digifiz_parameters.digifiz_options&OPTION_KELVIN)
+            { 
+              setMFADisplayedNumber((int16_t)(getAmbientTemperature()+273.15f));
+              setFloatDot(false);
+            }
+            else
+            {
               setMFADisplayedNumber((int16_t)getAmbientTemperature());
               setFloatDot(true);
-            #endif
-            
+            }
             break;
         default:
             break;

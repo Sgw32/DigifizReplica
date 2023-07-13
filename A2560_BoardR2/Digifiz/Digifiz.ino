@@ -147,9 +147,10 @@ ISR(TIMER4_COMPA_vect)
   {
     spd_m = 1000000/spd_m ; //Hz
     spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
-    #ifdef MILES
-    spd_m *= 0.6214;
-    #endif
+    //#ifdef MILES
+    if (digifiz_parameters.digifiz_options&OPTION_MILES)
+      spd_m *= 0.6214;
+    //#endif
     spd_m /= 100;
   }
 #ifndef TESTMODE
@@ -205,19 +206,24 @@ ISR(TIMER4_COMPA_vect)
   }
   //setSpeedometerData(getRawBrightnessLevel());
   setRPMData(averageRPM);
-  #ifndef GALLONS
-  uint8_t fuel = getLitresInTank();
-  if (fuel<10)
-    setRefuelSign(true);
+  uint8_t fuel = 0;
+  if (digifiz_parameters.digifiz_options&OPTION_GALLONS)
+  {
+    fuel = getGallonsInTank();
+    if (fuel<2)
+      setRefuelSign(true);
+    else
+      setRefuelSign(false);
+  }
   else
-    setRefuelSign(false);
-  #else
-  uint8_t fuel = getGallonsInTank();
-  if (fuel<2)
-    setRefuelSign(true);
-  else
-    setRefuelSign(false);
-  #endif
+  {
+    fuel = getLitresInTank();
+    if (fuel<10)
+      setRefuelSign(true);
+    else
+      setRefuelSign(false);  
+  }
+  
   setFuel(fuel);
   #if !defined(DIGIFIZ_ORIGINAL_DISPLAY) && !defined(DIGIFIZ_LCD_DISPLAY)
     setCoolantData(getDisplayedCoolantTemp());

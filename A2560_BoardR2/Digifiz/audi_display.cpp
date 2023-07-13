@@ -26,7 +26,7 @@ uint8_t backlight1 = 0b11110101;
 uint8_t barData_mem = 0;
 uint8_t clockHoursAudi = 0;
 uint8_t clockMinsAudi = 0;
-uint8_t audiOptions = 0x6;
+uint8_t audiOptions = 0b110;//0x6;
 
 void initDisplay()
 {
@@ -56,6 +56,30 @@ void initDisplay()
     checkEngineActive = false;
 }
 
+void setMilesKMH(bool onoff)
+{
+  if (onoff)
+  {
+    audiOptions = (audiOptions&0b11111100)|0b01;
+  }
+  else
+  {
+    audiOptions = (audiOptions&0b11111100)|0b10;
+  }
+}
+
+void setLBar(bool onoff)
+{
+  if (onoff)
+  {
+    audiOptions = (audiOptions&0b11110011)|0b0100;
+  }
+  else
+  {
+    audiOptions = (audiOptions&0b11110011)|0b1000;
+  }
+}
+
 void setServiceDisplayData(uint8_t data)
 {
   
@@ -74,6 +98,8 @@ void setRPM(int rpmdata)
 void setBacklight(bool onoff)
 {
   backlightStatus = onoff;
+  setMilesKMH((digifiz_parameters.digifiz_options&OPTION_MILES) ? 1 : 0);
+  setLBar((digifiz_parameters.digifiz_options&OPTION_LBAR) ? 1 : 0);
   stled.setLED(LEDall, onoff); //always
   stled2.setLED(audiOptions, true);
   stled2.setLED(~audiOptions, false);
