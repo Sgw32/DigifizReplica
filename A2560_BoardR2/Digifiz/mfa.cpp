@@ -3,6 +3,7 @@
 #include "orig_display.h"
 #include "lcd_display.h"
 #include "audi_display.h"
+#include "audi_red_display.h"
 
 uint8_t mfaMemorySelected = 0;
 uint8_t prevMFAMode = HIGH;
@@ -137,7 +138,7 @@ void pressMFAReset()
         case MFA_STATE_TRIP_MEAN_SPEED:
             digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock] = 0;
             break;
-#ifndef AUDI_DISPLAY
+#if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
         case MFA_STATE_OIL_TEMP:
             //no
             break;

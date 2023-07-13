@@ -656,6 +656,16 @@ void STLED316S_Common::setLED(LEDnum_t LEDnum, bool state)
         else _LEDstate &= ~LEDnum;
     }
     
+    //data[0] = STLED316S_DATA_WR | STLED316S_LED_PAGE;
+    //data[1] = _LEDstate;
+    //writeData(&data[0],2);
+}
+
+
+void STLED316S_Common::setLEDDigit(uint8_t dig)
+{
+    uint8_t data[2];
+      _LEDstate = _digitTable[dig];
     data[0] = STLED316S_DATA_WR | STLED316S_LED_PAGE;
     data[1] = _LEDstate;
     writeData(&data[0],2);

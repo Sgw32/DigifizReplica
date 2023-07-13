@@ -1,6 +1,7 @@
 #include "emergency.h"
 #include "lcd_display.h"
 #include "audi_display.h"
+#include "audi_red_display.h"
 
 uint8_t emergency_state = 0;
 uint16_t emergencyRPM = 3000;
@@ -38,7 +39,7 @@ uint8_t processOilPressure(int mRPM)
         emergency_state = 1;
     }
 
-#if !defined(EMERGENCY_DISABLE_SENSOR_CHECK) && !defined(AUDI_DISPLAY)
+#if !defined(EMERGENCY_DISABLE_SENSOR_CHECK) && !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
     //Audi Digifiz also does not have 1.8 bar sensor
     if (((last_emergency_state==0))&&
         (digitalRead(OIL_1_8BAR_PIN)==HIGH)

@@ -177,6 +177,7 @@ class STLED316S_Common
         void setDP(DIGITnum_t DIGITnum, uint8_t state);
         void setBrightnessLED(LEDnum_t LEDnum, uint8_t brightness);
         void setLED(LEDnum_t LEDnum, bool state);
+        void setLEDDigit(uint8_t dig);
         void setNumberMask(uint8_t mask);
         void dispRefreshAll();
         uint16_t readKeyScan(void);

@@ -11,6 +11,7 @@
 #include "mfa.h"
 #include "setup.h"
 #include "audi_display.h"
+#include "audi_red_display.h"
 
 //#include <DS3231.h>
 #include <RTClib.h>
@@ -241,7 +242,7 @@ void loop()
   processLCDIndicators();
   fireDigifiz();
   #endif
-  #ifdef AUDI_DISPLAY
+  #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
   fireDigifiz();
   #endif
   if ((millis()-clockDot)>500)
@@ -273,7 +274,7 @@ void loop()
     digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]+=spd_m;
     digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] = getCurrentIntakeFuelConsumption();//getFuelConsumption()*digifiz_parameters.tankCapacity;
     setMileage(uptimeDisplayEnabled ? (digifiz_parameters.uptime/3600) : (digifiz_parameters.mileage/3600)); //to km
-    #ifdef AUDI_DISPLAY
+    #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
     setDailyMileage((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
     #endif
     #ifndef YELLOW_GREEN_LED

@@ -9,7 +9,7 @@
 #define MFA_SENSOR_PIN 23 //PA1
 
 
-#ifndef AUDI_DISPLAY
+#if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
 #define MFA_STATE_TRIP_DURATION 0
 #define MFA_STATE_TRIP_DISTANCE 1
 #define MFA_STATE_TRIP_L100KM   2

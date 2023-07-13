@@ -329,14 +329,23 @@ uint8_t getGallonsInTank() //0..99
 
 uint8_t getDisplayedCoolantTemp()  //0..14, 0..16
 {
-#ifndef AUDI_DISPLAY
+#ifdef AUDI_DISPLAY
+    //16 LEDs
+    return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance)/
+            (digifiz_parameters.coolantMaxResistance - digifiz_parameters.coolantMinResistance)*16.0f),0,16);
+#endif
+#ifdef AUDI_RED_DISPLAY
+    //17 LEDs
+    return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance)/
+            (digifiz_parameters.coolantMaxResistance - digifiz_parameters.coolantMinResistance)*17.0f),0,17);
+
+#endif
+
+#if !defined(AUDI_RED_DISPLAY) && !defined(AUDI_DISPLAY)
     //14 LEDs
     return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance)/
             (digifiz_parameters.coolantMaxResistance - digifiz_parameters.coolantMinResistance)*14.0f),0,14); 
-#else
-    //16 LEDs
-    return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance)/
-            (digifiz_parameters.coolantMaxResistance - digifiz_parameters.coolantMinResistance)*16.0f),0,16); 
+ 
 #endif            
 }
 
