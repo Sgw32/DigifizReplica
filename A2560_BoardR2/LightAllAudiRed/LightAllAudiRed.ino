@@ -22,7 +22,7 @@ void loop()
     mfa=0;
   delay(100);
   setMileage(mileage);
-  setMFAType(6);
+    setMFAType(6);
   setAuxDigit(mileage);
   setFuel(66);
   setMFAClockData(00,12);
@@ -33,6 +33,7 @@ void loop()
   //setCoolantData(mileage%18);
   setCoolantData(16);
   setBarData(16);
+  fireDigifiz();
   /*setAll(0);
   setMFAClockData(12,34);
   setMFADisplayedNumber(1234);

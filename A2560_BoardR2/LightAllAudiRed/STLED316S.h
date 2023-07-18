@@ -129,17 +129,18 @@ class STLED316S_Common
 {
     private:
         uint8_t _dispDataBuffer[7]; //!< Memory buffer used for display
-        uint8_t _digitTable[17] = {0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F,0x77,0x7C,0x39,0x5E,0x79,0x71,0x40};
+        uint8_t _digitTable[18] = {0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F,0x77,0x7C,0x39,0x5E,0x79,0x71,0x40,0x00};
         uint8_t _digitBrightness[3];
         uint8_t _LEDbrightness[4];
         uint8_t _digDP;
         uint8_t _LEDstate;  //!< Memory of LEDs state
         uint8_t _nbrOfDigit;
+        uint8_t _numberMask = 0xFF;
         const uint8_t CHAR_MINUS = 0x10;
         uint32_t pow10(uint8_t factor);
         uint8_t dispNumberMinusSign(uint32_t nbr, uint8_t minPosition);
         void dispNumber(uint8_t digitPtr, uint32_t nbr, uint8_t minNbrOfDigit);
-
+        void dispNumberRev(uint8_t digitPtr, uint32_t nbr, uint8_t minNbrOfDigit);
     public:
         //STLED316S Register 
         static const uint8_t STLED316S_DISP_ON_CMD = 0x0D;
@@ -169,6 +170,7 @@ class STLED316S_Common
         void dispRAW(DIGITnum_t DIGITnum, uint8_t raw);
         void dispRAW(uint8_t *raw);
         void dispUdec(uint32_t nbr);
+        void dispUdecRev(uint32_t nbr);
         void dispHex(uint32_t data);
         void dispFloat(float nbr, uint8_t decimal);
         void dispDec(int32_t nbr);
@@ -176,6 +178,8 @@ class STLED316S_Common
         void setBrightnessLED(LEDnum_t LEDnum, uint8_t brightness);
         void setLED(LEDnum_t LEDnum, bool state);
         void setLEDDigit(uint8_t dig);
+        void setNumberMask(uint8_t mask);
+        void dispRefreshAll();
         uint16_t readKeyScan(void);
 
         virtual void writeData(uint8_t *data, uint8_t lenght);

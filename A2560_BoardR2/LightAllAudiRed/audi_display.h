@@ -93,4 +93,6 @@ void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
 void setServiceDisplayData(uint8_t data);
 
+void fireDigifiz();
+
 #endif

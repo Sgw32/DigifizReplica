@@ -101,11 +101,7 @@ void setRPM(int rpmdata)
 void setBacklight(bool onoff)
 {
   backlightStatus = onoff;
-  setMilesKMH((digifiz_parameters.digifiz_options&OPTION_MILES) ? 1 : 0);
-  setLBar((digifiz_parameters.digifiz_options&OPTION_LBAR) ? 1 : 0);
-  stled.setLED(LEDall, onoff); //always
-  stled2.setLED(audiOptions, true);
-  stled2.setLED(~audiOptions, false);
+  
 }
 
 void blinking()
@@ -177,36 +173,7 @@ void setCheckEngine(bool onoff)
 
 void displayMFAType(uint8_t mfaType)
 {    
-    switch(digifiz_parameters.mfaState)
-    {
-        case MFA_AVERAGE_SPEED:
-            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
-            setFloatDot(true);
-            break; 
-        case MFA_AVERAGE_CONSUMPTION:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
-            setFloatDot(true);
-            break;
-        case MFA_FUEL:
-            setMFADisplayedNumber((uint16_t)fuel_ind);
-            setFloatDot(false);
-            break; 
-        case MFA_MPG:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
-            setFloatDot(true);
-            break;  
-        case MFA_AVERAGE_MPH:
-            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
-            break;
-        case MFA_DAILY_MILEAGE:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
-            break;
-        case MFA_DRIVING_TIME:
-            setMFAClockData(clockHoursAudi,clockMinsAudi);
-            break;
-        default:
-            break;
-    }
+    setMFADisplayedNumber(12);
 }
 
 void setMFAType(uint8_t type)
@@ -310,8 +277,6 @@ void setMFAClockData(uint8_t mfa_clock_hrs,uint8_t mfa_clock_mins)
 
 void setMFADisplayedNumber(int16_t data)
 {
-    uint8_t mfa_clock_hours = (data/100)%100;
-    uint8_t mfa_clock_minutes = (data)%100;
     setMFAClockData(00,12);
 }
 

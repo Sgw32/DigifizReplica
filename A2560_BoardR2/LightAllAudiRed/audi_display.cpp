@@ -16,6 +16,13 @@ uint8_t barData_mem = 0;
 uint8_t clock_h = 0;
 uint8_t clock_m = 0;
 
+void fireDigifiz()
+{
+    stled.dispRefreshAll();
+    stled2.dispRefreshAll();
+}
+
+
 void initDisplay()
 {
     mx.begin();
