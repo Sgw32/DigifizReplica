@@ -138,7 +138,13 @@ void STLED316S::writeData(uint8_t *data, uint8_t lenght)
 
 void STLED316S_Common::dispRefreshAll()
 {
+    /*uint8_t data[2];
+    data[0] = STLED316S_DATA_WR | STLED316S_LED_PAGE;
+    data[1] = _LEDstate;
+    writeData(&data[0],2);*/
     writeData(&_dispDataBuffer[0],_nbrOfDigit+1);
+    //delayMicroseconds(10);    
+    //delayMicroseconds(10);
 }
 
 /**
@@ -665,10 +671,7 @@ void STLED316S_Common::setLED(LEDnum_t LEDnum, bool state)
 void STLED316S_Common::setLEDDigit(uint8_t dig)
 {
     uint8_t data[2];
-      _LEDstate = _digitTable[dig];
-    data[0] = STLED316S_DATA_WR | STLED316S_LED_PAGE;
-    data[1] = _LEDstate;
-    writeData(&data[0],2);
+    _LEDstate = _digitTable[dig];
 }
 
 /**

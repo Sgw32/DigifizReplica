@@ -312,7 +312,7 @@ void setMFADisplayedNumber(int16_t data)
 {
     uint8_t mfa_clock_hours = (data/100)%100;
     uint8_t mfa_clock_minutes = (data)%100;
-    setMFAClockData(mfa_clock_hours,mfa_clock_minutes);
+    setMFAClockData(00,12);
 }
 
 void setFuel(uint8_t litres)
@@ -350,15 +350,15 @@ void setRPMData(uint16_t data)
 
 void setSpeedometerData(uint16_t data)
 {
-    uint32_t dig3 = (data/100)%10;
-    uint32_t dig2 = (data/10)%10;
-    uint32_t dig1 = data%10;
-    uint32_t dig_h2 = (clock_h%10);
-    uint32_t dig_m2 = ((clock_m/10)%10);
-    uint32_t dig_m1 = clock_m%10;
-    uint32_t num=dig_m1*100000+dig_m2*10000+dig_h2*1000+dig1*100+dig2*10+dig3;
-    stled2.dispDec(num);
-    stled2.setLEDDigit((uint8_t)(clock_h/10));
+    uint8_t dig3 = (data/100)%10;
+    uint8_t dig2 = (data/10)%10;
+    uint8_t dig1 = data%10;
+    uint32_t num=dig1*100+dig2*10+dig3;
+    //stled2.setNumberMask(0b00110); //21
+    //stled2.setNumberMask(0b00010); //1
+    //stled2.setNumberMask(0b00000); // no numbers
+    stled2.dispUdecRev(data);
+    //stled2.setLEDDigit((uint8_t)(clock_h/10));
 }
 
 void setBarData(uint8_t data)
