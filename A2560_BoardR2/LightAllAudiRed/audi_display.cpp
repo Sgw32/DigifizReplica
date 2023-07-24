@@ -198,6 +198,7 @@ void setClockData(uint8_t clock_hours,uint8_t clock_minutes)
 void setFuel(uint8_t litres)
 {
     fuel_ind = litres;
+    barData_mem = (uint8_t)(((float)fuel_ind/70.0f)*17);
 }
 
 void setRPMData(uint16_t data)

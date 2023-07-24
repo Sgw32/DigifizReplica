@@ -26,16 +26,17 @@ uint8_t backlight1 = 0b11110101;
 uint8_t barData_mem = 0;
 uint8_t clockHoursAudi = 0;
 uint8_t clockMinsAudi = 0;
-uint8_t audiOptions = 0b110;//0x6;
+uint8_t audiOptions = 0b11111101;//0b110;//0x6;
 
-uint8_t clock_h = 0;
+uint16_t clock_h = 0;
+uint16_t prev_clock_h = 0;
 uint8_t clock_m = 0;
 
 void initDisplay()
 {
     mx.begin();
     mx.clear();
-    stled.begin(SEG1, SEG2, SEG3, SEG4, SEG5, SEG6, SEG8, SEG7);
+    stled.begin(SEG1, SEG2, SEG3, SEG4, SEG5, SEG6, SEG7, SEG8);
     stled.setBrightness(DIGITall, 2);
     stled.setBrightnessLED(LEDall, 1);
     stled.clearDisplay();
@@ -75,11 +76,11 @@ void setLBar(bool onoff)
 {
   if (onoff)
   {
-    audiOptions = (audiOptions&0b11110011)|0b0100;
+    //audiOptions = (audiOptions&0b11110011)|0b0100;
   }
   else
   {
-    audiOptions = (audiOptions&0b11110011)|0b1000;
+      //audiOptions = (audiOptions&0b11110011)|0b1000;
   }
 }
 
@@ -101,7 +102,8 @@ void setRPM(int rpmdata)
 void setBacklight(bool onoff)
 {
   backlightStatus = onoff;
-  
+  stled.setLED(audiOptions, true);
+  stled.setLED(~audiOptions, false);
 }
 
 void blinking()
@@ -119,6 +121,8 @@ void blinking()
     mx.setColumn(col, 0x00);
     delay(100);
     }
+
+    
 }
 
 void fireDigifiz()
@@ -165,7 +169,7 @@ void setRefuelSign(bool onoff)
 void setCheckEngine(bool onoff)
 {
     checkEngineActive = onoff;
-    if (!onoff)
+  if (!onoff)
     CHECK_ENGINE_PORT&=~(1<<CHECK_ENGINE_PIN);
   else 
     CHECK_ENGINE_PORT|=(1<<CHECK_ENGINE_PIN);
@@ -173,7 +177,36 @@ void setCheckEngine(bool onoff)
 
 void displayMFAType(uint8_t mfaType)
 {    
-    setMFADisplayedNumber(12);
+    switch(digifiz_parameters.mfaState)
+    {
+        case MFA_AVERAGE_SPEED:
+            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
+            setFloatDot(true);
+            break; 
+        case MFA_AVERAGE_CONSUMPTION:
+            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
+            setFloatDot(true);
+            break;
+        case MFA_FUEL:
+            setMFADisplayedNumber((uint16_t)fuel_ind);
+            setFloatDot(false);
+            break; 
+        case MFA_MPG:
+            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
+            setFloatDot(true);
+            break;  
+        case MFA_AVERAGE_MPH:
+            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
+            break;
+        case MFA_DAILY_MILEAGE:
+            setMFADisplayedNumber((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
+            break;
+        case MFA_DRIVING_TIME:
+            setMFAClockData(clockHoursAudi,clockMinsAudi);
+            break;
+        default:
+            break;
+    }
 }
 
 void setMFAType(uint8_t type)
@@ -195,26 +228,21 @@ void setMFAType(uint8_t type)
     uint8_t mfa2_led[7]={0b0,0b0,0b0,0b0,0b0,0b0,0b11};
   mx.setColumn(0, mfa1_led[type]);
   if (backlightStatus)
+  {
     mx.setColumn(1, backlight1|mfa2_led[type]);
+    
+  }
   else
     mx.setColumn(1, mfa2_led[type]);
 }
 
 void setBrightness(uint8_t levels)
 {
-  #ifndef YELLOW_GREEN_LED
-    mx.control(MD_MAX72XX::INTENSITY, constrain(levels,0,0xF));
-    stled.setBrightness(DIGITall, levels);
-    stled.setBrightnessLED(LEDall, 15);
-    stled2.setBrightness(DIGITall, levels);
-    stled2.setBrightnessLED(LEDall, 15);
-  #else
-    mx.control(MD_MAX72XX::INTENSITY, constrain(levels,0,0xF));
-    stled.setBrightness(DIGITall, levels);
-    stled.setBrightnessLED(LEDall, 15);
-    stled2.setBrightness(DIGITall, levels);
-    stled2.setBrightnessLED(LEDall, 15);
-  #endif
+  mx.control(MD_MAX72XX::INTENSITY, 0xF);
+  stled.setBrightness(DIGITall, levels);
+  stled.setBrightnessLED(LEDall, 15);
+  stled2.setBrightness(DIGITall, levels);
+  stled2.setBrightnessLED(LEDall, 15);
 }
 
 void setMileage(uint32_t mileage)
@@ -251,6 +279,7 @@ void setAuxDigit(uint8_t digit)
 
 void setClockData(uint8_t clock_hours,uint8_t clock_minutes)
 {
+   prev_clock_h = clock_h;
    clock_h = clock_hours;
    clock_m = clock_minutes;
 }
@@ -272,21 +301,25 @@ void setMFAClockData(uint8_t mfa_clock_hrs,uint8_t mfa_clock_mins)
     uint8_t dig1 = mfa_clock_minutes/10;
     //uint8_t number[10]=      {0b01111110,0b00001100,0b10110110,0b10011110,0b11001100,0b11011010,0b11111010,0b00001110,0b11111110,0b11011110};
     uint32_t num=(uint32_t)dig2*1000+(uint32_t)dig1*100+(uint32_t)dig4*10+(uint32_t)dig3+(uint32_t)dig5*10000+(uint32_t)dig6*100000;
-    stled.dispUdec(num);
+    stled.dispDec(num);
 }
 
 void setMFADisplayedNumber(int16_t data)
 {
-    setMFAClockData(00,12);
+    uint8_t mfa_clock_hours = (data/100)%100;
+    uint8_t mfa_clock_minutes = (data)%100;
+    setMFAClockData(mfa_clock_hours,mfa_clock_minutes);
 }
 
 void setFuel(uint8_t litres)
 {
     fuel_ind = litres;
+    barData_mem = (uint8_t)(((float)fuel_ind/digifiz_parameters.tankCapacity)*17);
 }
 
 void setRPMData(uint16_t data)
 {
+  //return;
     uint8_t number[9]={0b00000000,0b00000010,0b00000110,0b00001110,0b00011110,0b00111110,0b01111110,0b11111110,0b11111111};
     long long leds_lit = constrain(data,1000,7000);
     leds_lit-=1000; 
@@ -315,15 +348,12 @@ void setRPMData(uint16_t data)
 
 void setSpeedometerData(uint16_t data)
 {
-    uint8_t dig3 = (data/100)%10;
-    uint8_t dig2 = (data/10)%10;
-    uint8_t dig1 = data%10;
-    uint32_t num=dig1*100+dig2*10+dig3;
-    //stled2.setNumberMask(0b00110); //21
-    //stled2.setNumberMask(0b00010); //1
-    //stled2.setNumberMask(0b00000); // no numbers
-    stled2.dispUdecRev(data);
-    //stled2.setLEDDigit((uint8_t)(clock_h/10));
+    stled2.dispUdecRevDual(data,clock_h*100+clock_m);
+    if (prev_clock_h!=clock_h)
+    {
+      stled2.setLEDDigit((uint8_t)(clock_h/10));
+      prev_clock_h = clock_h;
+    }
 }
 
 void setBarData(uint8_t data)
@@ -343,6 +373,8 @@ void setFloatDot(bool value)
 
 void setCoolantData(uint16_t data)
 {
+    //data = 9;
+  
     uint8_t number[5]={0b0000,0b0001,0b0011,0b0111,0b1111};
     uint8_t numberBar[4]={0b0000,0b0100,0b1100,0b11100};
     uint8_t number2[5]={0b0000,0b0010,0b0110,0b1110,0b11110};
@@ -360,14 +392,17 @@ void setCoolantData(uint16_t data)
     {
       mx.setColumn(col, 0xff);
     }
-    for (uint8_t col=8+blocks_lit; col<12; col++)
+    mx.setColumn(8+blocks_lit, 0b1100000|number[data%4+1]);
+    for (uint8_t col=8+blocks_lit+1; col<12; col++)
     {
-      mx.setColumn(col, 0x00);
+      mx.setColumn(col, 0b1100000);
     }
+
+    
     
     if ((8+blocks_lit)!=12)
     {
-      mx.setColumn(8+blocks_lit, number[data%4+1]);
+      
       if (barData_mem<4)
         mx.setColumn(12, numberBar[barData_mem%4]);
       else
@@ -393,5 +428,9 @@ void setCoolantData(uint16_t data)
       mx.setColumn(12+blocks_lit2, number2[barData_mem%4+1]);
     if (barData_mem>15)
       mx.setColumn(15,number3[barData_mem%4+1]);
+
+      //mx.setColumn(8, );
+    //mx.setColumn(9, );
+      //mx.setColumn(15, 0b1100000);
 }
 #endif

@@ -54,7 +54,7 @@ void processMFA()
       }
     }
 #endif
-    
+#ifndef DISABLE_SENSOR_BUTTON
     if ((digitalRead(MFA_SENSOR_PIN)==HIGH)&&(prevMFASensor==LOW))
     {
         //Pressed MFA Sensor(on Digifiz)
@@ -75,7 +75,7 @@ void processMFA()
         else if ((millis() - pressSensorTime)>7000)
             pressMFASensorSuperSuperLong();
     }
-    
+#endif
     prevMFAMode = digitalRead(MFA_MODE_PIN);
     prevMFABlock = digitalRead(MFA_BLOCK_PIN);
     prevMFAReset = digitalRead(MFA_RESET_PIN);

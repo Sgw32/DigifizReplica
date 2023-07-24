@@ -31,8 +31,8 @@ void loop()
   mileage++;
   setSpeedometerData(mileage&0xFF);
   //setCoolantData(mileage%18);
-  setCoolantData(16);
-  setBarData(16);
+  setCoolantData(8);
+  setBarData(5);
   fireDigifiz();
   /*setAll(0);
   setMFAClockData(12,34);

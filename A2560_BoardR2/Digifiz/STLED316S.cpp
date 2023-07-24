@@ -78,14 +78,14 @@ void STLED316S_SPI::writeData(uint8_t *data, uint8_t lenght)
     
     SPI.beginTransaction(SPISettings(100000, LSBFIRST, SPI_MODE0)); //Send LSB first
     digitalWrite(_STBpin, LOW);//STB_L();
-    delayMicroseconds(2);   
+    delayMicroseconds(5);   
     for(i=0;i<lenght;i++) {
         SendByte = *p_data; 
         //SendByte = SwapBit(*p_data); //if SPI send MSB first
         SPI.transfer(SendByte);
         p_data++;
     } 
-    delayMicroseconds(2);
+    delayMicroseconds(5);
     digitalWrite(_STBpin, HIGH);//STB_H();
     SPI.endTransaction();
 }
@@ -125,13 +125,13 @@ void STLED316S::writeData(uint8_t *data, uint8_t lenght)
 
     digitalWrite(_CLKpin, HIGH);
     digitalWrite(_STBpin, LOW);//STB_L();
-    delayMicroseconds(2); 
+    delayMicroseconds(20); 
     for(i=0;i<lenght;i++) {
         SendByte = *p_data; 
         sendSW_SPI(SendByte);
         p_data++;
     }
-    delayMicroseconds(2);
+    delayMicroseconds(20);
     digitalWrite(_STBpin, HIGH);//STB_H();
 }
 
@@ -295,6 +295,60 @@ void STLED316S_Common::dispNumberRev(uint8_t digitPtr, uint32_t nbr, uint8_t min
         digitPtr--;
     }
 }
+
+/**
+ * @brief Display number1 in reverse order 
+ * 
+ * @param digitPtr Digit starting position
+ * @param nbr Number to display
+ * @param minNbrOfDigit Minimum number of digits of the number
+ */
+void STLED316S_Common::dispNumberRev1(uint8_t digitPtr, uint32_t nbr1, uint8_t minNbrOfDigit)
+{
+    uint8_t dig1 = (nbr1)%10;
+    uint8_t dig2 = (nbr1/10)%10;
+    uint8_t dig3 = (nbr1/100)%10;
+    
+    _dispDataBuffer[3] = _digitTable[dig1];
+    if (dig2)
+      _dispDataBuffer[2] = _digitTable[dig2];
+    else
+      _dispDataBuffer[2] = _digitTable[17];
+    if (dig3)
+      _dispDataBuffer[1] = _digitTable[dig3];
+    else
+      _dispDataBuffer[1] = _digitTable[17];
+    
+}
+
+
+/**
+ * @brief Display number2 in reverse order 
+ * 
+ * @param digitPtr Digit starting position
+ * @param nbr Number to display
+ * @param minNbrOfDigit Minimum number of digits of the number
+ */
+void STLED316S_Common::dispNumberRev2(uint8_t digitPtr, uint32_t nbr2, uint8_t minNbrOfDigit)
+{
+    uint8_t dig1 = (nbr2/1)%10;
+    uint8_t dig2 = (nbr2/10)%10;
+    uint8_t dig3 = (nbr2/100)%10;
+    
+    _dispDataBuffer[6] = _digitTable[dig1];
+    if (dig2)
+      _dispDataBuffer[5] = _digitTable[dig2];
+    else
+      _dispDataBuffer[5] = _digitTable[0];
+    if (dig3)
+      _dispDataBuffer[4] = _digitTable[dig3];
+    else
+      _dispDataBuffer[4] = _digitTable[0];
+
+
+    _dispDataBuffer[4] |= _digDP;
+}
+
 
 void STLED316S_Common::setNumberMask(uint8_t mask)
 {
@@ -499,6 +553,17 @@ void STLED316S_Common::dispUdecRev(uint32_t nbr)
 }
 
 /**
+ * @brief Display a 2 decimal numbers in rev order 3 by 3 (6 total)
+ * 
+ * @param nbr : Unsigned Decimal Number
+ */
+void STLED316S_Common::dispUdecRevDual(uint16_t nbr1,uint16_t nbr2)
+{
+      dispNumberRev1(_nbrOfDigit,nbr1,1);
+      dispNumberRev2(_nbrOfDigit,nbr2,1);
+}
+
+/**
  * @brief Display a hexadecimal data
  * 
  * @param data : Hex
@@ -662,9 +727,9 @@ void STLED316S_Common::setLED(LEDnum_t LEDnum, bool state)
         else _LEDstate &= ~LEDnum;
     }
     
-    //data[0] = STLED316S_DATA_WR | STLED316S_LED_PAGE;
-    //data[1] = _LEDstate;
-    //writeData(&data[0],2);
+    data[0] = STLED316S_DATA_WR | STLED316S_LED_PAGE;
+    data[1] = _LEDstate;
+    writeData(&data[0],2);
 }
 
 
@@ -672,6 +737,9 @@ void STLED316S_Common::setLEDDigit(uint8_t dig)
 {
     uint8_t data[2];
     _LEDstate = _digitTable[dig];
+    data[0] = STLED316S_DATA_WR | STLED316S_LED_PAGE;
+    data[1] = _LEDstate;
+    writeData(&data[0],2);
 }
 
 /**

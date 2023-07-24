@@ -113,7 +113,7 @@ void load_defaults()
     digifiz_parameters.daily_mileage[1] = 0;
     digifiz_parameters.autoBrightness = 1;
     digifiz_parameters.brightnessLevel = 10;
-#ifdef defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
+#if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
     digifiz_parameters.tankCapacity = 70;
 #else
     digifiz_parameters.tankCapacity = 55;
@@ -121,7 +121,7 @@ void load_defaults()
     digifiz_parameters.mfaState = 0;
     digifiz_parameters.buzzerOff = 1;
 #ifdef RPM_8000
-#ifdef defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
+#if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
     digifiz_parameters.maxRPM = 7000; //Audi digifiz supports only 7000 RPM
 #else
     digifiz_parameters.maxRPM = 8000;

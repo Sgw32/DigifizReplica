@@ -386,14 +386,15 @@ void setCoolantData(uint16_t data)
     {
       mx.setColumn(col, 0xff);
     }
-    for (uint8_t col=8+blocks_lit; col<12; col++)
+    mx.setColumn(8+blocks_lit, number[data%4+1]);
+    for (uint8_t col=8+blocks_lit+1; col<12; col++)
     {
       mx.setColumn(col, 0x00);
     }
     
     if ((8+blocks_lit)!=12)
     {
-      mx.setColumn(8+blocks_lit, number[data%4+1]);
+      
       if (barData_mem<4)
         mx.setColumn(12, numberBar[barData_mem%4]);
       else

@@ -141,6 +141,8 @@ class STLED316S_Common
         uint8_t dispNumberMinusSign(uint32_t nbr, uint8_t minPosition);
         void dispNumber(uint8_t digitPtr, uint32_t nbr, uint8_t minNbrOfDigit);
         void dispNumberRev(uint8_t digitPtr, uint32_t nbr, uint8_t minNbrOfDigit);
+        void dispNumberRev1(uint8_t digitPtr, uint32_t nbr, uint8_t minNbrOfDigit);
+        void dispNumberRev2(uint8_t digitPtr, uint32_t nbr, uint8_t minNbrOfDigit);
     public:
         //STLED316S Register 
         static const uint8_t STLED316S_DISP_ON_CMD = 0x0D;
@@ -171,6 +173,7 @@ class STLED316S_Common
         void dispRAW(uint8_t *raw);
         void dispUdec(uint32_t nbr);
         void dispUdecRev(uint32_t nbr);
+        void dispUdecRevDual(uint16_t nbr1,uint16_t nbr2);
         void dispHex(uint32_t data);
         void dispFloat(float nbr, uint8_t decimal);
         void dispDec(int32_t nbr);
