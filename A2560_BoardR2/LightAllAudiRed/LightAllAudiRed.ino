@@ -1,4 +1,4 @@
-  #include "audi_display.h"
+#include "audi_display.h"
 
 
 int mfa=0;
@@ -17,7 +17,7 @@ void setup()
 void loop() 
 {
   
-  mfa++;
+  /*mfa++;
   if (mfa==4)
     mfa=0;
   delay(100);
@@ -33,11 +33,11 @@ void loop()
   //setCoolantData(mileage%18);
   setCoolantData(8);
   setBarData(5);
-  fireDigifiz();
-  /*setAll(0);
+  fireDigifiz();*/
+  setAll(0);
   setMFAClockData(12,34);
   setMFADisplayedNumber(1234);
   delay(500);
   setAll(1);
-  delay(500);*/
+  delay(500);
 }

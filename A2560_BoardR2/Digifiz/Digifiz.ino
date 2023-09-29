@@ -272,7 +272,14 @@ void loop()
     
     digifiz_parameters.mileage+=spd_m;
     digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]+=spd_m;
+    #ifdef AVERAGE_CONSUMPTION_L100KM
+    digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] += 0.001f*(getCurrentIntakeFuelConsumption()-digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]);//getFuelConsumption()*digifiz_parameters.tankCapacity;
+    #endif
+
+    #ifdef CURRENT_CONSUMPTION_L100KM
     digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] = getCurrentIntakeFuelConsumption();//getFuelConsumption()*digifiz_parameters.tankCapacity;
+    #endif
+    
     setMileage(uptimeDisplayEnabled ? (digifiz_parameters.uptime/3600) : (digifiz_parameters.mileage/3600)); //to km
     #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
     setDailyMileage((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
@@ -280,7 +287,7 @@ void loop()
     #ifndef YELLOW_GREEN_LED
     setBrightness(digifiz_parameters.autoBrightness ? getBrightnessLevel() : digifiz_parameters.brightnessLevel);
     #else
-    setBrightness(digifiz_parameters.autoBrightness ? (getBrightnessLevel()+4) : digifiz_parameters.brightnessLevel);
+    setBrightness(digifiz_parameters.autoBrightness ? (getBrightnessLevel()+7) : digifiz_parameters.brightnessLevel);
     #endif
     
     saveParametersCounter++;

@@ -67,5 +67,7 @@ void changeBLEName();
 void protocolParse();
 void processData(int par, long value);
 void processGPIOPinsValue(long value);
+void printHelp();
+void printAbout();
 
 #endif

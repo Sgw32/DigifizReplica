@@ -107,9 +107,14 @@ void pressMFASensorSuperSuperLong()
 
 void pressMFAMode()
 {
-    digifiz_parameters.mfaState+=1;
-    if (digifiz_parameters.mfaState>5)
+digifiz_parameters.mfaState+=1;  
+#ifdef AUDI_RED_DISPLAY
+    if (digifiz_parameters.mfaState>6) // 0 1 2 3 4 5
         digifiz_parameters.mfaState = 0;
+#else
+    if (digifiz_parameters.mfaState>5) // 0 1 2 3 4 5
+        digifiz_parameters.mfaState = 0;
+#endif
     saveParameters();
 }
 

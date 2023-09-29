@@ -10,6 +10,7 @@ extern float averageRPM;
 
 String curCmd = "";
 String curCmdUIOD = "";
+String curCmdBT = "";
 
 #ifdef EMULATE_RTC
 extern RTC_Millis myRTC;
@@ -692,6 +693,56 @@ void processData(int parameter,long value)
 }
 
 
+//#define V1_BT_PROCESSOR
+#define V2_BT_PROCESSOR
+
+/*#define OPTION_MFA_MANUFACTURER 1
+#define OPTION_MILES 2
+#define OPTION_GALLONS 4
+#define OPTION_FAHRENHEIT 8
+#define OPTION_KELVIN 16
+#define OPTION_LBAR 32*/
+
+void printAbout()
+{
+  BTserial.println("Digifiz Replica by PHOL-LABS.");
+  BTserial.println("Fedor Zagumennov,");
+  BTserial.println("Pavel Myasnikov,");
+  BTserial.println("Cherry Fox / Duplux Indicators,");
+  BTserial.println("Egor Avramenko.");
+}
+
+void printHelp()
+{
+  BTserial.println("Digifiz Replica by PHOL-LABS.");
+  BTserial.println("Your dashboard is:");
+  if (digifiz_parameters.digifiz_options&OPTION_MFA_MANUFACTURER)
+    BTserial.println("MFA ON");
+  else
+    BTserial.println("MFA OFF");
+
+  if (digifiz_parameters.digifiz_options&OPTION_MILES)
+    BTserial.println("MPH");
+  else
+    BTserial.println("KMH");
+  if (digifiz_parameters.digifiz_options&OPTION_FAHRENHEIT)
+    BTserial.println("Fahrenheit");
+  else
+  {
+    if (digifiz_parameters.digifiz_options&OPTION_KELVIN)
+      BTserial.println("Lelvin");
+    else
+      BTserial.println("Celsium");
+  }
+  if (digifiz_parameters.digifiz_options&OPTION_GALLONS)
+    BTserial.println("Gallons");
+  else
+    BTserial.println("Liters");
+  
+  BTserial.print(digifiz_parameters.maxRPM);
+  BTserial.println(" RPM");
+}
+
 void protocolParse()
 {
   /*if ((millis()-statusTime)>2000)
@@ -700,6 +751,7 @@ void protocolParse()
     BTserial.println("Digifiz Status");
   }*/
 #ifdef USE_BTSERIAL
+#ifdef V1_BT_PROCESSOR
    if (BTserial.available() > 0) 
    {
       // look for the next valid integer in the incoming serial stream:
@@ -724,6 +776,48 @@ void protocolParse()
         char t = BTserial.read();
       }
    }
+#endif
+#ifdef V2_BT_PROCESSOR
+   if (BTserial.available() > 0) 
+   {
+      char c_char = BTserial.read();
+      if (c_char == '\n')
+      {
+        //process and wait for new cmd
+        String parameter = "";
+        String value = "";
+        
+        if (curCmdBT.indexOf(' ')>0)
+        {
+          int parameter_p = 0;
+          long value_p = 0;
+          parameter = curCmdBT.substring(0,curCmdBT.indexOf(' '));
+          value = curCmdBT.substring(curCmdBT.indexOf(' '));
+          if (parameter=="help")
+          {
+            printHelp();
+          }
+          else if (parameter=="about")
+          {
+            printAbout();
+          }
+          else
+          {
+            parameter_p = constrain(atoi(parameter.c_str()),0,255);
+            value_p = atol(value.c_str());
+            if(value_p<0)
+              value_p=0;
+            processData(parameter_p, value_p);
+          }
+        }
+        curCmdBT = "";
+      }
+      else
+      {
+        curCmdBT+=c_char;
+      }
+   }
+#endif
 #endif
 #ifdef USE_UIOD
 #ifdef UIOD_PARSE_INPUT

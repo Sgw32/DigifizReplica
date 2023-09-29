@@ -9,31 +9,35 @@
 //#define DISABLE_SENSOR_BUTTON
 
 
+//#define AVERAGE_CONSUMPTION_L100KM
+//#define FUEL_CONSUMPTION_TESTMODE
+#define CURRENT_CONSUMPTION_L100KM
+
 #define OIL_RES_10000
 
 //more brightness
-#define YELLOW_GREEN_LED 
+//#define YELLOW_GREEN_LED 
     
 #define NEW_REVISION
 
 #define EEPROM_SAVE_INTERVAL 32
 
-//#define GALLONS
-//#define MILES
-//#define FAHRENHEIT  
+#define GALLONS
+#define MILES
+#define FAHRENHEIT  
 //#define KELVIN
 
-#define USE_UIOD
-//#define USE_BTSERIAL //default for LED Digifiz Replica, not for UIOD
-#define UIOD_PARSE_INPUT //default for UIOD
+//#define USE_UIOD
+#define USE_BTSERIAL //default for LED Digifiz Replica, not for UIOD
+//#define UIOD_PARSE_INPUT //default for UIOD
 
 //DEFAULT for miniUIOD and BTserial:
-//#define BTserial Serial
-//#define UIODserial Serial1
+#define BTserial Serial
+#define UIODserial Serial1
 
 //DEFAULT for miniUIOD if ONLY mUIOD is installed!!!
-#define BTserial Serial1
-#define UIODserial Serial1
+//#define BTserial Serial1
+//#define UIODserial Serial1
 
 
 //DEFAULT for UIOD Digifiz Replica (LCD one)
@@ -47,7 +51,7 @@
 //#define TESTMODE
 //#define DIGIFIZ_ORIGINAL_DISPLAY
 //#define DIGIFIZ_LCD_DISPLAY
-#define AUDI_DISPLAY
+//#define AUDI_DISPLAY
 //#define AUDI_RED_DISPLAY
 
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)

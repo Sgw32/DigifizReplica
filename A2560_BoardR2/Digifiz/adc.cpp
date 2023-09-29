@@ -197,7 +197,11 @@ float getIntakePressure()
     for (int i=0;i!=100;i++)
      intp += (float)analogRead(pressurePin);
     intp/=100;
-    //intp = 512;
+
+#ifdef FUEL_CONSUMPTION_TESTMODE
+   intp = 512;
+#endif
+   
     return 84749.0f-20152.0f*intp/1023.0f*5.0f;
 }
 

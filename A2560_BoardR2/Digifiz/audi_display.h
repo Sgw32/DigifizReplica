@@ -54,12 +54,12 @@
 
 #define  DELAYTIME  100  // in milliseconds
 
-#define MFA_AIR_TEMP 0
+/*#define MFA_AIR_TEMP 0
 #define MFA_OIL_TEMP 1
 #define MFA_AVERAGE_SPEED 2
 #define MFA_AVERAGE_CONSUMPTION 3
 #define MFA_DAILY_MILEAGE 4
-#define MFA_DRIVING_TIME 5
+#define MFA_DRIVING_TIME 5*/
 
 #define MFA1_PIN 24
 #define MFA2_PIN 25

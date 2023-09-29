@@ -179,30 +179,33 @@ void displayMFAType(uint8_t mfaType)
 {    
     switch(digifiz_parameters.mfaState)
     {
-        case MFA_AVERAGE_SPEED:
+        case MFA_STATE_TRIP_MEAN_SPEED:
             setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
             setFloatDot(true);
             break; 
-        case MFA_AVERAGE_CONSUMPTION:
+        case MFA_STATE_TRIP_L100KM:
             setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
             setFloatDot(true);
             break;
-        case MFA_FUEL:
+        case MFA_STATE_TRIP_FUEL:
             setMFADisplayedNumber((uint16_t)fuel_ind);
             setFloatDot(false);
             break; 
-        case MFA_MPG:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
+        case MFA_STATE_TRIP_MPG:
+            setMFADisplayedNumber((uint16_t)(235.215f/digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]));
             setFloatDot(true);
             break;  
-        case MFA_AVERAGE_MPH:
-            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
+        case MFA_STATE_TRIP_MEAN_MPH:
+            if (digifiz_parameters.digifiz_options&OPTION_MILES)
+                setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
+            else
+                setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock])*0.6214);
             break;
-        case MFA_DAILY_MILEAGE:
+        case MFA_STATE_TRIP_DISTANCE:
             setMFADisplayedNumber((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
             break;
-        case MFA_DRIVING_TIME:
-            setMFAClockData(clockHoursAudi,clockMinsAudi);
+        case MFA_STATE_TRIP_DURATION:
+            setMFAClockData(sinceStart.hours(),sinceStart.minutes());
             break;
         default:
             break;
@@ -224,8 +227,8 @@ void setMFAType(uint8_t type)
       mx.setColumn(1,0);
       return;
   }
-    uint8_t mfa1_led[7]={0b10,0b100,0b1000,0b10000,0b100000,0b1000000,0b00000000};
-    uint8_t mfa2_led[7]={0b0,0b0,0b0,0b0,0b0,0b0,0b11};
+    uint8_t mfa1_led[7]={0b10,0b10000100,0b1000,0b10000,0b100000,0b1000001,0b00000000};
+    uint8_t mfa2_led[7]={0b0,0b0,0b0,0b0,0b0,0b0,0b1111};
   mx.setColumn(0, mfa1_led[type]);
   if (backlightStatus)
   {
@@ -242,7 +245,7 @@ void setBrightness(uint8_t levels)
   stled.setBrightness(DIGITall, levels);
   stled.setBrightnessLED(LEDall, 15);
   stled2.setBrightness(DIGITall, levels);
-  stled2.setBrightnessLED(LEDall, 15);
+    stled2.setBrightnessLED(LEDall, levels);
 }
 
 void setMileage(uint32_t mileage)
@@ -279,7 +282,7 @@ void setAuxDigit(uint8_t digit)
 
 void setClockData(uint8_t clock_hours,uint8_t clock_minutes)
 {
-   prev_clock_h = clock_h;
+   prev_clock_h = clock_m;
    clock_h = clock_hours;
    clock_m = clock_minutes;
 }
@@ -325,7 +328,7 @@ void setRPMData(uint16_t data)
     leds_lit-=1000; 
     leds_lit*=32;
     leds_lit/=6000;
-    leds_lit = constrain(leds_lit,3,32);
+    leds_lit = constrain(leds_lit,2,32);
     int blocks_lit = leds_lit / 8;
     if (blocks_lit>6) 
       blocks_lit=6; 
@@ -349,10 +352,10 @@ void setRPMData(uint16_t data)
 void setSpeedometerData(uint16_t data)
 {
     stled2.dispUdecRevDual(data,clock_h*100+clock_m);
-    if (prev_clock_h!=clock_h)
+    if (prev_clock_h!=clock_m)
     {
       stled2.setLEDDigit((uint8_t)(clock_h/10));
-      prev_clock_h = clock_h;
+      prev_clock_h = clock_m;
     }
 }
 
