@@ -28,13 +28,13 @@ English versions of communities and chat are coming soon and also will be in Tel
 
 Currently (2023) firmware supports such cars as:
 
-- ** Volkswagen Jetta Mk2 (1984-1992) ** both CE1/CE2
-- ** Volkswagen Golf Mk2 (1983-1992) ** both CE1/CE2
-- ** Volkswagen Passat B2 (1984-1992) ** - not tested - should work
-- ** Volkswagen Scirocco 2 (1984-1992) ** - needs adapter for contacts
+- **Volkswagen Jetta Mk2 (1984-1992)** both CE1/CE2
+- **Volkswagen Golf Mk2 (1983-1992)** both CE1/CE2
+- **Volkswagen Passat B2 (1984-1992)** - not tested - should work
+- **Volkswagen Scirocco 2 (1984-1992)** - needs adapter for contacts
 
-- **Audi 80 B2 (1978–1986) ** - both Red and Green Digifiz
-- **Audi 80 Coupe B2 (1980-1988) ** - both Red and Green Digifiz
+- **Audi 80 B2 (1978–1986)** - both Red and Green Digifiz
+- **Audi 80 Coupe B2 (1980-1988)** - both Red and Green Digifiz
 
 More info in manual (see Docs)
 
