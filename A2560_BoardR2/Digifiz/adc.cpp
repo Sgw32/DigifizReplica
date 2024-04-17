@@ -32,9 +32,9 @@ uint8_t oil08Pin = A2; // Oil pressure 0.8
 uint8_t lightSensorPin = A9; // Light sensor
 uint8_t coolantPin = A10; // Coolant temp sensor
 uint8_t gasolinePin = A11; //Gasoline sensor
-uint8_t oilPin = A14; //Gasoline sensor
-uint8_t airPin = A15; //Gasoline sensor
-uint8_t pressurePin = A5;
+uint8_t oilPin = A14; //Oil temp sensor
+uint8_t airPin = A15; //Air temp sensor
+uint8_t pressurePin = A5; //Manifold pressure sensor pin
 
 uint8_t tankCapacity = 60;
 uint16_t lightLevel;
@@ -70,7 +70,7 @@ void initADC()
     tauCoolant = (float)digifiz_parameters.tauCoolant*TAU;
     tauOil = (float)digifiz_parameters.tauOil*TAU*0.1;
     tauAir = (float)digifiz_parameters.tauAir*TAU*0.1;
-    tauGasoline = (float)digifiz_parameters.tauTank*TAU*0.01;
+    tauGasoline = (float)digifiz_parameters.tauTank*TAU*0.03;
     tauGasolineConsumption = (float)digifiz_parameters.tauTank*TAU*0.01;
     tankCapacity = digifiz_parameters.tankCapacity;
     
@@ -238,11 +238,17 @@ void processGasLevel()
 {
     V0 = (float)analogRead(gasolinePin);
     R2 = constrain(220 * V0 / (1023.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
-    gasolineLevel += tauGasoline*((1.0f-((float)R2-digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                        digifiz_parameters.tankMinResistance))-gasolineLevel); //percents
-    gasolineLevelFiltered += tauGasolineConsumption*(((float)R2-
+#ifndef FUEL_LEVEL_EXPERIMENTAL
+    float R2scaled = (((float)R2-
               digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                                                digifiz_parameters.tankMinResistance)-gasolineLevelFiltered); //percents
+                                                digifiz_parameters.tankMinResistance));
+#else
+    float R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
+#endif
+
+    gasolineLevel += tauGasoline*((1.0f-R2scaled)-gasolineLevel); //percents
+    gasolineLevelFiltered += tauGasolineConsumption*(R2scaled-gasolineLevelFiltered); //percents
+                                                
     if ((millis()-consumptionCounter)>1800000)
     {
       //half hour
@@ -289,12 +295,17 @@ void processFirstGasLevel()
       V0 += (float)analogRead(gasolinePin);
     V0/=300;
     R2 = constrain(220 * V0 / (1023.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
+#ifndef FUEL_LEVEL_EXPERIMENTAL
+    float R2scaled = (((float)R2-
+              digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
+                                                digifiz_parameters.tankMinResistance));
+#else
+    float R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
+#endif
     //35 = full
     //265 = empty
-    gasolineLevel = 1.0f - (((float)R2-(float)digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                        digifiz_parameters.tankMinResistance)); //percents
-    gasolineLevelFiltered = 1.0f - (((float)R2-(float)digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                        digifiz_parameters.tankMinResistance)); //percents
+    gasolineLevel = 1.0f - R2scaled; //percents
+    gasolineLevelFiltered = R2scaled; //percents
 }
 
 void processFirstAmbientTemperature()
@@ -308,16 +319,25 @@ void processFirstAmbientTemperature()
     airT = temp1;
 }
 
+float getRToFuelLevel(float R)
+{
+  return (1300.0f-10.3f*R+0.0206f*R*R);
+}
+
 float getGasLevel()
 {
     V0 = (float)analogRead(gasolinePin);
-    R2 = constrain(220 * V0 / (1023.0f - V0),35,265); // 330 Ohm in series with fuel sensor
-    gasolineLevel += tauGasoline*(((float)R2-
+    R2 = constrain(220 * V0 / (1023.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
+    
+#ifndef FUEL_LEVEL_EXPERIMENTAL
+    float R2scaled = (((float)R2-
               digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                                                digifiz_parameters.tankMinResistance)-gasolineLevel); //percents
-    gasolineLevelFiltered += tauGasolineConsumption*(((float)R2-
-              digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                                                digifiz_parameters.tankMinResistance)-gasolineLevelFiltered); //percents
+                                                digifiz_parameters.tankMinResistance));
+#else
+    float R2scaled = 1.0f-(1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
+#endif
+    gasolineLevel += tauGasoline*(R2scaled-gasolineLevel); //percents
+    gasolineLevelFiltered += tauGasolineConsumption*(R2scaled-gasolineLevelFiltered); //percents
     return gasolineLevel;
 }
 

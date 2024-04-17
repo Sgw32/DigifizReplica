@@ -1,10 +1,15 @@
 #include "tacho.h"
+#include "setup.h"
 
 uint32_t mRPMSenseData;
 uint32_t lastMillisRPM;
 
 MedianDispertionFilter<uint32_t> medianFilterRPM(5);
 
+/**
+ * @brief PCInt20 interrupt which reads RPM
+ * 
+ */
 void PCInt20()
 {
     // mRPMSenseData should correspond 0..9000 RPM
@@ -13,7 +18,11 @@ void PCInt20()
     // So mRPMSenseData has a window of 1000000/300 ... 1000000
     uint32_t cur_micros = micros();
     uint32_t delta = (cur_micros-lastMillisRPM);
+    #if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
     if (delta>3000)
+    #else
+    if (delta>1500)
+    #endif
     {
         mRPMSenseData = delta;
         lastMillisRPM = micros();

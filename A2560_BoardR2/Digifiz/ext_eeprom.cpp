@@ -116,7 +116,7 @@ void load_defaults()
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
     digifiz_parameters.tankCapacity = 70;
 #else
-    digifiz_parameters.tankCapacity = 55;
+    digifiz_parameters.tankCapacity = 63;//55;
 #endif
     digifiz_parameters.mfaState = 0;
     digifiz_parameters.buzzerOff = 1;

@@ -55,11 +55,43 @@ typedef struct digifiz_pars
 #define OPTION_KELVIN 16
 #define OPTION_LBAR 32
 
+/**
+ * @brief Loads defaults to the memory(internal or external EEPROM)
+ * 
+ */
 void load_defaults();
+
+/**
+ * @brief Inits EEPROM (internal or external)
+ * 
+ */
 void initEEPROM();
+
+/**
+ * @brief Checks for signature in memory
+ * 
+ * @return true has signature
+ * @return false no signature in memory
+ */
 bool checkMagicBytes();
+
+/**
+ * @brief Save parameters e.g. while driving
+ * 
+ */
 void saveParameters();
+
+/**
+ * @brief Computes parameters checksum(not CRC currently)
+ * 
+ */
 void computeCRC();
+
+/**
+ * @brief Get the Current Memory Block number
+ * 
+ * @return uint8_t 
+ */
 uint8_t getCurrentMemoryBlock();
 
 #endif

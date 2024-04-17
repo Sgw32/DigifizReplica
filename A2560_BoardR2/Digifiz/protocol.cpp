@@ -340,6 +340,12 @@ void processData(int parameter,long value)
         #endif
         pressMFABlock();
         break;
+      case PARAMETER_UPTIME:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_UPTIME");
+        #endif
+        digifiz_parameters.uptime = value;
+        break;  
       default:
         break;
     }
@@ -705,15 +711,18 @@ void processData(int parameter,long value)
 
 void printAbout()
 {
+  #ifdef USE_BTSERIAL
   BTserial.println("Digifiz Replica by PHOL-LABS.");
   BTserial.println("Fedor Zagumennov,");
   BTserial.println("Pavel Myasnikov,");
   BTserial.println("Cherry Fox / Duplux Indicators,");
   BTserial.println("Egor Avramenko.");
+  #endif
 }
 
 void printHelp()
 {
+  #ifdef USE_BTSERIAL
   BTserial.println("Digifiz Replica by PHOL-LABS.");
   BTserial.println("Your dashboard is:");
   if (digifiz_parameters.digifiz_options&OPTION_MFA_MANUFACTURER)
@@ -741,6 +750,7 @@ void printHelp()
   
   BTserial.print(digifiz_parameters.maxRPM);
   BTserial.println(" RPM");
+  #endif
 }
 
 void protocolParse()

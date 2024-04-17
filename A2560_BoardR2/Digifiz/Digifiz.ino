@@ -65,11 +65,15 @@ bool clockRunning;
 extern uint8_t uptimeDisplayEnabled;
 extern digifiz_pars digifiz_parameters;
 
+/**
+ * @brief Sets up main interrupt of device
+ * 
+ */
 void initReadInterrupt()
 {
     cli();//stop interrupts
     //set timer4 interrupt at 1Hz
-    TCCR4A = 0;// set entire TCCR1A register to 0
+      TCCR4A = 0;// set entire TCCR1A register to 0
     TCCR4B = 0;// same for TCCR1B
     TCNT4  = 0;//initialize counter value to 0
     // set compare match register for 1hz increments
@@ -83,6 +87,10 @@ void initReadInterrupt()
     sei();//allow interrupts
 }
 
+/**
+ * @brief Arduino (or Arduino-like) setup function
+ * 
+ */
 void setup() 
 {  
   spd_m = 0;
@@ -130,6 +138,9 @@ void setup()
   initBuzzer();
   initMFA();
   initEmergencyModule();
+  #ifdef FUEL_PRESSURE_SENSOR
+  initFuelPressureSensor();
+  #endif
   clockDot = millis();
   
   initReadInterrupt();
@@ -139,6 +150,10 @@ void setup()
   //delay(1000);
 }
 
+/**
+ * @brief Main interrupt of the device
+ * 
+ */
 ISR(TIMER4_COMPA_vect)
 {
   i=i+1;
@@ -190,6 +205,9 @@ ISR(TIMER4_COMPA_vect)
   processOilTemperature();
   processAmbientTemperature();
   processBrightnessLevel();
+  #ifdef FUEL_PRESSURE_SENSOR
+  processFuelPressure();
+  #endif
   displaySpeedCnt++;
   if (displaySpeedCnt==4) // 2 Hz loop(as on original Digifiz)  
   {
@@ -236,6 +254,10 @@ ISR(TIMER4_COMPA_vect)
   #endif  
 }
 
+/**
+ * @brief Arduino (or Arduino-like) loop function
+ * 
+ */
 void loop() 
 {
   #ifdef DIGIFIZ_LCD_DISPLAY
@@ -243,6 +265,8 @@ void loop()
   fireDigifiz();
   #endif
   #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
+  fireDigifiz();
+  #else
   fireDigifiz();
   #endif
   if ((millis()-clockDot)>500)
@@ -273,7 +297,7 @@ void loop()
     digifiz_parameters.mileage+=spd_m;
     digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]+=spd_m;
     #ifdef AVERAGE_CONSUMPTION_L100KM
-    digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] += 0.001f*(getCurrentIntakeFuelConsumption()-digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]);//getFuelConsumption()*digifiz_parameters.tankCapacity;
+      digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] += 0.01f*(getCurrentIntakeFuelConsumption()-digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]);//getFuelConsumption()*digifiz_parameters.tankCapacity;
     #endif
 
     #ifdef CURRENT_CONSUMPTION_L100KM
@@ -284,12 +308,15 @@ void loop()
     #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
     setDailyMileage((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
     #endif
+
+    if (millis()>2000)
+    {
     #ifndef YELLOW_GREEN_LED
     setBrightness(digifiz_parameters.autoBrightness ? getBrightnessLevel() : digifiz_parameters.brightnessLevel);
     #else
     setBrightness(digifiz_parameters.autoBrightness ? (getBrightnessLevel()+7) : digifiz_parameters.brightnessLevel);
     #endif
-    
+    }
     saveParametersCounter++;
     setBacklight(digifiz_parameters.backlight_on ? true : false);
     //setAudiOptions(0x9);
@@ -301,15 +328,12 @@ void loop()
         //pressMFAMode();
         //setAudiOptions(0x6);
     }
-    
     checkEmergency(rpm);
     setMFABlock(digifiz_parameters.mfaBlock ? 0 : 1); //in display h
-    displayMFAType(digifiz_parameters.mfaState);
+    displayMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState);
     setDot(false);
-    
-    
   }
-  setMFAType(digifiz_parameters.mfaState);
+  setMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState);
   processMFA();
   protocolParse();
 }

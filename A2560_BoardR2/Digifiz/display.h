@@ -14,6 +14,7 @@
 #include "MS5611.h"
 #include "adc.h"
 #include "mfa.h"
+#include "fuel_pressure.h"
 
 // Turn on debug statements to the serial output
 #define  DEBUG  1
@@ -91,6 +92,7 @@ void setRefuelSign(bool onoff);
 void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
 void setServiceDisplayData(uint8_t data);
+void fireDigifiz();
 #endif
 #endif
 #endif

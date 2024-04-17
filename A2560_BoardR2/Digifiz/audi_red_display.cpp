@@ -35,6 +35,7 @@ uint8_t clock_m = 0;
 void initDisplay()
 {
     mx.begin();
+    mx.update(MD_MAX72XX::OFF);
     mx.clear();
     stled.begin(SEG1, SEG2, SEG3, SEG4, SEG5, SEG6, SEG7, SEG8);
     stled.setBrightness(DIGITall, 2);
@@ -129,6 +130,7 @@ void fireDigifiz()
 {
     stled.dispRefreshAll();
     stled2.dispRefreshAll();
+    mx.update();
 }
 
 void blinking2()

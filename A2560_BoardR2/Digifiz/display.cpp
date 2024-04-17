@@ -28,6 +28,8 @@ void initDisplay()
 {
     mx.begin();
     mx2.begin();
+    mx.update(MD_MAX72XX::OFF);
+    //mx2.update(MD_MAX72XX::OFF);
     mx.clear();
     mx2.clear();
 
@@ -52,6 +54,13 @@ void setBacklight(bool onoff)
 {
     digitalWrite(BACKLIGHT_CTL_PIN, onoff ? HIGH : LOW);
 }
+
+void fireDigifiz()
+{
+  mx.update();
+  //mx2.update();
+}
+
 
 void blinking()
 {
@@ -117,7 +126,7 @@ void setCheckEngine(bool onoff)
 
 void displayMFAType(uint8_t mfaType)
 {    
-    switch(digifiz_parameters.mfaState)
+    switch(mfaType)
     {
         case MFA_STATE_TRIP_DURATION:
             setMFAClockData(sinceStart.hours(),sinceStart.minutes());
@@ -169,6 +178,10 @@ void displayMFAType(uint8_t mfaType)
               setFloatDot(true);
             }
             break;
+        case MFA_STATE_FUEL_PRESSURE:
+            setMFADisplayedNumber((uint16_t)(getFuelPressure()*100.0f));
+            setFloatDot(true);
+            break;
         default:
             break;
     }
@@ -179,12 +192,12 @@ void setMFAType(uint8_t type)
   uint8_t checkAdd = (checkEngineActive ? 0b10100001 : 0);
   if (type>6)
   {
-      mx.setColumn(0,0);
-      mx.setColumn(1,checkAdd);
+      mx.setColumn(0,0b11111111);
+      mx.setColumn(1,checkAdd|0b00001110);
       return;
   }
-  uint8_t mfa1_led[6]={0b00000000,0b00000000,0b00001110,0b00110000,0b11000000,0b00000001};
-  uint8_t mfa2_led[6]={0b00001000,0b00000100,0b00000000,0b00000000,0b00000000,0b00000010};
+  uint8_t mfa1_led[7]={0b00000000,0b00000000,0b00001110,0b00110000,0b11000000,0b00000001,0b11111111};
+  uint8_t mfa2_led[7]={0b00001000,0b00000100,0b00000000,0b00000000,0b00000000,0b00000010,0b00001110};
   mx.setColumn(0, mfa1_led[type]);
   mx.setColumn(1, checkAdd|mfa2_led[type]);
 }

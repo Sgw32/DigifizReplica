@@ -9,22 +9,23 @@
 //#define DISABLE_SENSOR_BUTTON
 
 
-//#define AVERAGE_CONSUMPTION_L100KM
+#define AVERAGE_CONSUMPTION_L100KM
 //#define FUEL_CONSUMPTION_TESTMODE
-#define CURRENT_CONSUMPTION_L100KM
-
+//#define CURRENT_CONSUMPTION_L100KM
+#define FUEL_LEVEL_EXPERIMENTAL
 #define OIL_RES_10000
+//#define FUEL_PRESSURE_SENSOR
 
 //more brightness
-//#define YELLOW_GREEN_LED 
+#define YELLOW_GREEN_LED 
     
 #define NEW_REVISION
 
 #define EEPROM_SAVE_INTERVAL 32
 
-#define GALLONS
-#define MILES
-#define FAHRENHEIT  
+//#define GALLONS
+//#define MILES
+//#define FAHRENHEIT  
 //#define KELVIN
 
 //#define USE_UIOD
@@ -52,7 +53,7 @@
 //#define DIGIFIZ_ORIGINAL_DISPLAY
 //#define DIGIFIZ_LCD_DISPLAY
 //#define AUDI_DISPLAY
-//#define AUDI_RED_DISPLAY
+#define AUDI_RED_DISPLAY
 
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
 #ifndef DISABLE_SENSOR_BUTTON

@@ -23,7 +23,8 @@ uint8_t getDisplayedCoolantTempOrig(); //0..20
 //Physical data values
 float getCoolantTemperature(); //celsius
 float getOilTemperature(); //celsius
-float getGasLevel(); //percents
+float getGasLevel(float R); //percents
+float getRToFuelLevel();
 float getAmbientTemperature(); //celsius
 float getFuelConsumption();
 

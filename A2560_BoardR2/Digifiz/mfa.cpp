@@ -45,7 +45,8 @@ void processMFA()
           //Pressed MFA Mode
           pressMFAMode();
       } 
-      digifiz_parameters.mfaBlock = (digitalRead(MFA_BLOCK_PIN)==LOW) ? 1 : 0;
+      //digifiz_parameters.mfaBlock = (digitalRead(MFA_BLOCK_PIN)==LOW) ? 1 : 0;
+      digifiz_parameters.mfaBlock = (digitalRead(MFA_BLOCK_PIN)==HIGH) ? 1 : 0;
       
       if ((digitalRead(MFA_RESET_PIN)==LOW)&&(prevMFAReset==HIGH))
       {
@@ -109,7 +110,7 @@ void pressMFAMode()
 {
 digifiz_parameters.mfaState+=1;  
 #ifdef AUDI_RED_DISPLAY
-    if (digifiz_parameters.mfaState>6) // 0 1 2 3 4 5
+    if (digifiz_parameters.mfaState>6) // 0 1 2 3 4 5 6
         digifiz_parameters.mfaState = 0;
 #else
     if (digifiz_parameters.mfaState>5) // 0 1 2 3 4 5
