@@ -13,7 +13,8 @@ Board set to: "Arduino Mega/Atmega2560"
 Libraries: MD_MAX72xx
 RTClib(not by Neuron)
 SparkFun EEPROM library    
-PinChangeInterrupt
+Adafruit_BusIO
+MedianFilterLib2
 
 Ctl+Shift+U for firmware upload
 

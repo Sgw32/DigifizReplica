@@ -1,7 +1,7 @@
 #ifndef TACHO_H
 #define TACHO_H
 #include "Arduino.h"
-#include <PinChangeInterrupt.h>
+#include "PinChangeInterrupt.h"
 #include "MedianDispertionFilter.h"
 
 #define RPM_PIN A12 //PK4 //KL_1
