@@ -1,0 +1,140 @@
+#ifndef DISPLAY_NEXT_H
+#define DISPLAY_NEXT_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#include "setup.h"
+#include "driver/gpio.h"
+#include "esp_log.h"
+#include "led_strip.h"
+#include "sdkconfig.h"
+#include "setup.h"
+#include <stdbool.h>
+#include <string.h>
+#ifdef DIGIFIZ_NEXT_DISPLAY
+
+#include "adc.h"
+#include "mfa.h"
+#include "fuel_pressure.h"
+
+// Turn on debug statements to the serial output
+#define DEBUG  1
+
+#define MFA1_PIN 24
+#define MFA2_PIN 25
+
+#define BRIGHTNESS_IN_PIN A9 //PK1
+#define BACKLIGHT_CTL_PIN 26 //PA4
+
+#define WSDATA_GPIO_PIN 21
+#define DIGIFIZ_DISPLAY_NEXT_LEDS 271
+#define DIGIFIZ_BACKLIGHT_LEDS 12
+
+#define USE_DISPLAY_LEDS
+
+enum 
+{
+    DIGIT_NUMBER_0 = 0b0111111,
+    DIGIT_NUMBER_1 = 0b0011000,
+    DIGIT_NUMBER_2 = 0b1110110,
+    DIGIT_NUMBER_3 = 0b1111100,
+    DIGIT_NUMBER_4 = 0b1011001,
+    DIGIT_NUMBER_5 = 0b1101101,
+    DIGIT_NUMBER_6 = 0b1101111,
+    DIGIT_NUMBER_7 = 0b0111000,
+    DIGIT_NUMBER_8 = 0b1111111,
+    DIGIT_NUMBER_9 = 0b1111101,
+    DIGIT_NUMBER_EMPTY = 0,
+    DIGIT_NUMBER_MINUS = 0b1000000,
+};
+
+typedef struct __attribute__((packed)) DigifizNextDisplay
+{
+    uint8_t coolant_backlight : 1; //1
+    uint16_t coolant_value : 14; //15
+    uint8_t vdo_backlight : 1; //16
+    uint8_t mfa2_ind : 1; //17 
+    uint8_t mfa1_ind : 1; //18
+    uint8_t battery_ind : 1; //19
+    uint8_t oil_ind : 1; //20
+    uint8_t brakes_ind : 1; //21
+    uint8_t right_turn_ind : 1; //22
+    uint8_t left_turn_ind : 1; //23
+    uint8_t farlight_ind : 1; //24
+    uint8_t glassheat_ind : 1; //25
+    uint8_t foglight_ind1 : 1; //26
+    uint8_t foglight_ind2 : 1; //27
+    uint8_t lights_on_ind : 1; //28
+    uint8_t rpm_padding : 4; //32
+    uint8_t rpm[5]; //72
+    uint8_t rpm_last :5; //77
+    uint32_t rpm_backlight: 18;
+    uint8_t mileage_digit_1 : 7;
+    uint8_t mileage_digit_2 : 7;
+    uint8_t mileage_digit_3 : 7;
+    uint8_t mileage_digit_4 : 7;
+    uint8_t mileage_digit_5 : 7;
+    uint8_t mileage_digit_6 : 7;
+    uint8_t km_backlight : 1;
+    uint8_t clock_digit_1 : 7;
+    uint8_t clock_digit_2 : 7;
+    uint8_t clock_dot : 2;
+    uint8_t clock_digit_3 : 7;
+    uint8_t clock_digit_4 : 7;
+    uint8_t mfa_indicators : 7;
+    uint8_t mfa_digit_1 : 7;
+    uint8_t mfa_digit_2 : 7;
+    uint8_t mfa_digit_3 : 7;
+    uint8_t mfa_digit_4 : 7;
+    uint8_t mfa_dots : 3;
+    uint8_t fuel_digit_1 : 7;
+    uint8_t fuel_digit_2 : 7;
+    uint8_t fuel_ind : 1;
+    uint8_t fuel_low_ind : 6;
+    uint8_t speed_digit_1 : 7;
+    uint8_t speed_digit_2 : 7;
+    uint8_t speed_digit_3 : 7;
+    uint8_t speed_digit_s1 : 7;
+    uint8_t speed_digit_s2 : 7;
+    uint8_t speed_digit_s3 : 7;
+    uint8_t km_ind : 1;
+    uint16_t backlight_leds:12;
+} DigifizNextDisplay;
+
+void initDisplay(); 
+void setRPM(uint32_t rpmdata);
+void setClockData(uint8_t clock_hours,uint8_t clock_minutes);
+void setMFAClockData(uint8_t mfa_clock_hours,uint8_t mfa_clock_minutes);
+void setMFADisplayedNumber(int16_t data);
+void setFuel(uint8_t litres);
+void setRPMData(uint16_t data);
+void setSpeedometerData(uint16_t data);
+void setCoolantData(uint16_t data);
+void setDot(bool value);
+void setFloatDot(bool value);
+void setMileage(uint32_t mileage);
+void setMFAType(uint8_t mfaType);
+void displayMFAType(uint8_t mfaType);
+void setMFABlock(uint8_t block);
+void setBrightness(uint8_t levels);
+void setRefuelSign(bool onoff);
+void setCheckEngine(bool onoff);
+void setBacklight(bool onoff);
+void setServiceDisplayData(uint8_t data);
+void fireDigifiz();
+
+void setOilIndicator(bool onoff);
+void setBrakesIndicator(bool onoff);
+void setHeatLightsIndicator(bool onoff);
+void setBackLightsHeatIndicator(bool onoff);
+void setBackWindowHeatIndicator(bool onoff);
+void processIndicators();
+
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+#endif

@@ -1,8 +1,9 @@
 #ifndef SETUP_H
 #define SETUP_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-//#define EMULATE_RTC
-//#define DISABLE_EEPROM
 //#define DISABLE_MANUFACTURER_MFA
 #define MANUFACTURER_MFA_SWITCH
 //#define EMERGENCY_DISABLE_SENSOR_CHECK
@@ -15,44 +16,19 @@
 #define OIL_RES_10000
 //#define FUEL_PRESSURE_SENSOR
 
-//more brightness
-#define YELLOW_GREEN_LED 
-    
-#define NEW_REVISION
-
 #define EEPROM_SAVE_INTERVAL 32
+
+extern const char TAG[];
 
 //#define GALLONS
 //#define MILES
 //#define FAHRENHEIT  
 //#define KELVIN
 
-//#define USE_UIOD
-#define USE_BTSERIAL //default for LED Digifiz Replica, not for UIOD
-//#define UIOD_PARSE_INPUT //default for UIOD
-
-//DEFAULT for miniUIOD and BTserial:
-#define BTserial Serial
-#define UIODserial Serial1
-
-//DEFAULT for miniUIOD if ONLY mUIOD is installed!!!
-//#define BTserial Serial1
-//#define UIODserial Serial1
-
-
-//DEFAULT for UIOD Digifiz Replica (LCD one)
-//#define BTserial Serial
-//#define UIODserial Serial
-
 #define RPM_8000
-
-#define DEFAULT_MILEAGE   000000L //78893L //103256L
+#define DEFAULT_MILEAGE   000000L
 
 //#define TESTMODE
-//#define DIGIFIZ_ORIGINAL_DISPLAY
-//#define DIGIFIZ_LCD_DISPLAY
-#define AUDI_DISPLAY
-//#define AUDI_RED_DISPLAY
 
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
 #ifndef DISABLE_SENSOR_BUTTON
@@ -74,7 +50,9 @@
 
 #define CRC_FRAGMENT_SIZE 84
 
-#define GPIO1_TO_GND_PIN 41
-#define GPIO2_TO_GND_PIN 40
+#define DIGIFIZ_NEXT_DISPLAY
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -422,8 +422,8 @@ void setClockData(uint8_t clock_hours,uint8_t clock_minutes)
     uint8_t number_clock[10]={0b11111011,0b01100000,0b10111101,0b11111100,0b01100110,0b11011110,0b11011111,0b11100000,0b11111111,0b11110110};
     if (((clock_hours / 10) % 10)!=0)
     {
-        lx.setDigifizBufferMasked(31, number_clock[number_clock[(clock_hours / 10) % 10]],0x7);
-        lx.setDigifizBufferMasked(32, number_clock[number_clock[(clock_hours / 10) % 10]],0xF0);
+        lx.setDigifizBufferMasked(31, number_clock[(clock_hours / 10) % 10],0x7);
+        lx.setDigifizBufferMasked(32, number_clock[(clock_hours / 10) % 10],0xF0);
         lx.setDigifizBufferMasked(15, number_clock[(clock_hours / 1) % 10],0x7);
         lx.setDigifizBufferMasked(16, number_clock[(clock_hours / 1) % 10],0xF0);
     }

@@ -1,0 +1,12 @@
+idf_component_register(SRCS "millis.c" "reg_inout.c" "frequency_count.c" "device_sleep.c" "emegrency.c" 
+"buzzer.c" 
+"protocol.c" 
+"params.c" 
+"mfa.c" 
+"fuel_pressure.c" 
+"adc.c" 
+"display_next.c" 
+"main.c" 
+"tacho.c" 
+"speedometer.c"
+INCLUDE_DIRS ".")

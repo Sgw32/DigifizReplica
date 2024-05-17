@@ -57,16 +57,13 @@ int current_hour = 99;
 int current_minute = 99;
 DateTime newTime;
 TimeSpan sinceStart = 0;
-bool century = false;
-bool h12Flag;
-bool pmFlag;
 bool clockRunning;
 
 extern uint8_t uptimeDisplayEnabled;
 extern digifiz_pars digifiz_parameters;
 
 /**
- * @brief Sets up main interrupt of device
+ * @brief Sets up main interrupt of device, interrupt freq ~8 Hz
  * 
  */
 void initReadInterrupt()
@@ -333,7 +330,4 @@ void loop()
     displayMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState);
     setDot(false);
   }
-  setMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState);
-  processMFA();
-  protocolParse();
 }
