@@ -1,59 +1,44 @@
 #include "params.h"
 #include "esp_log.h"
+#include <string.h>
 
+
+#define TAG "EEPROM module"
 const char LOG_TAG[] = "Digifiz Replica Next";
 
 digifiz_pars digifiz_parameters;
+digifiz_pars r_d_pars;
 uint8_t memory_block_selected = 0;
 
-bool checkMagicBytes()
-{    
-    uint8_t test1,test2,test3,test4;
-    test1 = 0;
-    test2 = 0;
-    test3 = 0;
-    test4 = 0;
-    uint8_t cnt = 0;
-    for (int j=0;j!=EEPROM_DOUBLING;j++)
-    {
-      for (cnt=0;cnt!=10;cnt++) 
-      {
-        //Give it 10 chances
-        
-        if ((test1=='D')&&
-            (test2=='I')&&
-            (test3=='G')&&
-            (test4=='I'))
-        {
-            return true;
-        }
-      }
-    }
-    return false;
-}
+const char* memory_blocks[] = {"s1","s2","s3"};
 
 bool checkInternalMagicBytes()
-{    
-    uint8_t test1,test2,test3,test4;
-    test1 = 0;
-    test2 = 0;
-    test3 = 0;
-    test4 = 0;
+{
     uint8_t cnt = 0;
-    for (int j=0;j!=EEPROM_DOUBLING;j++)
+    nvs_handle_t my_handle;
+    esp_err_t err = nvs_open("digifiz", NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) {
+        printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
+    } 
+    else 
     {
-      for (cnt=0;cnt!=10;cnt++) //What if we have a wrong negative results???
-      {
-        //Give it 10 chances
-        
-        if ((test1=='D')&&
-            (test2=='I')&&
-            (test3=='G')&&
-            (test4=='I'))
+        for (int j=0;j!=EEPROM_DOUBLING;j++)
         {
-            return true;
+            for (cnt=0;cnt!=3;cnt++) //What if we have a wrong negative results???
+            {
+                //Give it 10 chances
+                size_t size = sizeof(digifiz_pars);
+                nvs_get_blob(my_handle, memory_blocks[cnt], &r_d_pars, &size);
+                if ((r_d_pars.header[0]=='D')&&
+                    (r_d_pars.header[1]=='I')&&
+                    (r_d_pars.header[2]=='G')&&
+                    (r_d_pars.header[3]=='I'))
+                {
+                    memory_block_selected = 0;
+                    return true;
+                }
+            }
         }
-      }
     }
     return false;
 }
@@ -72,16 +57,16 @@ void saveParameters()
         printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
     } else {
         // Write data to NVS
-        nvs_set_blob(my_handle, "s1", &digifiz_parameters, sizeof(digifiz_pars));
+        nvs_set_blob(my_handle, memory_blocks[memory_block_selected], &digifiz_parameters, sizeof(digifiz_pars));
 
         // Commit changes to NVS
         err = nvs_commit(my_handle);
         if (err != ESP_OK) {
             printf("Error (%s) committing data to NVS!\n", esp_err_to_name(err));
         }
-
         // Close NVS
         nvs_close(my_handle);
+        ESP_LOGI(LOG_TAG, "EEPROM save ok");
     }
 //   sei();
   memory_block_selected++;
@@ -132,7 +117,7 @@ void load_defaults()
     digifiz_parameters.daily_mileage[0] = 0;
     digifiz_parameters.daily_mileage[1] = 0;
     digifiz_parameters.autoBrightness = 1;
-    digifiz_parameters.brightnessLevel = 10;
+    digifiz_parameters.brightnessLevel = 60;
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
     digifiz_parameters.tankCapacity = 70;
 #else
@@ -189,13 +174,15 @@ void load_defaults()
 
 void initEEPROM()
 {
-    ESP_LOGI(LOG_TAG, "initEEPROM started");
+    nvs_handle_t my_handle;
+    ESP_LOGI(TAG, "initEEPROM started");
     load_defaults(); //from table, not from memory
 
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         // NVS partition was truncated and needs to be erased
         // Retry nvs_flash_init
+        ESP_LOGI(TAG, "EEPROM erased");
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
     }
@@ -208,26 +195,39 @@ void initEEPROM()
 
     if (checkInternalMagicBytes()) //check if we have internal memory present.
     {
-        for (int j=0;j!=EEPROM_DOUBLING;j++) //try to read correct fragment "EEPROM_DOUBLING" times
+        esp_err_t err = nvs_open("digifiz", NVS_READWRITE, &my_handle);
+        if (err != ESP_OK) {
+            printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
+        } 
+        else
         {
-        uint8_t* digi_buf = (uint8_t*)&digifiz_parameters;
-        uint8_t crc = 0;
-        for(int i=0;i!=CRC_FRAGMENT_SIZE;i++)
-        {
-            crc^=digi_buf[i];
-        }
-        if (crc==digifiz_parameters.crc) //fragment is good, stop here. 
-            break;  
+            for (int j=0;j!=EEPROM_DOUBLING;j++) //try to read correct fragment "EEPROM_DOUBLING" times
+            {
+                size_t size = sizeof(digifiz_pars);
+                nvs_get_blob(my_handle, memory_blocks[j], &digifiz_parameters, &size);
+                uint8_t* digi_buf = (uint8_t*)&digifiz_parameters;
+                uint8_t crc = 0;
+                for(int i=0;i!=CRC_FRAGMENT_SIZE;i++)
+                {
+                    crc^=digi_buf[i];
+                }
+                if (crc==digifiz_parameters.crc) //fragment is good, stop here. 
+                {
+                    ESP_LOGI(LOG_TAG, "Found a valid memory block.");
+                    break;  
+                } 
+            }
         }
     }
     else
     {
         //We have corrupted all "EEPROM_DOUBLING" slots in memory, rewrite all the data
+        ESP_LOGI(TAG, "EEPROM is corrupt. Loading defaults.");
         //save it 4 times
         saveParameters();
         saveParameters();
         saveParameters();
         saveParameters();
     }
-    ESP_LOGI(LOG_TAG, "initEEPROM ended");
+    ESP_LOGI(TAG, "initEEPROM ended");
 }

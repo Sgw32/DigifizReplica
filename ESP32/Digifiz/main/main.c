@@ -30,6 +30,7 @@
 #include "buzzer.h"
 #include "emergency.h"
 
+#include "millis.h"
 #define configTICK_RATE_HZ                           CONFIG_FREERTOS_HZ
 #define portTICK_PERIOD_MS              ( ( TickType_t ) 1000 / configTICK_RATE_HZ )
 
@@ -52,6 +53,10 @@ long clockDot;
 int test = 1;
 int sinceStart_hours = 99;
 int sinceStart_minutes = 99;
+
+int16_t seconds_block1;
+int16_t seconds_block2;
+
 bool clockRunning;
 struct tm saved_time;
 uint8_t fuel = 0;
@@ -70,33 +75,45 @@ void set_time() {
     time(&now);
     localtime_r(&now, &timeinfo);
     printf("Current time: %02d:%02d\n", timeinfo.tm_hour, timeinfo.tm_min);
-    xSemaphoreTake(displayMutex, portMAX_DELAY); // Take the mutex
-
     // Convert current time to struct tm
     struct tm *current_time = localtime(&now);
 
-    // Convert both current time and saved time to time_t
-    time_t saved_time_t = mktime(&saved_time);
+    // Convert both current time and saved time to time_
+    time_t saved_t = mktime(&saved_time);
     time_t current_time_seconds = mktime(current_time);
 
     // Calculate the difference in seconds
-    double diff_seconds = difftime(current_time_seconds, saved_time_t);
+    double diff_seconds1 = difftime(current_time_seconds, saved_t)+seconds_block1;
+    double diff_seconds2 = difftime(current_time_seconds, saved_t)+seconds_block2;
 
     // Convert the difference to hours and minutes
-    int diff_minutes = diff_seconds / 60;
+
+    int diff_minutes = 0;
+    
+    if (digifiz_parameters.mfaBlock)
+    {
+        diff_minutes = diff_seconds2 / 60;
+    }
+    else
+    {
+        diff_minutes = diff_seconds1 / 60;
+    }
+    
     int diff_hours = diff_minutes / 60;
     diff_minutes %= 60;
 
     // Handle negative differences if the saved time is in the future
-    if (diff_seconds < 0) {
+    if (diff_seconds1 < 0) {
         diff_hours = -diff_hours;
         diff_minutes = -diff_minutes;
     }
 
-    setClockData(diff_hours,diff_minutes);
-    sinceStart_hours = timeinfo.tm_hour;
-    sinceStart_minutes = timeinfo.tm_min;
-    xSemaphoreGive(displayMutex); // Give back the mutex
+    setClockData(timeinfo.tm_hour,timeinfo.tm_min);
+    
+    sinceStart_hours = diff_hours;
+    sinceStart_minutes = diff_minutes;
+    digifiz_parameters.duration[0]=(uint16_t)fabs(diff_seconds1);
+    digifiz_parameters.duration[1]=(uint16_t)fabs(diff_seconds2);
 }
 
 
@@ -134,14 +151,6 @@ void digifizLoop(void *pvParameters) {
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
         setDailyMileage((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
 #endif
-        if (1)//(millis()>2000)
-        {
-#ifndef YELLOW_GREEN_LED
-            setBrightness(digifiz_parameters.autoBrightness ? getBrightnessLevel() : digifiz_parameters.brightnessLevel);
-#else
-            setBrightness(digifiz_parameters.autoBrightness ? (getBrightnessLevel()+7) : digifiz_parameters.brightnessLevel);
-#endif
-        }
 
         saveParametersCounter++;
         setBacklight(digifiz_parameters.backlight_on ? true : false);
@@ -157,7 +166,7 @@ void digifizLoop(void *pvParameters) {
         setMFABlock(digifiz_parameters.mfaBlock ? 0 : 1); //in display h
         displayMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState);
         setDot(false);
-        printf("Reg in: %u %u\n", digifiz_reg_in.bytes[0], digifiz_reg_in.bytes[1]);
+        printf("Reg in: %u %u %u\n", digifiz_reg_in.bytes[0], digifiz_reg_in.bytes[1], digifiz_parameters.mfaBlock);
         xSemaphoreGive(displayMutex); // Give back the mutex
         
         device_sleep_dump();
@@ -228,8 +237,8 @@ void displayUpdate(void *pvParameters) {
                 spd_m_speedometer=0;
 #endif
             displaySpeedCnt = 0;
-            printf("Status T RPM:%d %f %f %f %f\n",getDisplayedCoolantTemp(),getCoolantTemperature(),(float)((getCoolantTemperature()-digifiz_parameters.coolantMin)/
-                (digifiz_parameters.coolantMax - digifiz_parameters.coolantMin)*14.0f), averageRPM, spd_m_speedometer);
+            // printf("Status T RPM:%d %f %f %f %f\n",getDisplayedCoolantTemp(),getCoolantTemperature(),(float)((getCoolantTemperature()-digifiz_parameters.coolantMin)/
+            //     (digifiz_parameters.coolantMax - digifiz_parameters.coolantMin)*14.0f), averageRPM, spd_m_speedometer);
         }
 
         if (digifiz_parameters.digifiz_options&OPTION_GALLONS)
@@ -251,6 +260,14 @@ void displayUpdate(void *pvParameters) {
 
         setFuel(fuel);
         setCoolantData(getDisplayedCoolantTemp());
+        if (millis()>2000)
+        {
+            setBrightness(digifiz_parameters.autoBrightness ? getBrightnessLevel() : digifiz_parameters.brightnessLevel);
+        }
+        else
+        {
+            setBrightness(30);
+        }
 
         setRPMData(averageRPM);
         fireDigifiz();
@@ -280,7 +297,9 @@ void initDigifiz(void)
     time(&current_time_t);
     // Convert current time to struct tm
     localtime_r(&current_time_t, &saved_time);
-    
+    seconds_block1 = digifiz_parameters.duration[0];
+    seconds_block2 = digifiz_parameters.duration[1];
+    printf("Sec block1,2: %u %u", seconds_block1, seconds_block2);
     current_averageSpeed = digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock];
     digifiz_reg_out.byte = 0;
     ESP_LOGI(LOG_TAG, "initDigifiz ended");

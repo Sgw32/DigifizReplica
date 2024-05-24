@@ -43,7 +43,7 @@ float tauCoolant, tauGasoline, tauAir, tauOil,tauGasolineConsumption;
 float consumptionLevel;
 
 uint8_t tankCapacity = 55;
-uint16_t lightLevel;
+float lightLevel = 0;
 uint32_t consumptionCounter;
 
 extern float averageRPM;
@@ -208,11 +208,6 @@ uint16_t getRawGasLevel() {
 uint16_t getRawAmbientTemperature() {
     // Implementation placeholder
     return adc_raw.ambTempRawADCVal;
-}
-
-// Get the raw light level
-uint16_t getRawLightLevel() {
-    return adc_raw.lightRawADCVal;
 }
 
 // Get the liters of fuel in the tank
@@ -384,12 +379,13 @@ float getAmbientTemperatureFahrenheit() {
 
 // Get the brightness level
 uint8_t getBrightnessLevel() {
-    return constrain(lightLevel/2,6,255); //0..0.3V -> 0..400 (of 4095)
+    lightLevel += (getRawBrightnessLevel()-lightLevel)*0.03f;
+    return (uint8_t)constrain((lightLevel-300.0f)/6,6,100); //0..0.3V -> 0..400 (of 4095)
 }
 
 // Get the raw brightness level
 uint16_t getRawBrightnessLevel() {
-    return lightLevel;
+    return adc_raw.lightRawADCVal;
 }
 
 // Process coolant temperature data

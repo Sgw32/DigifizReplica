@@ -33,7 +33,6 @@ uint16_t getRawCoolantTemperature();
 uint16_t getRawOilTemperature();
 uint16_t getRawGasLevel();
 uint16_t getRawAmbientTemperature();
-uint16_t getRawLightLevel();
 
 //Display helpers
 uint8_t getLitresInTank(); //0..99

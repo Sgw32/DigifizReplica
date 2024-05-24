@@ -108,7 +108,7 @@ void initEEPROM();
  * @return true has signature
  * @return false no signature in memory
  */
-bool checkMagicBytes();
+bool checkInternalMagicBytes();
 
 /**
  * @brief Save parameters e.g. while driving

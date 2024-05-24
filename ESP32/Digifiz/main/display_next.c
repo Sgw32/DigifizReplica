@@ -6,8 +6,11 @@ uint8_t selectedBrightness = 20;
 uint32_t mRPMData = 4000;
 uint8_t backlightOff = 0;
 
+uint8_t backlightLevel = 30;
+
 DigifizNextDisplay display;
 static led_strip_handle_t led_strip;
+float brightnessFiltered = 6.0f;
 
 static void configure_led(void)
 {
@@ -40,7 +43,7 @@ void initDisplay() {
     ESP_LOGI(LOG_TAG, "initDisplay started");
     setBrightness(1);
     memset(&display, 0, sizeof(DigifizNextDisplay));
-    display.battery_ind = 1;
+    display.battery_ind = 0;
     display.mfa1_ind = 0;
     display.mfa2_ind = 0;
     display.coolant_backlight = 1;
@@ -57,8 +60,8 @@ void initDisplay() {
     display.clock_dot = 0b11;
     display.km_ind = 1;
     display.fuel_ind = 1;
-    display.lights_on_ind = 1;
-    display.foglight_ind2 = 1;
+    display.lights_on_ind = 0;
+    display.foglight_ind2 = 0;
     
     //display.rpm_padding = 0xF;
     //display.rpm[0] = 0xFF;
@@ -126,8 +129,8 @@ void setMFAClockData(uint8_t mfa_clock_hours, uint8_t mfa_clock_minutes) {
     }
     else
     {
-        display.mfa_digit_1 = DIGIT_NUMBER_EMPTY;
-        display.mfa_digit_2 = DIGIT_NUMBER_EMPTY;
+        display.mfa_digit_1 = DIGIT_NUMBER_0;
+        display.mfa_digit_2 = DIGIT_NUMBER_0;
         display.mfa_digit_3 = number_clock[(mfa_clock_minutes / 10) % 10];
         display.mfa_digit_4 = number_clock[(mfa_clock_minutes / 1) % 10];
     }
@@ -433,22 +436,27 @@ void displayMFAType(uint8_t mfaType) {
     switch(mfaType)
     {
         case MFA_STATE_TRIP_DURATION:
+            display.mfa_dots|=0b11;
             setMFAClockData(sinceStart_hours,sinceStart_minutes);
             break;
         case MFA_STATE_TRIP_DISTANCE:
+            display.mfa_dots&=0b00;
             setMFADisplayedNumber((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
             setFloatDot(false);
             break;
         case MFA_STATE_TRIP_L100KM:
+            display.mfa_dots&=0b00;
             setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
             //setMFADisplayedNumber((uint16_t)(getCurrentIntakeFuelConsumption()*100.0f));
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
+            display.mfa_dots&=0b00;
             setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
             setFloatDot(false);
             break;
         case MFA_STATE_OIL_TEMP:
+            display.mfa_dots&=0b00;
             if (digifiz_parameters.digifiz_options&OPTION_FAHRENHEIT)
             {
               setMFADisplayedNumber((int16_t)getOilTemperatureFahrenheit());
@@ -466,6 +474,7 @@ void displayMFAType(uint8_t mfaType) {
             }
             break;
         case MFA_STATE_AIR_TEMP:
+            display.mfa_dots&=0b00;
             if (digifiz_parameters.digifiz_options&OPTION_FAHRENHEIT)
             {
               setMFADisplayedNumber((int16_t)getAmbientTemperatureFahrenheit());
@@ -483,6 +492,7 @@ void displayMFAType(uint8_t mfaType) {
             }
             break;
         case MFA_STATE_FUEL_PRESSURE:
+            display.mfa_dots&=0b00;
             setMFADisplayedNumber((uint16_t)(getFuelPressure()*100.0f));
             setFloatDot(true);
             break;
@@ -511,7 +521,9 @@ void setMFABlock(uint8_t block) {
 
 // Set the brightness level
 void setBrightness(uint8_t levels) {
-    // Implementation placeholder
+    //printf("Br: %u\n", levels);
+    brightnessFiltered += 0.1f*((float)levels-brightnessFiltered);
+    backlightLevel = (uint8_t)brightnessFiltered;
 }
 
 // Set the refuel sign status
@@ -562,9 +574,6 @@ void processIndicators()
 uint16_t led_num = 0;
 // Fire up the Digifiz system
 void fireDigifiz() {
-    // Implementation placeholder
-   // led_strip_set_pixel(led_strip, 50, 0,0,0);
-    //return;
     led_num = 0;
     uint8_t *ptr = (uint8_t*)&display;
     for (uint16_t i = 0; i != sizeof(DigifizNextDisplay); i++)
@@ -573,7 +582,7 @@ void fireDigifiz() {
         {
             uint8_t bit = (ptr[i] >> j) & 1;
             if (bit)
-                led_strip_set_pixel(led_strip, led_num, 60,80,2);//led_strip_set_pixel(led_strip, led_num, 5,8,0);
+                led_strip_set_pixel(led_strip, led_num, (60*((uint32_t)backlightLevel))/100,(80*((uint32_t)backlightLevel))/100,(2*((uint32_t)backlightLevel))/100);
             else
                 led_strip_set_pixel(led_strip, led_num, 0,0,0);
             led_num+=1;
