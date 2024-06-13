@@ -21,6 +21,8 @@ uint8_t prevMFASensor = 0;
 uint8_t sensorPressed = 0;
 uint32_t pressSensorTime = 0;
 
+extern int16_t seconds_block1;
+extern int16_t seconds_block2;
 // Initialize the MFA (Multi-Function Display)
 void initMFA() {
     // Implementation placeholder
@@ -58,6 +60,7 @@ void processMFA()
       if ((bMFAReset==0)&&(prevMFAReset==1))
       {
           //Pressed MFA Reset
+          ESP_LOGI(LOG_TAG,  "Reset=1");
           pressMFAReset();
       }
     }
@@ -116,6 +119,14 @@ void pressMFAReset() {
     {
         case MFA_STATE_TRIP_DURATION:
             digifiz_parameters.duration[digifiz_parameters.mfaBlock] = 0;
+            if (digifiz_parameters.mfaBlock==0)
+            {
+                seconds_block1 = 0;
+            }
+            else
+            {
+                seconds_block2 = 0;
+            }
             break;
         case MFA_STATE_TRIP_DISTANCE:
             digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock] = 0;

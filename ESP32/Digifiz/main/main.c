@@ -5,6 +5,8 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h" // Include semaphore/mutex header
 
+#include "digifiz_ws_server.h"
+
 #include "driver/gpio.h"
 #include "driver/rtc_io.h"
 #include "esp_log.h"
@@ -260,6 +262,7 @@ void displayUpdate(void *pvParameters) {
 
         setFuel(fuel);
         setCoolantData(getDisplayedCoolantTemp());
+        processIndicators();
         if (millis()>2000)
         {
             setBrightness(digifiz_parameters.autoBrightness ? getBrightnessLevel() : digifiz_parameters.brightnessLevel);
@@ -305,8 +308,27 @@ void initDigifiz(void)
     ESP_LOGI(LOG_TAG, "initDigifiz ended");
 }
 
-void app_main(void)
+void digifizWebserver(void *pvParameters)
 {
+    digifiz_wifi_connect();
+    while (1)
+    {
+        vTaskDelay(MAIN_TASK_DELAY_MS / portTICK_PERIOD_MS);
+    }
+}
+
+void on_cpu_0(void *pvParameters)
+{
+    xTaskCreatePinnedToCore(digifizWebserver, "digifizWebserver", 4096, NULL, 3, NULL, 0);
+    while (1) 
+    {
+        vTaskDelay(MAIN_TASK_DELAY_MS / portTICK_PERIOD_MS);
+    }
+}
+
+void on_cpu_1(void *pvParameters)
+{
+    displayMutex = xSemaphoreCreateMutex(); // Create the mutex
     initEEPROM(); //Start memory container
     initADC();
     initDisplay();
@@ -315,10 +337,21 @@ void app_main(void)
     initTacho();
     initDeviceSleep();
     initRegInOut();
-    displayMutex = xSemaphoreCreateMutex(); // Create the mutex
-    xTaskCreate(digifizLoop, "digifizLoop", 4096, NULL, 1, NULL);
-    xTaskCreate(displayUpdate, "displayUpdate", 4096, NULL, 2, NULL);
-    xTaskCreate(adcLoop, "adcLoop", 4096, NULL, 3, NULL);
+
+    xTaskCreatePinnedToCore(digifizLoop, "digifizLoop", 4096, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(displayUpdate, "displayUpdate", 4096, NULL, 10, NULL, 1);
+    xTaskCreatePinnedToCore(adcLoop, "adcLoop", 4096, NULL, 3, NULL, 1);
+
+    while (1) 
+    {
+        vTaskDelay(MAIN_TASK_DELAY_MS / portTICK_PERIOD_MS);
+    }
+}
+
+void app_main(void)
+{
+    xTaskCreatePinnedToCore(on_cpu_0, "on_cpu_0", 4096, NULL, 3, NULL,0);
+    xTaskCreatePinnedToCore(on_cpu_1, "on_cpu_1", 4096, NULL, 3, NULL,1);
     while (1) 
     {
         vTaskDelay(MAIN_TASK_DELAY_MS / portTICK_PERIOD_MS);

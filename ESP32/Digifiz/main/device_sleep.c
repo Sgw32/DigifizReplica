@@ -6,6 +6,8 @@
 #include <stdio.h>
 
 #define SLEEP_PIN GPIO_NUM_10
+#define POWER_OUT_PIN GPIO_NUM_47
+
 
 esp_err_t initDeviceSleep() {
     ESP_LOGI(LOG_TAG, "initDeviceSleep started");
@@ -17,11 +19,27 @@ esp_err_t initDeviceSleep() {
     io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
     gpio_config(&io_conf);
     ESP_LOGI(LOG_TAG, "initDeviceSleep ended");
+
+    gpio_config_t pout_cfg_out = {
+        .pin_bit_mask = BIT64(POWER_OUT_PIN),
+        .mode = GPIO_MODE_OUTPUT,
+    };
+    gpio_config(&pout_cfg_out);
     return ESP_OK;
 }
 
 bool device_sleep_check() {
-    return gpio_get_level(SLEEP_PIN) == 1;
+    //TODO tests...
+    bool sleepMode = gpio_get_level(SLEEP_PIN) == 1;
+    if (sleepMode)
+    {
+        gpio_set_level(POWER_OUT_PIN, 0);
+    }
+    else
+    {
+        gpio_set_level(POWER_OUT_PIN, 1);
+    }
+    return sleepMode;
 }
 
 void device_sleep_dump() {

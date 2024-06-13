@@ -1,4 +1,6 @@
 #include "emergency.h"
+#include "params.h"
+#include "display_next.h"
 #include "reg_inout.h"
 #include "esp_log.h"
 #include "millis.h"
@@ -75,6 +77,9 @@ void checkEmergency(int mRPM)
       #ifdef DIGIFIZ_LCD_DISPLAY
         setLCDOilIndicator(false);
       #endif
+      #ifdef DIGIFIZ_NEXT_DISPLAY
+        setOilIndicator(0);
+      #endif
         buzzerOff();
     }
     if (emergency_state==1)
@@ -85,6 +90,9 @@ void checkEmergency(int mRPM)
       #ifdef DIGIFIZ_LCD_DISPLAY
         setLCDOilIndicator(true);
       #endif
+      #ifdef DIGIFIZ_NEXT_DISPLAY
+        setOilIndicator(1);
+      #endif
         buzzerOff();
     }
     if (emergency_state==3)
@@ -94,6 +102,9 @@ void checkEmergency(int mRPM)
       #endif
       #ifdef DIGIFIZ_LCD_DISPLAY
         setLCDOilIndicator(true);
+      #endif
+      #ifdef DIGIFIZ_NEXT_DISPLAY
+        setOilIndicator(1);
       #endif
         buzzerOn();
     }

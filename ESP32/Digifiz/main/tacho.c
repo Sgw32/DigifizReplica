@@ -26,7 +26,7 @@ void initTacho()
     config->frequency_update_callback = &tacho_callback;
 
     // task takes ownership of allocated memory
-    xTaskCreate(&frequency_count_task_function, "rpm_count_task", 4096, config, 5, NULL);
+    xTaskCreatePinnedToCore(&frequency_count_task_function, "rpm_count_task", 4096, config, 5, NULL, 1);
     ESP_LOGI(TAG, "initTacho ended");
 }
 

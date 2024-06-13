@@ -1,4 +1,4 @@
-idf_component_register(SRCS "millis.c" "reg_inout.c" "frequency_count.c" "device_sleep.c" "emegrency.c" 
+idf_component_register(SRCS "digifiz_wifi_connect.c" "digifiz_ws_server.c" "millis.c" "reg_inout.c" "frequency_count.c" "device_sleep.c" "emegrency.c" 
 "buzzer.c" 
 "protocol.c" 
 "params.c" 
@@ -9,4 +9,14 @@ idf_component_register(SRCS "millis.c" "reg_inout.c" "frequency_count.c" "device
 "main.c" 
 "tacho.c" 
 "speedometer.c"
-INCLUDE_DIRS ".")
+INCLUDE_DIRS "."
+REQUIRES  
+    nvs_wifi_connect
+    esp_http_server 
+    esp_wifi
+    mdns
+    nvs_flash
+    esp_adc
+EMBED_FILES 
+digifiz_ws_connect.html
+)

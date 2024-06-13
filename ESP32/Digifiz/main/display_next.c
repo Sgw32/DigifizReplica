@@ -22,7 +22,7 @@ static void configure_led(void)
     #if CONFIG_BLINK_LED_STRIP_BACKEND_RMT
     led_strip_rmt_config_t rmt_config = {
         .resolution_hz = 10 * 1000 * 1000, // 10MHz
-        .flags.with_dma = false,
+        .flags.with_dma = true,
     };
     ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &led_strip));
 #elif CONFIG_BLINK_LED_STRIP_BACKEND_SPI
@@ -148,6 +148,7 @@ void setMFADisplayedNumber(int16_t data) {
                             DIGIT_NUMBER_7,
                             DIGIT_NUMBER_8,
                             DIGIT_NUMBER_9};
+    printf("DisplayedMFA:%d\n",data);
     if (data>=0)
     {
       if (((data / 1000) % 10)!=0)
@@ -184,9 +185,9 @@ void setMFADisplayedNumber(int16_t data) {
             display.mfa_digit_2 = DIGIT_NUMBER_MINUS;
         }        
       }
+      display.mfa_digit_3 = number_mfa[(-data / 10) % 10];
+      display.mfa_digit_4 = number_mfa[(-data / 1) % 10];
     }
-    display.mfa_digit_3 = number_mfa[(-data / 10) % 10];
-    display.mfa_digit_4 = number_mfa[(-data / 1) % 10];
 }
 
 // Set the fuel level
@@ -470,7 +471,7 @@ void displayMFAType(uint8_t mfaType) {
             else
             {
               setMFADisplayedNumber((int16_t)(getOilTemperature()));
-              setFloatDot(true);
+              setFloatDot(false);
             }
             break;
         case MFA_STATE_AIR_TEMP:
@@ -488,7 +489,7 @@ void displayMFAType(uint8_t mfaType) {
             else
             {
               setMFADisplayedNumber((int16_t)getAmbientTemperature());
-              setFloatDot(true);
+              setFloatDot(false);
             }
             break;
         case MFA_STATE_FUEL_PRESSURE:
@@ -568,7 +569,24 @@ void setBackWindowHeatIndicator(bool onoff)
 }
 void processIndicators()
 {
-    
+    if (digifiz_reg_in.blinkAll)
+    {
+        display.left_turn_ind = 0;
+        display.right_turn_ind = 0;
+    }
+    else
+    {
+        display.left_turn_ind = 1;
+        display.right_turn_ind = 1;
+        // if (digifiz_reg_in.blinkLeftInd)
+        // {
+        //      display.left_turn_ind = 1;
+        // }
+        // if (digifiz_reg_in.blinkRightInd)
+        // {
+        //      display.right_turn_ind = 1;
+        // }
+    }
 }
 
 uint16_t led_num = 0;

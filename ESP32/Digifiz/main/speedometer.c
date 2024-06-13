@@ -24,7 +24,7 @@ void initSpeedometer()
     config->frequency_update_callback = &spd_m_callback;
 
     // task takes ownership of allocated memory
-    xTaskCreate(&frequency_count_task_function, "spd_m_count_task", 4096, config, 5, NULL);
+    xTaskCreatePinnedToCore(&frequency_count_task_function, "spd_m_count_task", 4096, config, 6, NULL,1);
     ESP_LOGI(TAG, "initSpeedometer ended");
 }
 

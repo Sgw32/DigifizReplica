@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+
+<head>
+    <title>Example Websocket Echo Server</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <style>
+        .column {
+            float: left;
+            width: 100%;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .btn {
+            float: left;
+            width: 100%;
+            margin: 2px;
+
+        }
+
+        .cl1 {
+            float: left;
+            width: 100%;
+            margin: 2px;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .cl01 {
+            float: left;
+            width: 100%;
+            text-align: center;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .cl02 {
+            float: left;
+            width: 100%;
+            text-align: center;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .hdr {
+            float: left;
+            width: 100%;
+            text-align: center;
+            color: white;
+            background-color: blue;
+            padding: 5px;
+            margin: 5px;
+        }
+
+        .logstr {
+            width: 100%;
+            float: left;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="hdr">Example Websocket Echo Server </div>
+    <div class="column">
+        <button class="btn" id="goWifi" onclick="window.location.href = '/wifi'" >Set WiFi SSID/Password -> /wifi</button>
+    </div>
+
+        <div class="cl1">
+            <label class="cl01" for="exampleSend">Input string for Echo</label>
+            <input class="cl02" type="text" id="exampleSend" placeholder="input">
+        </div>
+
+        <div class="cl1">
+            <label class="cl01" for="exampleEcho">Echo string</label>
+            <input class="cl02" type="text" id="exampleEcho" placeholder="output">
+        </div>
+
+    <script>
+        let exSend = document.getElementById("exampleSend");
+        exSend.addEventListener("input", function (e) {
+            //console.log(exSend.id + " " + exSend.value  );
+            socket.send(JSON.stringify({ name: exSend.id, msg: exSend.value }));
+        });
+        function receiveWsData(data) {
+            //console.log(data);
+            try {
+                let obj = JSON.parse(data);
+                let exEcho = document.getElementById("exampleEcho");
+                exEcho.value = obj.msg;
+            }
+            catch {
+                console.log(data + " catch");
+            }
+        };
+    </script>
+
+    <script>  // Прием, обработка и отправка данных в WS
+    </script>
+
+    <script> // основной старт скрипта, открыть сокет
+        // создать сокет по адресу
+        let wsHostStr = "ws://" + document.location.host + document.location.pathname;
+        wsHostStr += (document.location.pathname == '/') ? "ws" : "/ws";
+        var socket = new WebSocket(wsHostStr);
+    </script>
+
+    <script> // события WS
+        socket.onopen = function () {
+            console.log("connect");
+        };
+        socket.onclose = function (event) {
+            console.log("close");
+        };
+        socket.onerror = function () {
+            console.log("error");
+        };
+        socket.onmessage = function (event) {
+            receiveWsData(event.data);
+        };
+    </script>
+
+</body>
+
+</html>
