@@ -1,0 +1,17 @@
+idf_component_register(
+    SRCS 
+        source/nvs_wifi_connect.c
+        source/nvs_wifi_connect_http_server.c
+    INCLUDE_DIRS 
+        include
+    PRIV_INCLUDE_DIRS 
+        private_include
+    REQUIRES 
+       esp_http_server
+       #mdns
+    PRIV_REQUIRES 
+        nvs_flash 
+        esp_wifi
+    EMBED_FILES 
+        source/nvs_wifi_connect.html
+)

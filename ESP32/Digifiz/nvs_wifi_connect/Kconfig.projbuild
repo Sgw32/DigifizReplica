@@ -1,0 +1,27 @@
+menu "Nvs WiFi Connect"
+
+    config DEFAULT_NVS_WIFI_CONNECT_URI
+        string "Connect page URI"
+        default "/wifi"
+        help
+            WEB page URI to set ssid/pass.
+
+    config DEFAULT_NVS_WIFI_CONNECT_WS_URI
+        string "Connect ws URI"
+        default "/wifi/ws"
+        help
+            WEB ws URI to set ssid/pass.
+
+    config DEFAULT_AP_ESP_WIFI_SSID
+        string "Default AP SSID"
+        default "Provision_Wifi_AP"
+        help
+            Default AP SSID for first connect.
+
+    config DEFAULT_AP_ESP_WIFI_PASS
+        string "Default AP PASSWORD"
+        default ""
+        help
+            Default AP Password for first connect.
+
+endmenu
