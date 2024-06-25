@@ -73,9 +73,9 @@ typedef struct __attribute__((packed)) digifiz_pars
     uint8_t mfaBlock;               // 1 byte
     uint8_t displayDot;             // 1 byte
     uint8_t backlight_on;           // 1 byte
-    uint8_t reserved1;              // 1 byte
-    uint8_t reserved2;              // 1 byte
-    uint8_t reserved3;              // 1 byte
+    uint8_t mainc_r;              // 1 byte
+    uint8_t mainc_g;              // 1 byte
+    uint8_t mainc_b;              // 1 byte
     uint8_t crc;                    // 1 byte
     uint16_t coolantThermistorDefRes; // 2 bytes
 } digifiz_pars;

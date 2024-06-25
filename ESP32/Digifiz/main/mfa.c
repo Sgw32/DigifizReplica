@@ -3,7 +3,7 @@
 #include "millis.h"
 #include "reg_inout.h"
 #include "driver/gpio.h"
-
+#include <time.h>
 
 uint8_t uptimeDisplayEnabled = 0;
 uint8_t mfaMemorySelected = 0;
@@ -23,6 +23,8 @@ uint32_t pressSensorTime = 0;
 
 extern int16_t seconds_block1;
 extern int16_t seconds_block2;
+extern struct tm saved_time1;
+extern struct tm saved_time2;
 // Initialize the MFA (Multi-Function Display)
 void initMFA() {
     // Implementation placeholder
@@ -115,6 +117,8 @@ void pressMFABlock() {
 
 // Simulate pressing MFA reset button
 void pressMFAReset() {
+    time_t current_time_t;
+    time(&current_time_t);
     switch(digifiz_parameters.mfaState)
     {
         case MFA_STATE_TRIP_DURATION:
@@ -122,10 +126,14 @@ void pressMFAReset() {
             if (digifiz_parameters.mfaBlock==0)
             {
                 seconds_block1 = 0;
+                // Convert current time to struct tm
+                localtime_r(&current_time_t, &saved_time1);
             }
             else
             {
                 seconds_block2 = 0;
+                // Convert current time to struct tm
+                localtime_r(&current_time_t, &saved_time2);
             }
             break;
         case MFA_STATE_TRIP_DISTANCE:

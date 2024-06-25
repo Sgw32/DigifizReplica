@@ -1,5 +1,5 @@
 #include "lcd_display.h"
-#include <LX_Lcd_Vario.h>
+#include "LX_Lcd_Vario.h"
 #include <Wire.h>
 
 #ifdef DIGIFIZ_LCD_DISPLAY

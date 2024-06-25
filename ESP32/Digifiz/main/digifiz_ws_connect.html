@@ -43,6 +43,8 @@
             text-align: center;
             margin-top: 2px;
             margin-bottom: 2px;
+            overflow-y: auto; /* Add a vertical scrollbar */
+            resize: vertical; /* Allow vertical resizing by the user */
         }
 
         .hdr {
@@ -70,17 +72,33 @@
     </div>
 
         <div class="cl1">
-            <label class="cl01" for="exampleSend">Input string for Echo</label>
-            <input class="cl02" type="text" id="exampleSend" placeholder="input">
+            <label class="cl01" for="digifizConsole">Send commands:</label>
+            <input class="cl02" type="text" id="digifizConsole" placeholder="input">
         </div>
 
         <div class="cl1">
-            <label class="cl01" for="exampleEcho">Echo string</label>
-            <input class="cl02" type="text" id="exampleEcho" placeholder="output">
+            <label class="cl01" for="digifizConsoleResult">Command result</label>
+            <textarea class="cl02" type="text" id="digifizConsoleResult" placeholder="output"></textarea>
         </div>
+	<table>
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody id="paramsTable">
+            <!-- Rows will be added dynamically -->
+        </tbody>
+    </table>
+
+    <div class="btn-container">
+        <button onclick="setParameters()">Set</button>
+        <button onclick="loadParameters()">Load</button>
+    </div>
 
     <script>
-        let exSend = document.getElementById("exampleSend");
+        let exSend = document.getElementById("digifizConsole");
         exSend.addEventListener("input", function (e) {
             //console.log(exSend.id + " " + exSend.value  );
             socket.send(JSON.stringify({ name: exSend.id, msg: exSend.value }));
@@ -89,7 +107,7 @@
             //console.log(data);
             try {
                 let obj = JSON.parse(data);
-                let exEcho = document.getElementById("exampleEcho");
+                let exEcho = document.getElementById("digifizConsoleResult");
                 exEcho.value = obj.msg;
             }
             catch {
@@ -99,6 +117,48 @@
     </script>
 
     <script>  // Прием, обработка и отправка данных в WS
+		let params = [
+            { name: "Parameter 1", value: "" },
+            { name: "Parameter 2", value: "" },
+            { name: "Parameter 3", value: "" },
+            { name: "Parameter 4", value: "" },
+            { name: "Parameter 5", value: "" },
+            { name: "Parameter 6", value: "" },
+            { name: "Parameter 7", value: "" },
+            { name: "Parameter 8", value: "" },
+            { name: "Parameter 9", value: "" },
+            { name: "Parameter 10", value: "" }
+        ];
+
+        function populateTable() {
+            let table = document.getElementById("paramsTable");
+            table.innerHTML = "";
+            params.forEach((param, index) => {
+                let row = table.insertRow();
+                let cell1 = row.insertCell(0);
+                let cell2 = row.insertCell(1);
+
+                cell1.innerHTML = param.name;
+                cell2.innerHTML = `<input type='text' id='param${index}' value='${param.value}' />`;
+            });
+        }
+
+        function setParameters() {
+            params.forEach((param, index) => {
+                param.value = document.getElementById(`param${index}`).value;
+            });
+            console.log("Parameters set:", params);
+        }
+
+        function loadParameters() {
+            params.forEach((param, index) => {
+                document.getElementById(`param${index}`).value = param.value;
+            });
+            console.log("Parameters loaded:", params);
+        }
+
+        populateTable();
+
     </script>
 
     <script> // основной старт скрипта, открыть сокет

@@ -35,6 +35,9 @@
 #define PARAMETER_COMMAND_MFA_RESET 28
 #define PARAMETER_COMMAND_MFA_MODE 29
 #define PARAMETER_COMMAND_MFA_BLOCK 30
+#define PARAMETER_MAINCOLOR_R 31
+#define PARAMETER_MAINCOLOR_G 32
+#define PARAMETER_MAINCOLOR_B 33
 #define PARAMETER_UPTIME 123
 #define PARAMETER_READ_ADDITION 128
 #define PARAMETER_SET_HOUR 255
@@ -62,10 +65,19 @@
 
 void initComProtocol();
 void changeBLEName();
-void protocolParse();
+void protocolParse(char* buf, uint8_t len);
 void processData(int par, long value);
 void processGPIOPinsValue(long value);
 void printHelp();
 void printAbout();
+
+void printLnCString(char* data);
+void printLnUINT8(uint8_t val);
+void printLnUINT32(uint32_t val);
+void printLnFloat(float val);
+
+void clearProtocolBuffer(void);
+
+extern char ws_data_send[];
 
 #endif

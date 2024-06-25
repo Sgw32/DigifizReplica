@@ -14,7 +14,7 @@ menu "Nvs WiFi Connect"
 
     config DEFAULT_AP_ESP_WIFI_SSID
         string "Default AP SSID"
-        default "Provision_Wifi_AP"
+        default "Digifiz_AP"
         help
             Default AP SSID for first connect.
 

@@ -17,6 +17,8 @@ REQUIRES
     mdns
     nvs_flash
     esp_adc
+    json
 EMBED_FILES 
-digifiz_ws_connect.html
+data/digifiz_ws_connect.html
+data/style.css
 )

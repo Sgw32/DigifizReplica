@@ -11,14 +11,16 @@
 #include <esp_event.h>
 #include <esp_log.h>
 #include "esp_netif.h"
-
 #include <esp_http_server.h>
-
+#include <cJSON.h>
 #include "nvs_wifi_connect.h"
+#include "protocol.h"
+#include <string.h>
+
 
 /* A simple example that demonstrates using websocket echo server
  */
-static const char *TAG = "example_ws_echo_server";
+static const char *WS_TAG = "example_ws_echo_server";
 
 
 /*
@@ -28,7 +30,7 @@ static const char *TAG = "example_ws_echo_server";
 static esp_err_t echo_handler(httpd_req_t *req)
 {
     if (req->method == HTTP_GET) {
-        ESP_LOGI(TAG, "Handshake done, the new connection was opened");
+        ESP_LOGI(WS_TAG, "Handshake done, the new connection was opened");
         return ESP_OK;
     }
     httpd_ws_frame_t ws_pkt;
@@ -38,34 +40,68 @@ static esp_err_t echo_handler(httpd_req_t *req)
     /* Set max_len = 0 to get the frame len */
     esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "httpd_ws_recv_frame failed to get frame len with %d", ret);
+        ESP_LOGE(WS_TAG, "httpd_ws_recv_frame failed to get frame len with %d", ret);
         return ret;
     }
     //ESP_LOGI(TAG, "frame len is %d", ws_pkt.len);
+    cJSON *json_send = cJSON_CreateObject(); 
+    char *json_str = 0;
     if (ws_pkt.len) {
         /* ws_pkt.len + 1 is for NULL termination as we are expecting a string */
         buf = calloc(1, ws_pkt.len + 1);
         if (buf == NULL) {
-            ESP_LOGE(TAG, "Failed to calloc memory for buf");
+            ESP_LOGE(WS_TAG, "Failed to calloc memory for buf");
             return ESP_ERR_NO_MEM;
         }
         ws_pkt.payload = buf;
         /* Set max_len = ws_pkt.len to get the frame payload */
         ret = httpd_ws_recv_frame(req, &ws_pkt, ws_pkt.len);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "httpd_ws_recv_frame failed with %d", ret);
+            ESP_LOGE(WS_TAG, "httpd_ws_recv_frame failed with %d", ret);
             free(buf);
             return ret;
         }
-        //ESP_LOGI(TAG, "Got packet with message: %s", ws_pkt.payload);
+        ESP_LOGI(WS_TAG, "Got packet with message: %s", ws_pkt.payload);
+        cJSON *json = cJSON_Parse((char*)ws_pkt.payload); 
+        if (json == NULL) { 
+            const char *error_ptr = cJSON_GetErrorPtr(); 
+            if (error_ptr != NULL) { 
+                printf("Error: %s\n", error_ptr); 
+            } 
+        } 
+        else
+        {
+            // access the JSON data 
+            cJSON *name = cJSON_GetObjectItemCaseSensitive(json, "name"); 
+            if (cJSON_IsString(name) && (name->valuestring != NULL)) { 
+                printf("Name: %s\n", name->valuestring); 
+            } 
+            cJSON *msg = cJSON_GetObjectItemCaseSensitive(json, "msg"); 
+            if (cJSON_IsString(msg) && (msg->valuestring != NULL)) { 
+                printf("Msg: %s\n", msg->valuestring); 
+                protocolParse(msg->valuestring,strlen(msg->valuestring)); 
+            } 
+            
+            cJSON_AddStringToObject(json_send, "name", "digifizReply"); 
+            cJSON_AddStringToObject(json_send, "msg", ws_data_send); 
+
+            json_str = cJSON_Print(json_send); 
+            printf("json_str:%s\n",json_str);
+            ws_pkt.payload = (uint8_t*)json_str;
+            ws_pkt.len = strlen(json_str);
+        }
+        cJSON_Delete(json); 
     }
     //ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
-
     ret = httpd_ws_send_frame(req, &ws_pkt);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret);
+        ESP_LOGE(WS_TAG, "httpd_ws_send_frame failed with %d", ret);
     }
     free(buf);
+    clearProtocolBuffer();
+    if (json_str)
+        cJSON_free(json_str); 
+    cJSON_Delete(json_send); 
     return ret;
 }
 
@@ -101,16 +137,16 @@ static httpd_handle_t start_webserver(void)
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
     // Start the httpd server
-    ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
+    ESP_LOGI(WS_TAG, "Starting server on port: '%d'", config.server_port);
     if (httpd_start(&server, &config) == ESP_OK) {
         // Registering the ws handler
-        ESP_LOGI(TAG, "Registering URI handlers");
+        ESP_LOGI(WS_TAG, "Registering URI handlers");
         digifiz_register_uri_handler(server);
         nvs_wifi_connect_register_uri_handler(server);
         return server;
     }
 
-    ESP_LOGI(TAG, "Error starting server!");
+    ESP_LOGI(WS_TAG, "Error starting server!");
     return NULL;
 }
 
@@ -125,11 +161,11 @@ static void disconnect_handler(void* arg, esp_event_base_t event_base,
 {
     httpd_handle_t* server = (httpd_handle_t*) arg;
     if (*server) {
-        ESP_LOGI(TAG, "Stopping webserver");
+        ESP_LOGI(WS_TAG, "Stopping webserver");
         if (stop_webserver(*server) == ESP_OK) {
             *server = NULL;
         } else {
-            ESP_LOGE(TAG, "Failed to stop http server");
+            ESP_LOGE(WS_TAG, "Failed to stop http server");
         }
     }
 }
@@ -139,7 +175,7 @@ static void connect_handler(void* arg, esp_event_base_t event_base,
 {
     httpd_handle_t* server = (httpd_handle_t*) arg;
     if (*server == NULL) {
-        ESP_LOGI(TAG, "Starting webserver");
+        ESP_LOGI(WS_TAG, "Starting webserver");
         *server = start_webserver();
     }
 }
@@ -148,6 +184,7 @@ static void connect_handler(void* arg, esp_event_base_t event_base,
 void digifiz_ws_connect(void)
 {
     static httpd_handle_t server = NULL;
+    initComProtocol();
 
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));

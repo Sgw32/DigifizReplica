@@ -4,6 +4,9 @@
 extern "C" {
 #endif
 
+#define configTICK_RATE_HZ                           CONFIG_FREERTOS_HZ
+#define portTICK_PERIOD_MS              ( ( TickType_t ) 1000 / configTICK_RATE_HZ )
+
 //#define DISABLE_MANUFACTURER_MFA
 #define MANUFACTURER_MFA_SWITCH
 //#define EMERGENCY_DISABLE_SENSOR_CHECK

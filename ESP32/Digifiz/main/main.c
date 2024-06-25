@@ -33,8 +33,6 @@
 #include "emergency.h"
 
 #include "millis.h"
-#define configTICK_RATE_HZ                           CONFIG_FREERTOS_HZ
-#define portTICK_PERIOD_MS              ( ( TickType_t ) 1000 / configTICK_RATE_HZ )
 
 int i = 0;
 int saveParametersCounter = 0;
@@ -60,7 +58,8 @@ int16_t seconds_block1;
 int16_t seconds_block2;
 
 bool clockRunning;
-struct tm saved_time;
+struct tm saved_time1;
+struct tm saved_time2;
 uint8_t fuel = 0;
 
 #define MAIN_TASK_DELAY_MS 1000 // 1 second delay
@@ -68,7 +67,7 @@ uint8_t fuel = 0;
 #define ADC_TASK_DELAY_MS 10 // 0.01 second delay
 #define DISPLAY_UPDATE_DELAY_MS (1000 / 32) // 32 Hz rate calculation
 
-SemaphoreHandle_t displayMutex; // Mutex to protect access to spd_m
+SemaphoreHandle_t displayMutex; // Mutex to protect access to display
 
 // Get current time from RTC and print hours and minutes
 void set_time() {
@@ -81,12 +80,13 @@ void set_time() {
     struct tm *current_time = localtime(&now);
 
     // Convert both current time and saved time to time_
-    time_t saved_t = mktime(&saved_time);
+    time_t saved_t1 = mktime(&saved_time1);
+    time_t saved_t2 = mktime(&saved_time2);
     time_t current_time_seconds = mktime(current_time);
 
     // Calculate the difference in seconds
-    double diff_seconds1 = difftime(current_time_seconds, saved_t)+seconds_block1;
-    double diff_seconds2 = difftime(current_time_seconds, saved_t)+seconds_block2;
+    double diff_seconds1 = difftime(current_time_seconds, saved_t1)+seconds_block1;
+    double diff_seconds2 = difftime(current_time_seconds, saved_t2)+seconds_block2;
 
     // Convert the difference to hours and minutes
 
@@ -299,7 +299,8 @@ void initDigifiz(void)
     time_t current_time_t;
     time(&current_time_t);
     // Convert current time to struct tm
-    localtime_r(&current_time_t, &saved_time);
+    localtime_r(&current_time_t, &saved_time1);
+    localtime_r(&current_time_t, &saved_time2);
     seconds_block1 = digifiz_parameters.duration[0];
     seconds_block2 = digifiz_parameters.duration[1];
     printf("Sec block1,2: %u %u", seconds_block1, seconds_block2);
@@ -355,5 +356,6 @@ void app_main(void)
     while (1) 
     {
         vTaskDelay(MAIN_TASK_DELAY_MS / portTICK_PERIOD_MS);
+        printf("app_main\n");
     }
 }

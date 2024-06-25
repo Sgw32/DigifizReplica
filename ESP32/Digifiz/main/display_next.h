@@ -50,6 +50,51 @@ enum
     DIGIT_NUMBER_MINUS = 0b1000000,
 };
 
+enum
+{
+    COLOR_SCHEME_INVALID,
+    COLOR_SCHEME_SPEEDOMETER,
+    COLOR_SCHEME_TIME,
+    COLOR_SCHEME_RPM,
+    COLOR_SCHEME_TEMPERATURE,
+    COLOR_SCHEME_FUEL,
+    COLOR_SCHEME_REFUEL,
+    COLOR_SCHEME_MILEAGE,
+    COLOR_SCHEME_BACKLIGHT,
+    COLOR_SCHEME_SIGNALS,
+    COLOR_SCHEME_SIGNAL_LIGHTS,
+    COLOR_SCHEME_SIGNAL_FOGLIGHTS1,
+    COLOR_SCHEME_SIGNAL_FOGLIGHTS2,
+    COLOR_SCHEME_SIGNAL_GLASSHEAT,
+    COLOR_SCHEME_SIGNAL_FARLIGHT,
+    COLOR_SCHEME_SIGNAL_LEFT_TURN_IND,
+    COLOR_SCHEME_SIGNAL_RIGHT_TURN_IND,
+    COLOR_SCHEME_SIGNAL_BRAKES_IND,
+    COLOR_SCHEME_SIGNAL_OIL_IND,
+    COLOR_SCHEME_SIGNAL_BATTERY_IND,
+    COLOR_SCHEME_SIGNAL_MFA1_IND,
+    COLOR_SCHEME_SIGNAL_MFA2_IND,
+    COLOR_SCHEME_SIGNAL_MFA_INDICATORS,
+    COLOR_SCHEME_MFA,
+    COLOR_SCHEME_UPPER_BACKLIGHT,
+    __MAX_COLOR_SCHEME
+};
+
+typedef struct RGBColoringElement
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    int16_t end_segment;
+    uint8_t type;
+    uint8_t basecolor_enabled;
+} RGBColoringElement;
+
+typedef struct ColoringScheme
+{
+    RGBColoringElement scheme[50];
+} ColoringScheme;
+
 typedef struct __attribute__((packed)) DigifizNextDisplay
 {
     uint8_t coolant_backlight : 1; //1
@@ -70,37 +115,37 @@ typedef struct __attribute__((packed)) DigifizNextDisplay
     uint8_t rpm_padding : 4; //32
     uint8_t rpm[5]; //72
     uint8_t rpm_last :5; //77
-    uint32_t rpm_backlight: 18;
-    uint8_t mileage_digit_1 : 7;
-    uint8_t mileage_digit_2 : 7;
-    uint8_t mileage_digit_3 : 7;
-    uint8_t mileage_digit_4 : 7;
-    uint8_t mileage_digit_5 : 7;
-    uint8_t mileage_digit_6 : 7;
-    uint8_t km_backlight : 1;
-    uint8_t clock_digit_1 : 7;
-    uint8_t clock_digit_2 : 7;
-    uint8_t clock_dot : 2;
-    uint8_t clock_digit_3 : 7;
-    uint8_t clock_digit_4 : 7;
-    uint8_t mfa_indicators : 7;
-    uint8_t mfa_digit_1 : 7;
-    uint8_t mfa_digit_2 : 7;
-    uint8_t mfa_digit_3 : 7;
-    uint8_t mfa_digit_4 : 7;
-    uint8_t mfa_dots : 3;
-    uint8_t fuel_digit_1 : 7;
-    uint8_t fuel_digit_2 : 7;
-    uint8_t fuel_ind : 1;
-    uint8_t fuel_low_ind : 6;
-    uint8_t speed_digit_1 : 7;
-    uint8_t speed_digit_2 : 7;
-    uint8_t speed_digit_3 : 7;
-    uint8_t speed_digit_s1 : 7;
-    uint8_t speed_digit_s2 : 7;
-    uint8_t speed_digit_s3 : 7;
-    uint8_t km_ind : 1;
-    uint16_t backlight_leds:12;
+    uint32_t rpm_backlight: 18; //95
+    uint8_t mileage_digit_1 : 7; //102
+    uint8_t mileage_digit_2 : 7; //109
+    uint8_t mileage_digit_3 : 7; //116
+    uint8_t mileage_digit_4 : 7; //123
+    uint8_t mileage_digit_5 : 7; //130
+    uint8_t mileage_digit_6 : 7; //137
+    uint8_t km_backlight : 1; //138
+    uint8_t clock_digit_1 : 7; //145
+    uint8_t clock_digit_2 : 7; //152
+    uint8_t clock_dot : 2; //154
+    uint8_t clock_digit_3 : 7; //161
+    uint8_t clock_digit_4 : 7; //168
+    uint8_t mfa_indicators : 7; //175
+    uint8_t mfa_digit_1 : 7; //182
+    uint8_t mfa_digit_2 : 7; //189
+    uint8_t mfa_digit_3 : 7; //196
+    uint8_t mfa_digit_4 : 7; //203
+    uint8_t mfa_dots : 3; //206
+    uint8_t fuel_digit_1 : 7; //213
+    uint8_t fuel_digit_2 : 7; //220
+    uint8_t fuel_ind : 1; //221
+    uint8_t fuel_low_ind : 6; //227
+    uint8_t speed_digit_1 : 7; //234
+    uint8_t speed_digit_2 : 7; //241
+    uint8_t speed_digit_3 : 7; //248
+    uint8_t speed_digit_s1 : 7; //255
+    uint8_t speed_digit_s2 : 7; //262
+    uint8_t speed_digit_s3 : 7; //269
+    uint8_t km_ind : 1; //270
+    uint16_t backlight_leds:12; //282
 } DigifizNextDisplay;
 
 void initDisplay(); 
@@ -123,6 +168,7 @@ void setRefuelSign(bool onoff);
 void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
 void setServiceDisplayData(uint8_t data);
+void getColorBySegmentNumber(uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* b);
 void fireDigifiz();
 
 void setOilIndicator(bool onoff);

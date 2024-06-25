@@ -12,12 +12,237 @@ DigifizNextDisplay display;
 static led_strip_handle_t led_strip;
 float brightnessFiltered = 6.0f;
 
+uint8_t maincolor_r;
+uint8_t maincolor_g;
+uint8_t maincolor_b;
+
+ColoringScheme digifizStandard = {
+    .scheme = {
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 1,
+            .type = COLOR_SCHEME_BACKLIGHT,
+            .basecolor_enabled = 1
+        },
+        {
+            .r = 60,
+            .g = 8,
+            .b = 2,
+            .end_segment = 15,
+            .type = COLOR_SCHEME_TEMPERATURE,
+            .basecolor_enabled = 1
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 16,
+            .type = COLOR_SCHEME_BACKLIGHT,
+            .basecolor_enabled = 1
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 17,
+            .type = COLOR_SCHEME_SIGNAL_MFA1_IND,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 18,
+            .type = COLOR_SCHEME_SIGNAL_MFA2_IND,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 80,
+            .g = 2,
+            .b = 2,
+            .end_segment = 19,
+            .type = COLOR_SCHEME_SIGNAL_BATTERY_IND,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 80,
+            .g = 2,
+            .b = 2,
+            .end_segment = 20,
+            .type = COLOR_SCHEME_SIGNAL_OIL_IND,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 21,
+            .type = COLOR_SCHEME_SIGNAL_BRAKES_IND,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 22,
+            .type = COLOR_SCHEME_SIGNAL_RIGHT_TURN_IND,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 23,
+            .type = COLOR_SCHEME_SIGNAL_LEFT_TURN_IND,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 2,
+            .g = 2,
+            .b = 60,
+            .end_segment = 24,
+            .type = COLOR_SCHEME_SIGNAL_FARLIGHT,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 25,
+            .type = COLOR_SCHEME_SIGNAL_GLASSHEAT,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 26,
+            .type = COLOR_SCHEME_SIGNAL_FOGLIGHTS2,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 27,
+            .type = COLOR_SCHEME_SIGNAL_FOGLIGHTS1,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 2,
+            .g = 80,
+            .b = 2,
+            .end_segment = 28,
+            .type = COLOR_SCHEME_SIGNAL_LIGHTS,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 60,
+            .g = 8,
+            .b = 2,
+            .end_segment = 77,
+            .type = COLOR_SCHEME_RPM,
+            .basecolor_enabled = 1
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 95,
+            .type = COLOR_SCHEME_BACKLIGHT,
+            .basecolor_enabled = 1
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 137,
+            .type = COLOR_SCHEME_MILEAGE,
+            .basecolor_enabled = 1
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 138,
+            .type = COLOR_SCHEME_BACKLIGHT,
+            .basecolor_enabled = 1
+        },
+        { 
+            .r = 6,
+            .g = 8,
+            .b = 60,
+            .end_segment = 168,
+            .type = COLOR_SCHEME_TIME,
+            .basecolor_enabled = 1
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 175,
+            .type = COLOR_SCHEME_SIGNAL_MFA_INDICATORS,
+            .basecolor_enabled = 1
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 206,
+            .type = COLOR_SCHEME_MFA,
+            .basecolor_enabled = 1
+        },
+        { 
+            .r = 2,
+            .g = 2,
+            .b = 80,
+            .end_segment = 221,
+            .type = COLOR_SCHEME_FUEL,
+            .basecolor_enabled = 1
+        },
+        { 
+            .r = 80,
+            .g = 2,
+            .b = 2,
+            .end_segment = 227,
+            .type = COLOR_SCHEME_REFUEL,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 60,
+            .g = 8,
+            .b = 2,
+            .end_segment = 269,
+            .type = COLOR_SCHEME_SPEEDOMETER,
+            .basecolor_enabled = 1
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 270,
+            .type = COLOR_SCHEME_BACKLIGHT,
+            .basecolor_enabled = 1
+        },
+        { 
+            .r = 60,
+            .g = 80,
+            .b = 2,
+            .end_segment = 282,
+            .type = COLOR_SCHEME_UPPER_BACKLIGHT,
+            .basecolor_enabled = 0
+        },
+    }
+};
+
 static void configure_led(void)
 {
     ESP_LOGI(LOG_TAG, "Digifiz WS2812 LED init.");
      led_strip_config_t strip_config = {
         .strip_gpio_num = WSDATA_GPIO_PIN,
-        .max_leds = DIGIFIZ_DISPLAY_NEXT_LEDS, // at least one LED on board
+        .max_leds = DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS, // at least one LED on board
     };
     #if CONFIG_BLINK_LED_STRIP_BACKEND_RMT
     led_strip_rmt_config_t rmt_config = {
@@ -62,7 +287,7 @@ void initDisplay() {
     display.fuel_ind = 1;
     display.lights_on_ind = 0;
     display.foglight_ind2 = 0;
-    
+    display.backlight_leds = 0b111111111111;
     //display.rpm_padding = 0xF;
     //display.rpm[0] = 0xFF;
     setFuel(99);
@@ -589,24 +814,74 @@ void processIndicators()
     }
 }
 
+void getColorBySegmentNumber(uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* b)
+{
+    uint16_t startSegment = 0;
+    uint16_t endSegment = 0;
+    for (uint16_t i=0;i!=49;i++)
+    {
+        endSegment = digifizStandard.scheme[i].end_segment;
+        if ((segment>=startSegment)&&(segment<endSegment))
+        {
+            if (digifizStandard.scheme[i].basecolor_enabled)
+            {
+                (*r) = maincolor_r;
+                (*g) = maincolor_g;
+                (*b) = maincolor_b;
+            }
+            else
+            {
+                (*r) = digifizStandard.scheme[i].r;
+                (*g) = digifizStandard.scheme[i].g;
+                (*b) = digifizStandard.scheme[i].b;
+            }
+        }
+        startSegment = endSegment;
+    }
+}
+
 uint16_t led_num = 0;
 // Fire up the Digifiz system
 void fireDigifiz() {
     led_num = 0;
+
+    if ((digifiz_parameters.mainc_r==0)&&
+        (digifiz_parameters.mainc_g==0)&&
+        (digifiz_parameters.mainc_b==0))
+    {
+        digifiz_parameters.mainc_r = 60;
+        digifiz_parameters.mainc_g = 80;
+        digifiz_parameters.mainc_b = 2;
+    }
+    maincolor_r = digifiz_parameters.mainc_r;
+    maincolor_g = digifiz_parameters.mainc_g;
+    maincolor_b = digifiz_parameters.mainc_b;
     uint8_t *ptr = (uint8_t*)&display;
     for (uint16_t i = 0; i != sizeof(DigifizNextDisplay); i++)
     {
         for (uint16_t j = 0; j != 8; j++)
         {
             uint8_t bit = (ptr[i] >> j) & 1;
+            uint8_t r = 0;
+            uint8_t g = 0;
+            uint8_t b = 0;
+
+            getColorBySegmentNumber(led_num,&r,&g,&b);
+
             if (bit)
-                led_strip_set_pixel(led_strip, led_num, (60*((uint32_t)backlightLevel))/100,(80*((uint32_t)backlightLevel))/100,(2*((uint32_t)backlightLevel))/100);
-            else
-                led_strip_set_pixel(led_strip, led_num, 0,0,0);
-            led_num+=1;
-            if (led_num>DIGIFIZ_DISPLAY_NEXT_LEDS-1)
             {
-                led_num=DIGIFIZ_DISPLAY_NEXT_LEDS-1;
+                led_strip_set_pixel(led_strip, led_num, ((uint32_t)r*((uint32_t)backlightLevel))/100,
+                    ((uint32_t)g*((uint32_t)backlightLevel))/100,
+                    ((uint32_t)b*((uint32_t)backlightLevel))/100);
+            }
+            else
+            {
+                led_strip_set_pixel(led_strip, led_num, 0,0,0);
+            }
+            led_num+=1;
+            if (led_num>(DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1))
+            {
+                led_num=DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1;
                 break;
             }
         }

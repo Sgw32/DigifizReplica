@@ -149,6 +149,9 @@ void load_defaults()
     digifiz_parameters.coolantThermistorDefRes = 10000;
     digifiz_parameters.uptime = 0;
     digifiz_parameters.digifiz_options = 0;
+    digifiz_parameters.mainc_r = 60;
+    digifiz_parameters.mainc_g = 80;
+    digifiz_parameters.mainc_b = 2;
 #ifdef MANUFACTURER_MFA_SWITCH
     digifiz_parameters.digifiz_options |= OPTION_MFA_MANUFACTURER;
 #endif
