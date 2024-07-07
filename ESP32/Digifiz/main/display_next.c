@@ -59,7 +59,7 @@ ColoringScheme digifizStandard = {
             .basecolor_enabled = 0
         },
         { 
-            .r = 80,
+            .r = 240,
             .g = 2,
             .b = 2,
             .end_segment = 19,
@@ -67,7 +67,7 @@ ColoringScheme digifizStandard = {
             .basecolor_enabled = 0
         },
         { 
-            .r = 80,
+            .r = 240,
             .g = 2,
             .b = 2,
             .end_segment = 20,
@@ -75,8 +75,8 @@ ColoringScheme digifizStandard = {
             .basecolor_enabled = 0
         },
         { 
-            .r = 60,
-            .g = 80,
+            .r = 240,
+            .g = 2,
             .b = 2,
             .end_segment = 21,
             .type = COLOR_SCHEME_SIGNAL_BRAKES_IND,
@@ -101,7 +101,7 @@ ColoringScheme digifizStandard = {
         { 
             .r = 2,
             .g = 2,
-            .b = 60,
+            .b = 120,
             .end_segment = 24,
             .type = COLOR_SCHEME_SIGNAL_FARLIGHT,
             .basecolor_enabled = 0
@@ -142,17 +142,25 @@ ColoringScheme digifizStandard = {
             .r = 60,
             .g = 8,
             .b = 2,
-            .end_segment = 77,
+            .end_segment = 69,
             .type = COLOR_SCHEME_RPM,
             .basecolor_enabled = 1
         },
         { 
-            .r = 60,
-            .g = 80,
+            .r = 120,
+            .g = 8,
+            .b = 2,
+            .end_segment = 77,
+            .type = COLOR_SCHEME_RPM,
+            .basecolor_enabled = 0
+        },
+        { 
+            .r = 20,
+            .g = 20,
             .b = 2,
             .end_segment = 95,
             .type = COLOR_SCHEME_BACKLIGHT,
-            .basecolor_enabled = 1
+            .basecolor_enabled = 0
         },
         { 
             .r = 60,
@@ -263,6 +271,20 @@ static void configure_led(void)
     led_strip_clear(led_strip);
 }
 
+void deinit_leds(void)
+{
+    ESP_LOGI(LOG_TAG, "Deinitializing WS2812 LED.");
+
+    // Clear the LED strip to turn off all LEDs
+    ESP_ERROR_CHECK(led_strip_clear(led_strip));
+
+    // Delete the LED strip device
+    ESP_ERROR_CHECK(led_strip_del(led_strip));
+    led_strip = NULL;
+
+    ESP_LOGI(LOG_TAG, "WS2812 LED deinitialized.");
+}
+
 // Initialize the display
 void initDisplay() {
     ESP_LOGI(LOG_TAG, "initDisplay started");
@@ -327,7 +349,7 @@ void setClockData(uint8_t clock_hours, uint8_t clock_minutes) {
     else
     {
         display.clock_digit_1 = DIGIT_NUMBER_0;
-        display.clock_digit_2 = DIGIT_NUMBER_0;
+        display.clock_digit_2 = number_clock[(clock_hours / 1) % 10];
         display.clock_digit_3 = number_clock[(clock_minutes / 10) % 10];
         display.clock_digit_4 = number_clock[(clock_minutes / 1) % 10];
     }
@@ -355,7 +377,7 @@ void setMFAClockData(uint8_t mfa_clock_hours, uint8_t mfa_clock_minutes) {
     else
     {
         display.mfa_digit_1 = DIGIT_NUMBER_0;
-        display.mfa_digit_2 = DIGIT_NUMBER_0;
+        display.mfa_digit_2 = number_clock[(mfa_clock_hours / 1) % 10];
         display.mfa_digit_3 = number_clock[(mfa_clock_minutes / 10) % 10];
         display.mfa_digit_4 = number_clock[(mfa_clock_minutes / 1) % 10];
     }
@@ -373,7 +395,7 @@ void setMFADisplayedNumber(int16_t data) {
                             DIGIT_NUMBER_7,
                             DIGIT_NUMBER_8,
                             DIGIT_NUMBER_9};
-    printf("DisplayedMFA:%d\n",data);
+    //printf("DisplayedMFA:%d\n",data);
     if (data>=0)
     {
       if (((data / 1000) % 10)!=0)
@@ -441,8 +463,9 @@ void setFuel(uint8_t litres) {
 }
 
 // Set the RPM data
-void setRPMData(uint16_t data) {
+void setRPMData(uint16_t inp_d) {
     // Implementation placeholder
+    uint32_t data = (49*(uint32_t)inp_d)/digifiz_parameters.maxRPM;
     if (data<1)
         data=1;
     if (data>49)
@@ -750,6 +773,12 @@ void setBrightness(uint8_t levels) {
     //printf("Br: %u\n", levels);
     brightnessFiltered += 0.1f*((float)levels-brightnessFiltered);
     backlightLevel = (uint8_t)brightnessFiltered;
+}
+
+void resetBrightness()
+{
+    brightnessFiltered = 0.0f;
+    backlightLevel = 0;
 }
 
 // Set the refuel sign status

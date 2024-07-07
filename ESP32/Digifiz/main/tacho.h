@@ -6,18 +6,15 @@
 #include "esp_err.h"
 #include "esp_attr.h"
 #include "esp_sleep.h"
-#include "driver/pulse_cnt.h"
+#include "esp_system.h"
+#include "driver/gpio.h"
+#include "driver/gptimer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "frequency_count.h"
+#include "freertos/queue.h"
 
-#define RPM_PCNT_UNIT    PCNT_UNIT_0
-#define RPM_CHANNEL    PCNT_CHANNEL_1
 #define RPM_PIN 35
-
-#define RPM_SAMPLE_PERIOD 0.05  // seconds
-// suitable up to 16,383.5 Hz
-#define RPM_WINDOW_DURATION 0.05  // seconds
+#define DEBOUNCE_TICKS 500 //0.5ms
 /**
  * @brief Inits tacho module
  * 
@@ -44,4 +41,14 @@ uint32_t getRPMDispertion();
  * @return uint32_t 
  */
 uint32_t getRPMMean();
+
+/**
+ * @brief resets periph
+ */
+void deinit_gptimer(void);
+
+/**
+ * @brief resets gpio periph
+ */
+void deinit_tacho_gpio(void);
 #endif

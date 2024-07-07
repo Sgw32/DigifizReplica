@@ -5,6 +5,7 @@
 #include "esp_log.h"
 #include "esp_err.h"
 #include "setup.h"
+#include "display_next.h"
 #include <stdio.h>
 
 #include "freertos/FreeRTOS.h"
@@ -56,6 +57,7 @@ static void deep_sleep_task(void *args)
     while (1)
     {
         //printf("Checking sleep pin...\n");
+#ifndef DEBUG_SLEEP_DISABLE
         bool sleepMode = gpio_get_level(SLEEP_PIN) == 1;
         if (sleepMode)
         {
@@ -65,6 +67,7 @@ static void deep_sleep_task(void *args)
             ESP_ERROR_CHECK(rtc_gpio_pullup_en(ext_wakeup_pin_1));
             esp_deep_sleep_start();
         }
+#endif
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
@@ -96,6 +99,9 @@ bool device_sleep_check() {
     bool sleepMode = gpio_get_level(SLEEP_PIN) == 1;
     if (sleepMode)
     {
+#ifndef DEBUG_SLEEP_DISABLE
+        resetBrightness();
+#endif
         gpio_set_level(POWER_OUT_PIN, 0);
     }
     else

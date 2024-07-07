@@ -21,6 +21,8 @@ extern "C" {
 
 #define EEPROM_SAVE_INTERVAL 32
 
+#define DEBUG_SLEEP_DISABLE
+
 extern const char TAG[];
 
 //#define GALLONS

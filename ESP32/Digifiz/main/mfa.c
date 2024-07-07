@@ -54,9 +54,9 @@ void processMFA()
       if ((bMFAMode==0)&&(prevMFAMode==1))
       {
           //Pressed MFA Mode
+          ESP_LOGI(LOG_TAG,  "Mode=1");
           pressMFAMode();
       } 
-      //digifiz_parameters.mfaBlock = (digitalRead(MFA_BLOCK_PIN)==LOW) ? 1 : 0;
       digifiz_parameters.mfaBlock = (bMFABlock==1) ? 1 : 0;
       
       if ((bMFAReset==0)&&(prevMFAReset==1))

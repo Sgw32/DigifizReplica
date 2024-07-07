@@ -1,4 +1,4 @@
-idf_component_register(SRCS "digifiz_wifi_connect.c" "digifiz_ws_server.c" "millis.c" "reg_inout.c" "frequency_count.c" "device_sleep.c" "emegrency.c" 
+idf_component_register(SRCS "digifiz_time.c" "digifiz_wifi_connect.c" "digifiz_ws_server.c" "millis.c" "reg_inout.c" "frequency_count.c" "device_sleep.c" "emegrency.c" 
 "buzzer.c" 
 "protocol.c" 
 "params.c" 
@@ -18,6 +18,7 @@ REQUIRES
     nvs_flash
     esp_adc
     json
+    app_update
 EMBED_FILES 
 data/digifiz_ws_connect.html
 data/style.css

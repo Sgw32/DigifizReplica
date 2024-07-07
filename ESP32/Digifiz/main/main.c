@@ -1,6 +1,7 @@
 /* Digifiz Replica Next
 */
 #include <stdio.h>
+#include <esp_ota_ops.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h" // Include semaphore/mutex header
@@ -13,6 +14,7 @@
 #include "esp_err.h"
 #include "esp_attr.h"
 #include "esp_sleep.h"
+#include "esp_wifi.h"
 #include <time.h>
 #include "led_strip.h"
 #include "sdkconfig.h"
@@ -110,12 +112,28 @@ void set_time() {
         diff_minutes = -diff_minutes;
     }
 
+    //printf("time:%u:%u\n",timeinfo.tm_hour,timeinfo.tm_min);
     setClockData(timeinfo.tm_hour,timeinfo.tm_min);
     
     sinceStart_hours = diff_hours;
     sinceStart_minutes = diff_minutes;
     digifiz_parameters.duration[0]=(uint16_t)fabs(diff_seconds1);
     digifiz_parameters.duration[1]=(uint16_t)fabs(diff_seconds2);
+}
+
+// Shutdown handler function
+void shutdown_handler(void)
+{
+    ESP_LOGI("SHUTDOWN_HANDLER", "Running shutdown handler...");
+
+    // Stop and deinitialize Timer
+    xSemaphoreTake(displayMutex, portMAX_DELAY); // Take the mutex
+    deinit_leds();
+    deinit_tacho_gpio();
+    deinit_gptimer();
+    // Disconnect and deinitialize Wi-Fi
+    ESP_ERROR_CHECK(esp_wifi_stop());
+    ESP_ERROR_CHECK(esp_wifi_deinit());
 }
 
 
@@ -168,7 +186,7 @@ void digifizLoop(void *pvParameters) {
         setMFABlock(digifiz_parameters.mfaBlock ? 0 : 1); //in display h
         displayMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState);
         setDot(false);
-        printf("Reg in: %u %u %u\n", digifiz_reg_in.bytes[0], digifiz_reg_in.bytes[1], digifiz_parameters.mfaBlock);
+        //printf("Reg in: %u %u %u\n", digifiz_reg_in.bytes[0], digifiz_reg_in.bytes[1], digifiz_reg_in.mfaReset);
         xSemaphoreGive(displayMutex); // Give back the mutex
         
         device_sleep_dump();
@@ -176,7 +194,6 @@ void digifizLoop(void *pvParameters) {
         //pressMFAMode();
         // Read ADC values from multiple pins
         //vTaskDelay(pdMS_TO_TICKS(DIGIFIZ_TASK_DELAY_MS));
-        
         
         if (getBuzzerEnabled())
         {
@@ -239,8 +256,8 @@ void displayUpdate(void *pvParameters) {
                 spd_m_speedometer=0;
 #endif
             displaySpeedCnt = 0;
-            // printf("Status T RPM:%d %f %f %f %f\n",getDisplayedCoolantTemp(),getCoolantTemperature(),(float)((getCoolantTemperature()-digifiz_parameters.coolantMin)/
-            //     (digifiz_parameters.coolantMax - digifiz_parameters.coolantMin)*14.0f), averageRPM, spd_m_speedometer);
+            printf("Status T RPM:%d %f %f %f %f\n",getDisplayedCoolantTemp(),getCoolantTemperature(),(float)((getCoolantTemperature()-digifiz_parameters.coolantMin)/
+                 (digifiz_parameters.coolantMax - digifiz_parameters.coolantMin)*14.0f), averageRPM, spd_m_speedometer);
         }
 
         if (digifiz_parameters.digifiz_options&OPTION_GALLONS)
@@ -351,11 +368,20 @@ void on_cpu_1(void *pvParameters)
 
 void app_main(void)
 {
+    const esp_partition_t *partition = esp_ota_get_running_partition();
+	printf("Currently running partition: %s\r\n", partition->label);
+    esp_ota_img_states_t ota_state;
+	if (esp_ota_get_state_partition(partition, &ota_state) == ESP_OK) {
+		if (ota_state == ESP_OTA_IMG_PENDING_VERIFY) {
+			esp_ota_mark_app_valid_cancel_rollback();
+		}
+	}
     xTaskCreatePinnedToCore(on_cpu_0, "on_cpu_0", 4096, NULL, 3, NULL,0);
     xTaskCreatePinnedToCore(on_cpu_1, "on_cpu_1", 4096, NULL, 3, NULL,1);
+    ESP_ERROR_CHECK(esp_register_shutdown_handler(shutdown_handler));
     while (1) 
     {
         vTaskDelay(MAIN_TASK_DELAY_MS / portTICK_PERIOD_MS);
-        printf("app_main\n");
+        //printf("app_main\n");
     }
 }

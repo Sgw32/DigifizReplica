@@ -1,4 +1,5 @@
 #include "adc.h"
+#include <math.h>
 #include "params.h"
 #include "setup.h"
 #include "driver/gpio.h"
@@ -12,13 +13,13 @@
 const float R1_Coolant = COOLANT_R_AT_NORMAL_T; //for Coolant
 
 #ifndef NEW_REVISION
-const float R2_Ambient = 10000.0f; //for Coolant
+const float R2_Ambient = 3300.0f; //for Coolant
 #else
 const float R2_Ambient = 1000.0f; //for Coolant
 #endif
 
 #ifdef OIL_RES_10000
-const float R2_Oil = 220;
+const float R2_Oil = 3300;
 #else
 const float R2_Oil = 220;
 #endif
@@ -33,7 +34,11 @@ const uint8_t airChannel = ADC_CHANNEL_3; //Air temp sensor
 const uint8_t intakePressureChannel = ADC_CHANNEL_5; //Manifold pressure sensor pin
 const uint8_t fuelPressureChannel = ADC_CHANNEL_6; //Manifold pressure sensor pin
 
-float logR2, R2, coolantT, oilT, airT;
+float logR2 = 0.0f;
+float R2 = 0.0f;
+float coolantT = 0.0f;
+float oilT = 0.0f;
+float airT = 0.0f;
 float coolantB = 4000;
 float oilB = 4000;
 float airB = 4000;
@@ -164,10 +169,14 @@ void initADC() {
     }
 
     //Init values:
-    processFirstCoolantTemperature();
-    processFirstOilTemperature();
-    processFirstGasLevel();
-    processFirstAmbientTemperature();
+    if (adc_raw.coolantRawADCVal>0)
+        processFirstCoolantTemperature();
+    if (adc_raw.oilTempRawADCVal>0)
+        processFirstOilTemperature();
+    if (adc_raw.fuelRawADCVal>0)
+        processFirstGasLevel();
+    if (adc_raw.ambTempRawADCVal>0)
+        processFirstAmbientTemperature();
     ESP_LOGI(LOG_TAG, "initADC ended");
 }
 
@@ -261,32 +270,17 @@ float getCoolantTemperature() {
 
 // Get the oil temperature in Celsius
 float getOilTemperature() {
-    V0 = adc_raw.oilTempRawADCVal;
-    R2 = R2_Oil * V0 / (4095.0f - V0); //
-    float tempT = 1.0f/(log(R2/R1_Oil)/coolantB+1.0f/(25.0f+273.15f))-273.15f;
-    if (tempT<-50.0f)
+    if (oilT<-50.0f)
+    {
+        oilT = -60.0f;
         return -999.9f;
-    else if (tempT>200.0)
+    }
+    else if (oilT>200.0)
+    {
+        oilT = 210.0f;
         return -999.9f;
-    else
-        return oilT +=0.1*(tempT-oilT);
-}
-
-// Get the gas level in percent
-float getGasLevel(float R) {
-    V0 = adc_raw.fuelRawADCVal;
-    R2 = constrain(220 * V0 / (4095.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
-    
-#ifndef FUEL_LEVEL_EXPERIMENTAL
-    float R2scaled = (((float)R2-
-              digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                                                digifiz_parameters.tankMinResistance));
-#else
-    float R2scaled = 1.0f-(1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
-#endif
-    gasolineLevel += tauGasoline*(R2scaled-gasolineLevel); //percents
-    gasolineLevelFiltered += tauGasolineConsumption*(R2scaled-gasolineLevelFiltered); //percents
-    return gasolineLevel;
+    }
+    return oilT;
 }
 
 // Convert resistance to fuel level
@@ -295,25 +289,24 @@ float getRToFuelLevel(float R) {
 }
 
 // Get the ambient temperature in Celsius
-float getAmbientTemperature() {
-    // Implementation placeholder
-    V0 = adc_raw.ambTempRawADCVal;
-    R2 = R2_Ambient * V0 / (4095.0f - V0); //
-    float tempT = 1.0f/(log(R2/R1_Ambient)/coolantB+1.0f/(25.0f+273.15f))-273.15f;
-    if (tempT<-50.0f)
-        return -999.9f;
-    else if (tempT>200.0)
-        return -999.9f;
-    else
+float getAmbientTemperature() 
+{
+    if (airT<-50.0f)
     {
-        airT +=0.1*(tempT-airT);
-        return airT;
+        airT = -60.0f;
+        return -999.9f;
     }
-    return -999.9f;
+    else if (airT>200.0)
+    {
+        airT = 210.0f;
+        return -999.9f;
+    }
+    return airT;
 }
 
 // Get the fuel consumption
-float getFuelConsumption() {
+float getFuelConsumption() 
+{
     return constrain(consumptionLevel,0,1.0f);
 }
 
@@ -410,26 +403,17 @@ void processOilTemperature() {
 void processGasLevel() {
     //TODO add values
     V0 = adc_raw.fuelRawADCVal;
-    R2 = constrain(220 * V0 / (1023.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
+    R2 = constrain(220 * V0 / (4095.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
 #ifndef FUEL_LEVEL_EXPERIMENTAL
     float R2scaled = (((float)R2-
               digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
                                                 digifiz_parameters.tankMinResistance));
 #else
-    float R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
+    float R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f; //This is a polynome calculated using VAG sensor gauge
 #endif
-
+    //printf("ADC fuel: %f %f\n",V0, gasolineLevel);
     gasolineLevel += tauGasoline*((1.0f-R2scaled)-gasolineLevel); //percents
     gasolineLevelFiltered += tauGasolineConsumption*(R2scaled-gasolineLevelFiltered); //percents
-
-    //TODO millis                                     
-    if (0)//((millis()-consumptionCounter)>1800000)
-    {
-      //half hour
-      consumptionCounter = 0;//millis();
-      consumptionLevel = (gasolineLevelFiltered05hour-gasolineLevelFiltered)*2.0f;
-      gasolineLevelFiltered05hour = gasolineLevelFiltered;
-    }
 }
 
 // Process ambient temperature data
@@ -438,7 +422,11 @@ void processAmbientTemperature() {
     R2 = R2_Ambient * V0 / (4095.0f - V0); 
     float temp1 = (log(R2/R1_Ambient)/airB);
     temp1 += 1/(25.0f+273.15f);
-    airT += tauAir*(1.0f/temp1 - 273.15f - airT);
+    if (temp1>0)
+    {
+        airT += tauAir*(1.0f/temp1 - 273.15f - airT);
+    }
+    //printf("ADC AMBT: %f %f\n",V0, temp1);
 }
 
 // Process brightness level data
@@ -449,7 +437,6 @@ void processBrightnessLevel() {
 // Process the first coolant temperature data
 void processFirstCoolantTemperature() {
     V0 = adc_raw.coolantRawADCVal;
-    V0/=100;
     R2 = 220.0f * V0 / (4095.0f - V0); //
     float temp1 = (log(R2/R1_Coolant)/coolantB);
     temp1 += 1/(25.0f+273.15f);
@@ -459,7 +446,6 @@ void processFirstCoolantTemperature() {
 // Process the first oil temperature data
 void processFirstOilTemperature() {
     V0 = adc_raw.oilTempRawADCVal;
-    V0/=100;
     R2 = R2_Oil * V0 / (4095.0f - V0); //
     float temp1 = (log(R2/R1_Oil)/oilB);
     temp1 += 1/(25.0f+273.15f);
@@ -469,7 +455,6 @@ void processFirstOilTemperature() {
 // Process the first gas level data
 void processFirstGasLevel() {
     V0 = adc_raw.fuelRawADCVal;
-    V0/=300;
     R2 = constrain(220 * V0 / (4095.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
 #ifndef FUEL_LEVEL_EXPERIMENTAL
     float R2scaled = (((float)R2-
@@ -486,10 +471,11 @@ void processFirstGasLevel() {
 
 // Process the first ambient temperature data
 void processFirstAmbientTemperature() {
+    printf("First AMBT:%f", airT);
     V0 = adc_raw.ambTempRawADCVal;
-    V0/=100;
     R2 = R2_Ambient * V0 / (4095.0f - V0); 
     float temp1 = (log(R2/R1_Ambient)/airB);
     temp1 += 1/(25.0f+273.15f);
     airT = temp1;
+    printf("First after AMBT:%f", airT);
 }

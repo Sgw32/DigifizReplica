@@ -164,6 +164,7 @@ void setMFAType(uint8_t mfaType);
 void displayMFAType(uint8_t mfaType);
 void setMFABlock(uint8_t block);
 void setBrightness(uint8_t levels);
+void resetBrightness();
 void setRefuelSign(bool onoff);
 void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
@@ -178,6 +179,7 @@ void setBackLightsHeatIndicator(bool onoff);
 void setBackWindowHeatIndicator(bool onoff);
 void processIndicators();
 
+void deinit_leds(void);
 
 #ifdef __cplusplus
 }

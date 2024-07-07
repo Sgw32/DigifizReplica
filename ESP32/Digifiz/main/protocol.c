@@ -4,6 +4,7 @@
 #include "adc.h"
 #include "esp_log.h"
 #include <string.h>
+#include "digifiz_time.h"
 
 uint32_t statusTime;
 
@@ -226,13 +227,13 @@ void processData(int parameter,long value)
     //commands
     if (par==PARAMETER_SET_HOUR)
     {
-           
+      set_hour(value);
     }
     else
     {
       if (par==PARAMETER_SET_MINUTE)
       {
-          
+        set_minute(value);
       }
       else
       {

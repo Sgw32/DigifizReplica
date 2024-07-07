@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Digifiz Server</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta charset="UTF-8">
+	<link rel="icon" href="data:,">
+    <style>
+	
+	body, html {
+	height: 100%;
+	margin: 0;
+	font-family: Arial;
+	}
+
+	.active, .cfgheader:hover {
+	  background-color: #ccc;
+	}
+	.cfgpanel {
+	}
+
+	th.cfg {
+	  padding:5pt
+	}
+
+	.hamburger {
+	  position: relative;
+	  display: inline-block;
+	  width: 1.25em;
+	  height: 0.8em;
+	  margin-right: 0.3em;
+	  border-top: 0.2em solid #fff;
+	  border-bottom: 0.2em solid #fff;
+	}
+
+	.hamburger:before {
+	  content: "";
+	  position: absolute;
+	  top: 0.3em;
+	  left: 0px;
+	  width: 100%;
+	  border-top: 0.2em solid #fff;
+	}
+
+	.wrapper {
+	  height: 100%;
+	  display: flex;
+	  flex-direction: column;
+	  margin: 0;
+	}
+	.tci {
+	  flex-grow: 1; border: none; margin: 0; padding: 0; 
+	}
+	.footer {
+	}
+
+	table, th, td {
+		border: 1px solid black;
+		border-collapse: collapse;
+		background-color: #ddd
+	}
+
+	td#caption {
+		text-align: center;
+		background-color: #aaa;
+		font-weight: bold;
+	}
+
+	td#sfreq {
+		background-color: #ccc;
+	}
+
+	.content {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		overflow: auto;
+		height: 100%;
+	}
+	.tabcontent {
+		display: none;
+		flex: 1;
+		padding: 6px 12px;
+		border-top: none;
+		flex-direction: column;
+		overflow: auto;
+	}
+
+	html {
+	  font-family: Helvetica;
+	  display: inline-block;
+	  margin: 0px auto;
+	  text-align: center;
+	}
+	h1{
+	  color: #0F3376;
+	  font-size: 24px
+	}
+	p{
+	  font-size: 1.5rem;
+	}
+	.canberemoved_button {
+	  display: inline-block;
+	  background-color: #008CBA;
+	  border: none;
+	  border-radius: 4px;
+	  color: white;
+	  padding: 16px 40px;
+	  text-decoration: none;
+	  font-size: 30px;
+	  margin: 2px;
+	  cursor: pointer;
+	}
+	.button2 {
+	  background-color: #f44336;
+	}
+	.save {
+	  background-color: #0F3376;
+	  border: black;
+	  border-width: 1;
+	  color: white;
+	  padding: 8px 30px;
+	  text-align: center;
+	  text-decoration: none;
+	  display: block;
+	  font-size: 14px;
+	  margin: 0
+	}
+	.ctlbtn {
+	  background-color: #ccc;
+	  border: black;
+	  border-width: 1;
+	  color: black;
+	  padding: 4px 30px;
+	  text-align: center;
+	  text-decoration: none;
+	  display: block;
+	  margin: 2;
+	  font-size: 4vh;
+	}
+	.update {
+	  margin: 0;
+	  display: block;
+	}
+
+	#map {
+		height: 100%;
+	}
+
+	.leaflet-popup-content table, .leaflet-popup-content table td {
+		border:0;
+		background-color: white;
+	}
+
+	.leaflet-popup-content table td:nth-child(2),.leaflet-popup-content table td:nth-child(5) {
+		text-align: right;
+		padding-left: 3px;
+	}
+
+	.leaflet-popup-content table td:nth-child(3),.leaflet-popup-content table td:nth-child(6) {
+		text-align: left;
+		padding-right: 10px;
+	}
+
+	.leaflet-gps{animation:fading 1s infinite}@keyframes fading{0%{opacity:0.7}50%{opacity:1}100%{opacity:0.7}}
+
+	.leaflet-gps::after {
+		content: '🔵';
+	}
+	.leaflet-gps {
+		margin-left: -7px !important;
+		margin-top: -9px !important;
+	}
+
+	.leaflet-burst::after {
+		content: '💥';
+	}
+	.leaflet-burst {
+		margin-left: -20px !important;
+		margin-top: -22px !important;
+		font-weight: bold;
+		font-size: 30px;
+	}
+
+	.leaflet-landing::after {
+		content: '×';
+	}
+
+	.leaflet-landing {
+		margin-left: -13px !important;
+		margin-top: -30px !important;
+		font-weight: bold;
+		font-size: 40px;
+	}
+
+
+	.leaflet-header {
+		text-align: center;
+		width: 250px;
+		box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+		border-bottom-left-radius: 4px;
+		border-bottom-right-radius: 4px;
+		pointer-events: auto !important;
+	}
+
+	.leaflet-header #settings {
+		display: none;
+	}
+
+	.leaflet-header label {
+		display: block;
+		margin-top: 5px;
+	}
+	.leaflet-header input {
+		width: 80px;
+		margin: 0 auto;
+	}
+
+	.leaflet-header #submit {
+		margin: 3px auto;
+	}
+
+	.leaflet-footer {
+			display:none;
+		text-align: center;
+		width: 180px;
+		box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+		border-top-left-radius: 4px;
+		border-top-right-radius: 4px;
+	}
+
+	.leaflet-center {
+		left:0;
+		right:0;
+		margin: 0 auto;
+		padding: 5px;
+		background: #fff;
+		background: rgba(255, 255, 255, 0.8);
+	}
+
+	.leaflet-header #sonde_detail {
+		display:none;
+	}
+
+	@media screen and (max-width: 600px) {
+		.leaflet-control-attribution {
+			-moz-transform: rotate(-90deg) translateX(100%);
+			-ms-transform: rotate(-90deg) translateX(100%);
+			-o-transform: rotate(-90deg) translateX(100%);;
+			-webkit-transform: rotate(-90deg) translateX(100%);
+			transform: rotate(-90deg) translateX(100%);
+			-webkit-transform-origin: 100% 100%;
+			-moz-transform-origin: 100% 100%;
+			-ms-transform-origin: 100% 100%;
+			-o-transform-origin: 100% 100%;
+			transform-origin: 100% 100%;
+		}
+	}
+
+	.ldot {
+	  height: 15px;
+	  width: 15px;
+		margin-top: 8px;
+		margin-left: -1px;
+	  border-radius: 50%;
+	  display: inline-block;
+	}
+
+	.ybg {
+		background-color: orange;
+		background-image: -webkit-gradient(linear, left top, left bottom, from(yellow), to(orange));
+		background-image: linear-gradient(top, yellow, orange);
+	}
+	.gbg {
+		background-color: green;
+		background-image: -webkit-gradient(linear, left top, left bottom, from(lime), to(green));
+		background-image: linear-gradient(top, lime, green); 
+	}
+	.rbg { 
+		background-color: red;
+		background-image: -webkit-gradient(linear, left top, left bottom, from(orange), to(red));
+		background-image: linear-gradient(top, orange, red); 
+	}
+
+	#sonde_statbar .ldot {
+		margin-right: 3px;
+	}
+
+	/* Add a black background color to the top navigation */
+	.topnav {
+	  background-color: #333;
+	  overflow: hidden;
+	}
+
+	/* Style the links inside the navigation bar */
+	.topnav a {
+	  float: left;
+	  display: block;
+	  color: #f2f2f2;
+	  text-align: center;
+	  padding: 14px 16px;
+	  text-decoration: none;
+	  font-size: 17px;
+	}
+
+	/* Change the color of links on hover */
+	.topnav a:hover {
+	  background-color: #ddd;
+	  color: black;
+	}
+
+	/* Add an active class to highlight the current page */
+	.topnav a.active {
+	  background-color: #04AA6D;
+	  color: white;
+	}
+
+	/* Hide the link that should open and close the topnav on small screens */
+	.topnav .icon {
+	  display: none;
+	  padding-bottom: 12px;
+	  padding-top: 11px;
+	}
+
+	/* When the screen is less than 600 pixels wide, hide all links, except for the first one ("Home"). Show the link that contains should open and close the topnav (.icon) */
+	@media screen and (max-width: 600px) {
+	  .topnav a:not(.active) {display: none;}
+	  .topnav a.icon {
+		float: right;
+		display: block;
+	  }
+	}
+
+	/* The "responsive" class is added to the topnav with JavaScript when the user clicks on the icon. This class makes the topnav look good on small screens (display the links vertically instead of horizontally) */
+	@media screen and (max-width: 600px) {
+	  .topnav.responsive {position: relative;}
+	  .topnav.responsive a.icon {
+		position: absolute;
+		right: 0;
+		top: 0;
+	  }
+	  .topnav.responsive a {
+		float: none;
+		display: block;
+		text-align: left;
+	  }
+	}
+	@media (prefers-color-scheme: dark) {
+	  body {
+		background-color: #333;
+	  }   
+	  h2{
+		color: white;
+	  }
+	  table, th, td, .save, a.active {
+		color: white;
+		border: 1px solid grey;
+		border-collapse: collapse;
+		background-color: #333;
+	  }
+	  input, select, .tci, .warning {
+		color: white;
+		background-color: #333;
+	  }
+	  a:link, a:visited {
+		color: #D3D3D3;
+	  }
+	  .topnav, td#sfreq {
+		background-color: grey;
+	  }
+	  .topnav a:visited {
+		color: white;
+	  }
+	  .ctlbtn {
+		color: white;
+		background-color: grey;
+	  }
+	  .leaflet-center {
+		color: white;
+		background-color: grey;
+	  }
+	  .leaflet-bar a {
+		background-color: grey !important;
+	  }
+	  .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+		color: white !important;
+		background: grey !important;
+	  }
+	}
+
+		
+	
+        .column {
+            float: left;
+            width: 100%;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .btn {
+            float: left;
+            width: 100%;
+            margin: 2px;
+
+        }
+
+        .cl1 {
+            float: left;
+            width: 100%;
+            margin: 2px;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .cl01 {
+            float: left;
+            width: 100%;
+            text-align: center;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .cl02 {
+            float: left;
+            width: 100%;
+            text-align: center;
+            margin-top: 2px;
+            margin-bottom: 2px;
+			overflow-y: auto; /* Add a vertical scrollbar */
+            resize: vertical; /* Allow vertical resizing by the user */
+        }
+
+        .hdr {
+            float: left;
+            width: 100%;
+            text-align: center;
+            color: white;
+            background-color: blue;
+            padding: 5px;
+            margin: 5px;
+        }
+
+        .logstr {
+            width: 100%;
+            float: left;
+        }
+    </style>
+</head>
+
+<body>
+<div class="wrapper"><div class="header">
+  <h2>Digifiz Server</h2>
+<div class="topnav" id="myTopnav">
+	<a href="#" onclick="selTab(event,'WiFi')" class="tablinks" id="defaultTab">WiFi</a>
+	<a href="#" onclick="selTab(event,'Data')" class="tablinks">Data</a>
+	<a href="#" onclick="selTab(event,'Config')" class="tablinks">Config</a>
+	<a href="#" onclick="selTab(event,'Control')" class="tablinks">Control</a>
+	<a href="#" onclick="selTab(event,'About')" class="tablinks">About</a>
+	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
+		<span class="hamburger"></span>
+	</a>
+</div>
+</div>
+
+<div id="WiFi" class="tabcontent" >
+<div class="tci">
+	<div class="hdr">Wi-Fi settings</div>
+    <div class="column">
+        <button class="btn" id="goWifi" onclick="window.location.href = '/wifi'" >Set WiFi SSID/Password -> /wifi</button>
+    </div>
+	<div class="hdr">OTA Update software</div>
+	<div class="column">
+		<input class="btn" type="file" id="otafile" name="otafile" />
+		<button class="btn" id="upload" type="button" onclick="startUpload()">Upload</button>
+	</div>
+	<div id="progress" class="column"></div>
+</div>
+</div>
+
+<div id="Data" class="tabcontent" >
+	<div class="tci"></div>
+</div>
+
+<div id="Config" class="tabcontent" >
+	<div class="tci">
+		<table>
+			<thead>
+				<tr>
+					<th>Parameter</th>
+					<th>Value</th>
+				</tr>
+			</thead>
+			<tbody id="paramsTable">
+				<!-- Rows will be added dynamically -->
+			</tbody>
+		</table>
+		<div class="btn-container">
+			<button onclick="setParameters()">Set</button>
+			<button onclick="loadParameters()">Load</button>
+		</div>
+	</div>
+</div>
+
+<div id="Control" class="tabcontent" >
+	<div class="tci">
+		<div class="cl1">
+            <label class="cl01" for="digifizConsole">Send command</label>
+            <input class="cl01" type="text" id="digifizConsole" placeholder="Command">
+        </div>
+		<div class="cl1">
+			<button class="cl01" type="button" id="processCommandButton">Process Command</button>
+		</div>
+        <div class="cl1">
+            <label class="cl01" for="digifizConsoleResult">Command result</label>
+            <textarea class="cl02" type="text" id="digifizConsoleResult" placeholder="Console output"></textarea>
+        </div>
+	</div>
+</div>
+
+<div id="About" class="tabcontent">
+<div class="tci">
+   Copyright &copy; 2021-2024 by Fedor Zagumennov (Sgw32)<br>
+
+   Web dashboard by rdzTTGOsonde project
+   <a href="https://github.com/dl9rdz/rdz_ttgo_sonde">GitHub page</a> by <a href="https://github.com/dl9rdz">dl9rdz</a>,
+<br>
+   <br>
+    Web dashboard license: This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License as
+    published by the Free Software Foundation; either version 2 of
+    the License, or (at your option) any later version.<br>
+    See <a href="https://www.gnu.org/licenses/gpl-2.0.txt">https://www.gnu.org/licenses/gpl-2.0.txt</a>
+    for details.
+</div>
+</div>
+
+</div>
+<script>
+function selTab(evt, id) {
+	var i, tabcontent, tablinks;
+	tabcontent=document.getElementsByClassName("tabcontent");
+	for(i=0; i<tabcontent.length; i++) {
+		tabcontent[i].style.display = "none";
+		var link = tabcontent[i].dataset.src;
+		if(link) {
+			var iframe = tabcontent[i].getElementsByTagName("iframe")[0];
+			iframe.setAttribute("src", "");
+		}
+	}
+	tablinks=document.getElementsByClassName("tablinks");
+	for(i=0; i<tablinks.length; i++) {
+		tablinks[i].className = tablinks[i].className.replace(" active", "");
+	}	
+	var act = document.getElementById(id);
+	act.style.display = "flex";
+	evt.currentTarget.className += " active";
+	
+	var link = act.dataset.src;
+	if(link) {
+		var iframe = act.getElementsByTagName("iframe")[0];
+		iframe.setAttribute("src", link);
+	}
+	var x = document.getElementById("myTopnav");
+    x.className = "topnav";
+}
+/* Toggle between adding and removing the "responsive" class to topnav when the user clicks on the icon */
+function myFunction() {
+  var x = document.getElementById("myTopnav");
+  if (x.className === "topnav") {
+    x.className += " responsive";
+  } else {
+    x.className = "topnav";
+  }
+}
+document.getElementById("defaultTab").click();
+</script>
+
+<script>
+	let exSend = document.getElementById("digifizConsole");
+	document.getElementById('processCommandButton').addEventListener('click',function (e) {
+		//console.log(exSend.id + " " + exSend.value  );
+		socket.send(JSON.stringify({ name: exSend.id, msg: exSend.value + '\n' }));
+	});
+	function receiveWsData(data) {
+		//console.log(data);
+		try {
+			let obj = JSON.parse(data);
+			let exEcho = document.getElementById("digifizConsoleResult");
+			exEcho.value = obj.msg;
+		}
+		catch {
+			console.log(data + " catch");
+		}
+	};
+</script>
+
+    <script>  // Прием, обработка и отправка данных в WS
+		let params = [
+            { name: "Parameter 1", value: "" },
+            { name: "Parameter 2", value: "" },
+            { name: "Parameter 3", value: "" },
+            { name: "Parameter 4", value: "" },
+            { name: "Parameter 5", value: "" },
+            { name: "Parameter 6", value: "" },
+            { name: "Parameter 7", value: "" },
+            { name: "Parameter 8", value: "" },
+            { name: "Parameter 9", value: "" },
+            { name: "Parameter 10", value: "" }
+        ];
+
+        function populateTable() {
+            let table = document.getElementById("paramsTable");
+            table.innerHTML = "";
+            params.forEach((param, index) => {
+                let row = table.insertRow();
+                let cell1 = row.insertCell(0);
+                let cell2 = row.insertCell(1);
+
+                cell1.innerHTML = param.name;
+                cell2.innerHTML = `<input type='text' id='param${index}' value='${param.value}' />`;
+            });
+        }
+
+        function setParameters() {
+            params.forEach((param, index) => {
+                param.value = document.getElementById(`param${index}`).value;
+            });
+            console.log("Parameters set:", params);
+        }
+
+        function loadParameters() {
+            params.forEach((param, index) => {
+                document.getElementById(`param${index}`).value = param.value;
+            });
+            console.log("Parameters loaded:", params);
+        }
+
+        populateTable();
+
+    </script>
+
+    <script> // основной старт скрипта, открыть сокет
+        // создать сокет по адресу
+        let wsHostStr = "ws://" + document.location.host + document.location.pathname;
+        wsHostStr += (document.location.pathname == '/') ? "ws" : "/ws";
+        var socket = new WebSocket(wsHostStr);
+    </script>
+
+    <script> // события WS
+        socket.onopen = function () {
+            console.log("connect");
+        };
+        socket.onclose = function (event) {
+            console.log("close");
+        };
+        socket.onerror = function () {
+            console.log("error");
+        };
+        socket.onmessage = function (event) {
+            receiveWsData(event.data);
+        };
+    </script>
+	<script>
+		function startUpload() {
+			var otafile = document.getElementById("otafile").files;
+
+			if (otafile.length == 0) {
+				alert("No file selected!");
+			} else {
+				document.getElementById("otafile").disabled = true;
+				document.getElementById("upload").disabled = true;
+
+				var file = otafile[0];
+				var xhr = new XMLHttpRequest();
+				xhr.onreadystatechange = function() {
+					if (xhr.readyState == 4) {
+						if (xhr.status == 200) {
+							document.open();
+							document.write(xhr.responseText);
+							document.close();
+						} else if (xhr.status == 0) {
+							alert("Server closed the connection abruptly!");
+							location.reload()
+						} else {
+							alert(xhr.status + " Error!\n" + xhr.responseText);
+							location.reload()
+						}
+					}
+				};
+
+				xhr.upload.onprogress = function (e) {
+					var progress = document.getElementById("progress");
+					progress.textContent = "Progress: " + (e.loaded / e.total * 100).toFixed(0) + "%";
+				};
+				xhr.open("POST", "/update", true);
+				xhr.send(file);
+			}
+		}
+	</script>
+
+</body>
+
+</html>

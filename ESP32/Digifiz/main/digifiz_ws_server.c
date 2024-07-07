@@ -10,19 +10,23 @@
 #include <esp_wifi.h>
 #include <esp_event.h>
 #include <esp_log.h>
+#include <esp_ota_ops.h>
 #include "esp_netif.h"
 #include <esp_http_server.h>
 #include <cJSON.h>
 #include "nvs_wifi_connect.h"
 #include "protocol.h"
+#include <sys/param.h>
 #include <string.h>
 
 
 /* A simple example that demonstrates using websocket echo server
  */
-static const char *WS_TAG = "example_ws_echo_server";
+static const char *WS_TAG = "ws_echo_server";
 
-
+esp_err_t digifiz_register_uri_handler(httpd_handle_t server);
+esp_err_t update_post_handler(httpd_req_t *req);
+static esp_err_t echo_handler(httpd_req_t *req);
 /*
  * This handler echos back the received ws data
  * and triggers an async send if certain message received
@@ -129,7 +133,61 @@ static const httpd_uri_t example_gh = {
     .handler = get_handler,
     .user_ctx = NULL};
 
-esp_err_t digifiz_register_uri_handler(httpd_handle_t server);
+httpd_uri_t update_post = {
+	.uri	  = "/update",
+	.method   = HTTP_POST,
+	.handler  = update_post_handler,
+	.user_ctx = NULL
+};
+
+/*
+ * Handle OTA file upload
+ */
+esp_err_t update_post_handler(httpd_req_t *req)
+{
+	char buf[1000];
+	esp_ota_handle_t ota_handle;
+	int remaining = req->content_len;
+
+	const esp_partition_t *ota_partition = esp_ota_get_next_update_partition(NULL);
+	ESP_ERROR_CHECK(esp_ota_begin(ota_partition, OTA_SIZE_UNKNOWN, &ota_handle));
+
+	while (remaining > 0) {
+		int recv_len = httpd_req_recv(req, buf, MIN(remaining, sizeof(buf)));
+
+		// Timeout Error: Just retry
+		if (recv_len == HTTPD_SOCK_ERR_TIMEOUT) {
+			continue;
+
+		// Serious Error: Abort OTA
+		} else if (recv_len <= 0) {
+			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Protocol Error");
+			return ESP_FAIL;
+		}
+
+		// Successful Upload: Flash firmware chunk
+		if (esp_ota_write(ota_handle, (const void *)buf, recv_len) != ESP_OK) {
+			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Flash Error");
+			return ESP_FAIL;
+		}
+
+		remaining -= recv_len;
+	}
+
+	// Validate and switch to new OTA image and reboot
+	if (esp_ota_end(ota_handle) != ESP_OK || esp_ota_set_boot_partition(ota_partition) != ESP_OK) {
+			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Validation / Activation Error");
+			return ESP_FAIL;
+	}
+
+	httpd_resp_sendstr(req, "Firmware update complete, rebooting now!\n");
+
+	vTaskDelay(500 / portTICK_PERIOD_MS);
+	esp_restart();
+
+	return ESP_OK;
+}
+
 
 static httpd_handle_t start_webserver(void)
 {
@@ -204,6 +262,8 @@ esp_err_t digifiz_register_uri_handler(httpd_handle_t server)
     ret = httpd_register_uri_handler(server, &example_ws);
     if (ret)
         goto _ret;
+    ret = httpd_register_uri_handler(server, &update_post);
 _ret:
     return ret;
 }
+
