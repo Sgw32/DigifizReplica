@@ -85,6 +85,7 @@ void processData(int parameter,long value)
   //emergency reset(if requested)
   if (par == PARAMETER_RESET_DIGIFIZ)
   {
+            printLnCString("PARAMETER_RESET_DIGIFIZ\n");
             load_defaults();
             saveParameters();
             return;
@@ -170,6 +171,18 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_MAX_RPM\n");
         digifiz_parameters.maxRPM = value;
         break;
+      case PARAMETER_NORMAL_RESISTANCE_COOLANT:
+        printLnCString("PARAMETER_NORMAL_RESISTANCE_COOLANT\n");
+        digifiz_parameters.coolantThermistorDefRes = value;
+        break;
+      case PARAMETER_NORMAL_RESISTANCE_OIL:
+        printLnCString("PARAMETER_NORMAL_RESISTANCE_OIL\n");
+        digifiz_parameters.oilThermistorDefRes = value;
+        break;
+      case PARAMETER_NORMAL_RESISTANCE_AMB:
+        printLnCString("PARAMETER_NORMAL_RESISTANCE_AMB\n");
+        digifiz_parameters.ambThermistorDefRes = value;
+        break;
       case PARAMETER_DOT_OFF:
         printLnCString("PARAMETER_DOT_OFF\n");
         digifiz_parameters.displayDot = value;
@@ -192,7 +205,7 @@ void processData(int parameter,long value)
         break;
       case PARAMETER_COMMAND_MFA_RESET:
         printLnCString("PARAMETER_COMMAND_MFA_RESET\n");
-	    pressMFAReset();
+	      pressMFAReset();
         break;
       case PARAMETER_COMMAND_MFA_MODE:
         printLnCString("PARAMETER_COMMAND_MFA_MODE\n");
@@ -214,6 +227,18 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_MAINCOLOR_B\n");
         digifiz_parameters.mainc_b = value;
         break;
+      case PARAMETER_BACKCOLOR_R:
+        printLnCString("PARAMETER_BACKCOLOR_R\n");
+        digifiz_parameters.backc_r = value;
+        break;
+      case PARAMETER_BACKCOLOR_G:
+        printLnCString("PARAMETER_BACKCOLOR_G\n");
+        digifiz_parameters.backc_g = value;
+        break;
+      case PARAMETER_BACKCOLOR_B:
+        printLnCString("PARAMETER_BACKCOLOR_B\n");
+        digifiz_parameters.backc_b = value;
+        break;
       case PARAMETER_UPTIME:
         printLnCString("PARAMETER_UPTIME\n");
         digifiz_parameters.uptime = value;
@@ -227,18 +252,21 @@ void processData(int parameter,long value)
     //commands
     if (par==PARAMETER_SET_HOUR)
     {
+      printLnCString("PARAMETER_SET_HOUR\n");
       set_hour(value);
     }
     else
     {
       if (par==PARAMETER_SET_MINUTE)
       {
+        printLnCString("PARAMETER_SET_MINUTE\n");
         set_minute(value);
       }
       else
       {
         if (par==PARAMETER_RESET_DAILY_MILEAGE)
         {
+          printLnCString("PARAMETER_RESET_DAILY_MILEAGE\n");
           digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock] = 0;
         }
       }

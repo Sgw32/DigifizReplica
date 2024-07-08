@@ -146,7 +146,9 @@ void load_defaults()
     digifiz_parameters.coolantMin = 60;
     digifiz_parameters.coolantMax = 120;
     digifiz_parameters.medianDispFilterThreshold = 65535; // value below will pass
-    digifiz_parameters.coolantThermistorDefRes = 10000;
+    digifiz_parameters.coolantThermistorDefRes = COOLANT_R_AT_NORMAL_T;
+    digifiz_parameters.oilThermistorDefRes = OIL_R_AT_NORMAL_T;
+    digifiz_parameters.ambThermistorDefRes = AMBIENT_R_AT_NORMAL_T;
     digifiz_parameters.uptime = 0;
     digifiz_parameters.digifiz_options = 0;
     digifiz_parameters.mainc_r = 60;

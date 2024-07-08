@@ -452,7 +452,6 @@
   <h2>Digifiz Server</h2>
 <div class="topnav" id="myTopnav">
 	<a href="#" onclick="selTab(event,'WiFi')" class="tablinks" id="defaultTab">WiFi</a>
-	<a href="#" onclick="selTab(event,'Data')" class="tablinks">Data</a>
 	<a href="#" onclick="selTab(event,'Config')" class="tablinks">Config</a>
 	<a href="#" onclick="selTab(event,'Control')" class="tablinks">Control</a>
 	<a href="#" onclick="selTab(event,'About')" class="tablinks">About</a>
@@ -477,10 +476,6 @@
 </div>
 </div>
 
-<div id="Data" class="tabcontent" >
-	<div class="tci"></div>
-</div>
-
 <div id="Config" class="tabcontent" >
 	<div class="tci">
 		<table>
@@ -494,9 +489,9 @@
 				<!-- Rows will be added dynamically -->
 			</tbody>
 		</table>
-		<div class="btn-container">
-			<button onclick="setParameters()">Set</button>
-			<button onclick="loadParameters()">Load</button>
+		<div class="cl1">
+			<button class="cl01" onclick="setParameters()">Set</button>
+			<button class="cl01" onclick="loadParameters()">Load</button>
 		</div>
 	</div>
 </div>
@@ -596,16 +591,43 @@ document.getElementById("defaultTab").click();
 
     <script>  // Прием, обработка и отправка данных в WS
 		let params = [
-            { name: "Parameter 1", value: "" },
-            { name: "Parameter 2", value: "" },
-            { name: "Parameter 3", value: "" },
-            { name: "Parameter 4", value: "" },
-            { name: "Parameter 5", value: "" },
-            { name: "Parameter 6", value: "" },
-            { name: "Parameter 7", value: "" },
-            { name: "Parameter 8", value: "" },
-            { name: "Parameter 9", value: "" },
-            { name: "Parameter 10", value: "" }
+            { name: "PARAMETER_RPMCOEFFICIENT", value: "" },
+            { name: "PARAMETER_SPEEDCOEEFICIENT", value: "" },
+            { name: "PARAMETER_COOLANTTHERMISTORB", value: "" },
+            { name: "PARAMETER_AIRTHERMISTORB", value: "" },
+            { name: "PARAMETER_TANKMINRESISTANCE", value: "" },
+            { name: "PARAMETER_TANKMAXRESISTANCE", value: "" },
+            { name: "PARAMETER_TAU_COOLANT", value: "" },
+            { name: "PARAMETER_TAU_OIL", value: "" },
+            { name: "PARAMETER_TAU_AIR", value: "" },
+            { name: "PARAMETER_TAU_TANK", value: "" },
+			{ name: "PARAMETER_MILEAGE", value: "" },
+            { name: "PARAMETER_DAILY_MILEAGE", value: "" },
+            { name: "PARAMETER_AUTO_BRIGHTNESS", value: "" },
+            { name: "PARAMETER_BRIGHTNESS_LEVEL", value: "" },
+            { name: "PARAMETER_TANK_CAPACITY", value: "" },
+            { name: "PARAMETER_MFA_STATE", value: "" },
+            { name: "PARAMETER_BUZZER_OFF", value: "" },
+			{ name: "PARAMETER_MAX_RPM", value: "" },
+            { name: "PARAMETER_NORMAL_RESISTANCE_COOLANT", value: "" },
+            { name: "PARAMETER_NORMAL_RESISTANCE_OIL", value: "" },
+            { name: "PARAMETER_NORMAL_RESISTANCE_AMB", value: "" },
+            { name: "PARAMETER_DOT_OFF", value: "" },
+            { name: "PARAMETER_BACKLIGHT_ON", value: "" },
+            { name: "PARAMETER_M_D_FILTER", value: "" },
+			{ name: "PARAMETER_COOLANT_MAX_R", value: "" },
+            { name: "PARAMETER_COOLANT_MIN_R", value: "" },
+            { name: "PARAMETER_COMMAND_MFA_RESET", value: "" },
+            { name: "PARAMETER_COMMAND_MFA_MODE", value: "" },
+            { name: "PARAMETER_COMMAND_MFA_BLOCK", value: "" },
+            { name: "PARAMETER_MAINCOLOR_R", value: "" },
+            { name: "PARAMETER_MAINCOLOR_G", value: "" },
+			{ name: "PARAMETER_MAINCOLOR_B", value: "" },
+			{ name: "PARAMETER_BACKCOLOR_R", value: "" },
+            { name: "PARAMETER_BACKCOLOR_G", value: "" },
+			{ name: "PARAMETER_BACKCOLOR_B", value: "" },
+			{ name: "PARAMETER_SET_HOUR", value: "" },
+			{ name: "PARAMETER_SET_MINUTE", value: "" }
         ];
 
         function populateTable() {
@@ -624,6 +646,8 @@ document.getElementById("defaultTab").click();
         function setParameters() {
             params.forEach((param, index) => {
                 param.value = document.getElementById(`param${index}`).value;
+				let dSend = { id: param.id, value: param.value };
+				socket.send(JSON.stringify({ name: dSend.id, msg: dSend.value + '\n' }));
             });
             console.log("Parameters set:", params);
         }

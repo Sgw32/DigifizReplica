@@ -42,7 +42,7 @@ extern const char LOG_TAG[];
 
 typedef struct __attribute__((packed)) digifiz_pars
 {
-   uint8_t header[4];              // 4 bytes
+    uint8_t header[4];              // 4 bytes
     uint32_t mileage;               // 4 bytes
     uint32_t daily_mileage[2];      // 8 bytes
     uint32_t uptime;                // 4 bytes
@@ -76,8 +76,14 @@ typedef struct __attribute__((packed)) digifiz_pars
     uint8_t mainc_r;              // 1 byte
     uint8_t mainc_g;              // 1 byte
     uint8_t mainc_b;              // 1 byte
-    uint8_t crc;                    // 1 byte
+    uint8_t backc_r;              // 1 byte
+    uint8_t backc_g;              // 1 byte
+    uint8_t backc_b;              // 1 byte
+    uint8_t crc;                      // 1 byte
     uint16_t coolantThermistorDefRes; // 2 bytes
+    uint16_t oilThermistorDefRes;   // 2 bytes
+    uint16_t ambThermistorDefRes;   // 2 bytes
+    uint8_t reserved1;              // 1 byte
 } digifiz_pars;
 
 // Ensure that the size of digifiz_pars is divisible by 4

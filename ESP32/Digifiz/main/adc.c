@@ -10,8 +10,6 @@
 #include "esp_sleep.h"
 #include "esp_log.h"
 
-const float R1_Coolant = COOLANT_R_AT_NORMAL_T; //for Coolant
-
 #ifndef NEW_REVISION
 const float R2_Ambient = 3300.0f; //for Coolant
 #else
@@ -24,8 +22,9 @@ const float R2_Oil = 3300;
 const float R2_Oil = 220;
 #endif
 
-const float R1_Oil = OIL_R_AT_NORMAL_T; //for Coolant
-const float R1_Ambient = AMBIENT_R_AT_NORMAL_T; //for Coolant
+float R1_Coolant = COOLANT_R_AT_NORMAL_T; //for Coolant
+float R1_Oil = OIL_R_AT_NORMAL_T; //for Coolant
+float R1_Ambient = AMBIENT_R_AT_NORMAL_T; //for Coolant
 const uint8_t lightSensorChannel = ADC_CHANNEL_4; // Light sensor
 const uint8_t coolantChannel = ADC_CHANNEL_0; // Coolant temp sensor
 const uint8_t gasolineChannel = ADC_CHANNEL_1; //Gasoline sensor
@@ -136,6 +135,10 @@ void initADC() {
     coolantB = digifiz_parameters.coolantThermistorB;
     oilB = digifiz_parameters.oilThermistorB;
     airB = digifiz_parameters.airThermistorB;
+    R1_Coolant = digifiz_parameters.coolantThermistorDefRes;
+    R1_Oil = digifiz_parameters.oilThermistorDefRes;
+    R1_Ambient = digifiz_parameters.ambThermistorDefRes;
+
     tauCoolant = (float)digifiz_parameters.tauCoolant*TAU;
     tauOil = (float)digifiz_parameters.tauOil*TAU*0.1;
     tauAir = (float)digifiz_parameters.tauAir*TAU*0.1;
