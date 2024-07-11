@@ -19,5 +19,5 @@ jobs:
           - name: MD_MAX72xx
           - source-url: https://github.com/sparkfun/SparkFun_External_EEPROM_Arduino_Library.git
           - name: RTCLib
-          - name: Adafruit_BusIO
+          - source-url: https://github.com/adafruit/Adafruit_BusIO.git
           - name: MedianFilterLib2
