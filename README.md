@@ -1,5 +1,7 @@
 [![Build Digifiz Next](https://github.com/Sgw32/DigifizReplica/actions/workflows/main.yml/badge.svg)](https://github.com/Sgw32/DigifizReplica/actions/workflows/main.yml)
 
+[![Build Digifiz Replica Arduino](https://github.com/Sgw32/DigifizReplica/actions/workflows/legacy_arduino.yml/badge.svg)](https://github.com/Sgw32/DigifizReplica/actions/workflows/legacy_arduino.yml)
+
 # Official Digifiz Replica repository
 
 ![Digifiz Replica](/images/digifiz_photo.jpg)
