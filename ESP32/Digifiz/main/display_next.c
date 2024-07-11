@@ -827,20 +827,22 @@ void processIndicators()
     {
         display.left_turn_ind = 0;
         display.right_turn_ind = 0;
+        if (!digifiz_reg_in.blinkLeftInd)
+        {
+             display.left_turn_ind = 1;
+        }
+        if (!digifiz_reg_in.blinkRightInd)
+        {
+             display.right_turn_ind = 1;
+        }
     }
     else
     {
         display.left_turn_ind = 1;
         display.right_turn_ind = 1;
-        // if (digifiz_reg_in.blinkLeftInd)
-        // {
-        //      display.left_turn_ind = 1;
-        // }
-        // if (digifiz_reg_in.blinkRightInd)
-        // {
-        //      display.right_turn_ind = 1;
-        // }
     }
+
+    display.brakes_ind = digifiz_reg_in.brakesInd ? 0 : 1;
 }
 
 void getColorBySegmentNumber(uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* b)
