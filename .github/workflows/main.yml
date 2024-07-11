@@ -1,7 +1,7 @@
 name: Build Digifiz Next
+on: push
 jobs:
   build:
-    on: push
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
