@@ -1,3 +1,5 @@
+[![Build Digifiz Next](https://github.com/Sgw32/DigifizReplica/actions/workflows/main.yml/badge.svg)](https://github.com/Sgw32/DigifizReplica/actions/workflows/main.yml)
+
 # Official Digifiz Replica repository
 
 ![Digifiz Replica](/images/digifiz_photo.jpg)
