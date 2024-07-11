@@ -17,7 +17,7 @@ jobs:
         fqbn: "arduino:avr:mega"
         libraries: |
           - name: MD_MAX72xx
-          - name: SparkFun_External_EEPROM_Arduino_Library
-          - name: SparkFun_External_EEPROM_Arduino_Library
+          - source-url: https://github.com/sparkfun/SparkFun_External_EEPROM_Arduino_Library.git
+          - name: RTCLib
           - name: Adafruit_BusIO
           - name: MedianFilterLib2
