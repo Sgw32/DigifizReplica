@@ -1,0 +1,23 @@
+name: Build Digifiz Replica Arduino
+on: 
+ - push
+ - pull_request
+jobs:
+  compile-sketch:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - uses: arduino/compile-sketches@v1
+      with:
+        sketch-paths: |
+         - ./A2560_BoardR2/Digifiz/
+        fqbn: "arduino:avr:mega"
+        libraries: |
+          - name: MD_MAX72xx
+          - source-url: https://github.com/sparkfun/SparkFun_External_EEPROM_Arduino_Library.git
+          - name: RTCLib
+          - source-url: https://github.com/adafruit/Adafruit_BusIO.git
+          - name: MedianFilterLib2
