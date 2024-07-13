@@ -50,7 +50,7 @@
 
 //#define TESTMODE
 //#define DIGIFIZ_ORIGINAL_DISPLAY
-#define DIGIFIZ_LCD_DISPLAY
+//#define DIGIFIZ_LCD_DISPLAY
 //#define AUDI_DISPLAY
 //#define AUDI_RED_DISPLAY
 
