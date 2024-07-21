@@ -89,12 +89,12 @@ typedef struct __attribute__((packed)) digifiz_pars
 // Ensure that the size of digifiz_pars is divisible by 4
 STATIC_ASSERT(sizeof(digifiz_pars) % 4 == 0, "Size of digifiz_pars is not divisible by 4");
 
-#define OPTION_MFA_MANUFACTURER 1
-#define OPTION_MILES 2
-#define OPTION_GALLONS 4
-#define OPTION_FAHRENHEIT 8
-#define OPTION_KELVIN 16
-#define OPTION_LBAR 32
+#define OPTION_MFA_MANUFACTURER (1<<0)
+#define OPTION_MILES (1<<1)
+#define OPTION_GALLONS (1<<2)
+#define OPTION_FAHRENHEIT (1<<3)
+#define OPTION_KELVIN (1<<4)
+#define OPTION_LBAR (1<<5)
 
 /**
  * @brief Loads defaults to the memory(internal or external EEPROM)

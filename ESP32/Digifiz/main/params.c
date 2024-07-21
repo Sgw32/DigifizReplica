@@ -151,9 +151,9 @@ void load_defaults()
     digifiz_parameters.ambThermistorDefRes = AMBIENT_R_AT_NORMAL_T;
     digifiz_parameters.uptime = 0;
     digifiz_parameters.digifiz_options = 0;
-    digifiz_parameters.mainc_r = 60;
-    digifiz_parameters.mainc_g = 80;
-    digifiz_parameters.mainc_b = 2;
+    digifiz_parameters.mainc_r = 180;
+    digifiz_parameters.mainc_g = 240;
+    digifiz_parameters.mainc_b = 6;
 #ifdef MANUFACTURER_MFA_SWITCH
     digifiz_parameters.digifiz_options |= OPTION_MFA_MANUFACTURER;
 #endif
@@ -234,5 +234,36 @@ void initEEPROM()
         saveParameters();
         saveParameters();
     }
+
+    #ifdef MANUFACTURER_MFA_SWITCH
+        digifiz_parameters.digifiz_options |= OPTION_MFA_MANUFACTURER;
+    #else
+        digifiz_parameters.digifiz_options &= ~OPTION_MFA_MANUFACTURER;
+    #endif
+        
+    #ifdef GALLONS
+        digifiz_parameters.digifiz_options |= OPTION_GALLONS;
+    #else
+        digifiz_parameters.digifiz_options &= ~OPTION_GALLONS;
+    #endif
+
+    #ifdef MILES
+        digifiz_parameters.digifiz_options |= OPTION_MILES;
+    #else
+        digifiz_parameters.digifiz_options &= ~OPTION_MILES;
+    #endif
+
+    #ifdef FAHRENHEIT 
+        digifiz_parameters.digifiz_options |= OPTION_FAHRENHEIT;
+    #else
+        digifiz_parameters.digifiz_options &= ~OPTION_FAHRENHEIT;
+    #endif
+
+    #ifdef KELVIN 
+        digifiz_parameters.digifiz_options |= OPTION_KELVIN;
+    #else
+        digifiz_parameters.digifiz_options &= ~OPTION_KELVIN;
+    #endif
+
     ESP_LOGI(TAG, "initEEPROM ended");
 }

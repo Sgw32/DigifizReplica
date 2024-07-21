@@ -880,9 +880,9 @@ void fireDigifiz() {
         (digifiz_parameters.mainc_g==0)&&
         (digifiz_parameters.mainc_b==0))
     {
-        digifiz_parameters.mainc_r = 60;
-        digifiz_parameters.mainc_g = 80;
-        digifiz_parameters.mainc_b = 2;
+        digifiz_parameters.mainc_r = 180;
+        digifiz_parameters.mainc_g = 240;
+        digifiz_parameters.mainc_b = 6;
     }
     maincolor_r = digifiz_parameters.mainc_r;
     maincolor_g = digifiz_parameters.mainc_g;

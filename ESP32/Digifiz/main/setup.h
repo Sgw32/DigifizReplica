@@ -26,7 +26,7 @@ extern "C" {
 extern const char TAG[];
 
 //#define GALLONS
-//#define MILES
+#define MILES
 //#define FAHRENHEIT  
 //#define KELVIN
 
