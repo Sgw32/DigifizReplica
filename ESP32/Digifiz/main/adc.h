@@ -69,6 +69,15 @@ void processFirstOilTemperature();
 void processFirstGasLevel();
 void processFirstAmbientTemperature();
 
+// Function declarations
+int getCoolantRawADCVal(void);
+int getFuelRawADCVal(void);
+int getLightRawADCVal(void);
+int getAmbTempRawADCVal(void);
+int getOilTempRawADCVal(void);
+int getIntakePressRawADCVal(void);
+int getFuelPressRawADCVal(void);
+
 #ifdef __cplusplus
 }
 #endif

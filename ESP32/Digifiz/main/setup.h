@@ -26,7 +26,7 @@ extern "C" {
 extern const char TAG[];
 
 //#define GALLONS
-#define MILES
+//#define MILES
 //#define FAHRENHEIT  
 //#define KELVIN
 
@@ -46,11 +46,14 @@ extern const char TAG[];
 //#define OIL_R_AT_NORMAL_T 10000.0f //Digifiz replica OEM sensors by PHL
 #define OIL_R_AT_NORMAL_T 1000.0f //VW OEM
 //#define AMBIENT_R_AT_NORMAL_T 10000.0f //Digifiz replica OEM sensors by PHL
-#define AMBIENT_R_AT_NORMAL_T 2991.39f //AutoVAZ sensors
+//#define AMBIENT_R_AT_NORMAL_T 2991.39f //AutoVAZ sensors
+#define AMBIENT_R_AT_NORMAL_T 500.0f //AutoVAZ sensors
 
 #define COOLANT_THERMISTOR_B 4000 //OEM VW
-//#define AIR_THERMISTOR_B 4000 //OEM
-#define AIR_THERMISTOR_B 3812 //AutoVAZ sensors
+//#define AIR_THERMISTOR_B 4000 //If use same sensor
+//#define AIR_THERMISTOR_B 3812 //AutoVAZ sensors
+//https://golf1wiki.de/index.php/MFA_Au%C3%9Fentemperaturf%C3%BChler
+#define AIR_THERMISTOR_B 3600 //171919379A
 #define OIL_THERMISTOR_B 4000 //OEM
 
 #define CRC_FRAGMENT_SIZE 84

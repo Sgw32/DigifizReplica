@@ -79,6 +79,7 @@ void processData(int par, long value);
 void processGPIOPinsValue(long value);
 void printHelp();
 void printAbout();
+void printADC();
 
 void printLnCString(char* data);
 void printLnUINT8(uint8_t val);

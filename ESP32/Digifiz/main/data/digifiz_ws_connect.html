@@ -403,6 +403,11 @@
             margin: 2px;
 
         }
+		
+		.mfa-buttons {
+			display: flex;
+			gap: 10px; /* Adjust the space between buttons as needed */
+		}
 
         .cl1 {
             float: left;
@@ -488,13 +493,22 @@
             <label class="cl01" for="digifizConsoleResult">Command result</label>
             <textarea class="cl02" type="text" id="digifizConsoleResult" placeholder="Console output"></textarea>
         </div>
+        <div class="cl1">
+            <div class="mfa-buttons">
+                <button class="cl01" type="button" id="mfaModeButton">MFA Mode</button>
+                <button class="cl01" type="button" id="mfaResetButton">MFA Reset</button>
+            </div>
+        </div>
+		<div class="cl1">
+			<button class="cl01" type="button" id="fResetButton">Factory reset</button>
+		</div>
 	</div>
 </div>
 
 <div id="About" class="tabcontent">
 <div class="tci">
    Copyright &copy; 2021-2024 by Fedor Zagumennov (Sgw32)<br>
-
+   OTA 2.0 Mb <br>
    Web dashboard by rdzTTGOsonde project
    <a href="https://github.com/dl9rdz/rdz_ttgo_sonde">GitHub page</a> by <a href="https://github.com/dl9rdz">dl9rdz</a>,
 <br>
@@ -528,7 +542,6 @@ function selTab(evt, id) {
 	var act = document.getElementById(id);
 	act.style.display = "flex";
 	evt.currentTarget.className += " active";
-	
 	var link = act.dataset.src;
 	if(link) {
 		var iframe = act.getElementsByTagName("iframe")[0];
@@ -552,8 +565,16 @@ document.getElementById("defaultTab").click();
 <script>
 	let exSend = document.getElementById("digifizConsole");
 	document.getElementById('processCommandButton').addEventListener('click',function (e) {
-		//console.log(exSend.id + " " + exSend.value  );
 		socket.send(JSON.stringify({ name: exSend.id, msg: exSend.value + '\n' }));
+	});
+	document.getElementById('mfaModeButton').addEventListener('click',function (e) {
+		socket.send(JSON.stringify({ name: "mfaMode", msg: '29 0\n' }));
+	});
+	document.getElementById('mfaResetButton').addEventListener('click',function (e) {
+		socket.send(JSON.stringify({ name: "mfaReset", msg: '28 0\n' }));
+	});
+	document.getElementById('fResetButton').addEventListener('click',function (e) {
+		socket.send(JSON.stringify({ name: "fReset", msg: '252 0\n' }));
 	});
 	function receiveWsData(data) {
 		//console.log(data);

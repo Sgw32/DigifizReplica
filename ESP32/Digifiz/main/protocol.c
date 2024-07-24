@@ -428,6 +428,18 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_BACKLIGHT_ON\n");
         printLnUINT8(digifiz_parameters.backlight_on);
         break;
+      case PARAMETER_NORMAL_RESISTANCE_COOLANT:
+        printLnCString("PARAMETER_NORMAL_RESISTANCE_COOLANT\n");
+        printLnUINT32(digifiz_parameters.coolantThermistorDefRes);
+        break;
+      case PARAMETER_NORMAL_RESISTANCE_OIL:
+        printLnCString("PARAMETER_NORMAL_RESISTANCE_OIL\n");
+        printLnUINT32(digifiz_parameters.oilThermistorDefRes);
+        break;
+      case PARAMETER_NORMAL_RESISTANCE_AMB:
+        printLnCString("PARAMETER_NORMAL_RESISTANCE_AMB\n");
+        printLnUINT32(digifiz_parameters.ambThermistorDefRes);
+        break;
       default:
         break;
     }
@@ -442,6 +454,18 @@ void printAbout()
   printLnCString("Pavel Myasnikov,\n");
   printLnCString("Cherry Fox / Duplux Indicators,\n");
   printLnCString("Egor Avramenko.\n");
+}
+
+void printADC()
+{
+  printLnCString("ADC:\n");
+  printLnFloat((float)getCoolantRawADCVal());
+  printLnFloat((float)getFuelRawADCVal());
+  printLnFloat((float)getLightRawADCVal());
+  printLnFloat((float)getAmbTempRawADCVal());
+  printLnFloat((float)getOilTempRawADCVal());
+  printLnFloat((float)getIntakePressRawADCVal());
+  printLnFloat((float)getFuelPressRawADCVal());
 }
 
 void printHelp()
@@ -515,6 +539,10 @@ void protocolParse(char* buf, uint8_t len)
                 else if (strcmp(cmd_buffer_par,"about")==0)
                 {
                     printAbout();
+                }
+                else if (strcmp(cmd_buffer_par,"adc")==0)
+                {
+                    printADC();
                 }
                 else
                 {

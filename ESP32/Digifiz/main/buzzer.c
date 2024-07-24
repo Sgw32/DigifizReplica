@@ -4,7 +4,7 @@
 
 extern digifiz_pars digifiz_parameters;
 uint8_t buzzerIsOn;
-
+ 
 void initBuzzer()
 {
     ESP_LOGI(LOG_TAG, "initBuzzer started");

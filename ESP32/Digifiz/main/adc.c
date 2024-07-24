@@ -482,3 +482,32 @@ void processFirstAmbientTemperature() {
     airT = temp1;
     printf("First after AMBT:%f", airT);
 }
+
+// Function definitions
+int getCoolantRawADCVal(void) {
+    return adc_raw.coolantRawADCVal;
+}
+
+int getFuelRawADCVal(void) {
+    return adc_raw.fuelRawADCVal;
+}
+
+int getLightRawADCVal(void) {
+    return adc_raw.lightRawADCVal;
+}
+
+int getAmbTempRawADCVal(void) {
+    return adc_raw.ambTempRawADCVal;
+}
+
+int getOilTempRawADCVal(void) {
+    return adc_raw.oilTempRawADCVal;
+}
+
+int getIntakePressRawADCVal(void) {
+    return adc_raw.intakePressRawADCVal;
+}
+
+int getFuelPressRawADCVal(void) {
+    return adc_raw.fuelPressRawADCVal;
+}
