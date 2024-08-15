@@ -239,6 +239,10 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_BACKCOLOR_B\n");
         digifiz_parameters.backc_b = value;
         break;
+      case PARAMETER_RPM_FILTER:
+        printLnCString("PARAMETER_RPM_FILTER\n");
+        digifiz_parameters.rpmFilterK = value;
+        break;
       case PARAMETER_UPTIME:
         printLnCString("PARAMETER_UPTIME\n");
         digifiz_parameters.uptime = value;

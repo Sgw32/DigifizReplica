@@ -1,6 +1,7 @@
 #include "tacho.h"
 #include "setup.h"
 #include "esp_log.h"
+#include "millis.h"
 
 uint32_t mRPMSenseData;
 
@@ -9,11 +10,62 @@ static QueueHandle_t gpio_evt_queue = NULL;
 static volatile uint64_t last_time_rising = 0;
 static volatile uint64_t last_time_falling = 0;
 static volatile uint64_t interval = 0;
+static volatile uint32_t last_rpm_value_millis = 0;
 static volatile uint8_t rpm_cnt = 0;
 static gptimer_handle_t gptimer = 0;
+static uint32_t average_intv_q = 0;
+static uint32_t buf_intv_q = 0;
 
-static void IRAM_ATTR gpio_isr_handler(void* arg) {
+CircularBuffer rpm_buffer;
+
+// Initialize the circular buffer
+void init_buffer(CircularBuffer *buffer) {
+    for (int i = 0; i < RPM_WINDOW_SIZE; i++) {
+        buffer->data[i] = 0;
+    }
+    buffer->index = 0;
+}
+
+// Insert a new value into the circular buffer
+void insert_buffer(CircularBuffer *buffer, int value) {
+    buffer->data[buffer->index] = value;
+    buffer->index = (buffer->index + 1) % RPM_WINDOW_SIZE;
+}
+
+// Function to find the median of the buffer's data
+int find_median(CircularBuffer *buffer) {
+    int sorted[RPM_WINDOW_SIZE];
+    for (int i = 0; i < RPM_WINDOW_SIZE; i++) {
+        sorted[i] = buffer->data[i];
+    }
+    
+    // Sort the window (Insertion sort)
+    for (int i = 1; i < RPM_WINDOW_SIZE; i++) {
+        int key = sorted[i];
+        int j = i - 1;
+
+        while (j >= 0 && sorted[j] > key) {
+            sorted[j + 1] = sorted[j];
+            j = j - 1;
+        }
+        sorted[j + 1] = key;
+    }
+    
+    // Return the median element
+    return sorted[RPM_WINDOW_SIZE / 2];
+}
+
+// Median filter function
+int median_filter(CircularBuffer *buffer, int new_value) {
+    insert_buffer(buffer, new_value);
+    return find_median(buffer);
+}
+
+
+static void IRAM_ATTR gpio_isr_handler(void* arg) {    
     uint64_t current_time;
+    uint32_t intv_q = 0;
+
     gptimer_get_raw_count(gptimer, &current_time);
     uint32_t current_gpio_level = gpio_get_level(RPM_PIN);
     if (current_gpio_level==1)
@@ -23,12 +75,16 @@ static void IRAM_ATTR gpio_isr_handler(void* arg) {
       {
         interval = current_time - last_time_rising;
       }
+
       last_time_rising = current_time;
-      uint32_t intv_q = (uint32_t) interval;
+      intv_q = (uint32_t) interval;
+      average_intv_q += intv_q;
       rpm_cnt++;
-      if (rpm_cnt%10)
+      if ((rpm_cnt%8)==0)
       {
-        xQueueSendFromISR(gpio_evt_queue, &intv_q, NULL);
+        buf_intv_q = average_intv_q>>3;//median_filter(&rpm_buffer, average_intv_q>>4);
+        average_intv_q = 0;
+        xQueueSendFromISR(gpio_evt_queue, &buf_intv_q, NULL);
       }
     }
     else
@@ -66,17 +122,18 @@ void deinit_gptimer(void)
 }
 
 static void frequency_task(void* arg) {
-    uint64_t intv;
+    uint64_t intv = 0;
+    uint32_t rpm_sense = 0;
     while (1) {
        if (xQueueReceive(gpio_evt_queue, &intv, portMAX_DELAY)) {
-            mRPMSenseData = 1000000/intv;
+            //mRPMSenseData += (1000000/intv-mRPMSenseData)>>2; //Filter data
+            rpm_sense = median_filter(&rpm_buffer, 1000000/intv);
+            if (rpm_sense<1200)
+            {
+              mRPMSenseData = rpm_sense;
+              last_rpm_value_millis = millis();
+            }
        }
-      // uint64_t current_time;
-      // gptimer_get_raw_count(gptimer, &current_time);
-      // interval = current_time - last_time;
-      // last_time = current_time;
-      // printf("interval: %llu\n", interval);
-      // vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 
@@ -118,6 +175,8 @@ void deinit_tacho_gpio(void)
 void initTacho()
 {
     ESP_LOGI(TAG, "initTacho started");
+    init_buffer(&rpm_buffer);
+    last_rpm_value_millis = millis();
     mRPMSenseData = 0;
     gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
     tacho_timer_init();
@@ -137,7 +196,15 @@ uint32_t getRPMMean()
   return 0;
 }
 
+//Value in Hz
 uint32_t readLastRPM()
 {
-  return mRPMSenseData;
+  if ((millis()-last_rpm_value_millis)<1000)
+  {
+    return mRPMSenseData;
+  }
+  else
+  {
+    return 0;
+  }
 }

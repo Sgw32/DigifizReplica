@@ -231,14 +231,19 @@ void displayUpdate(void *pvParameters) {
             if((getRPMDispertion()<digifiz_parameters.medianDispFilterThreshold)) //30 or LESS!!!
             {
                 //50 Hz - 1500 rev/min
+                //rpmCoefficient = 3000 for Golf 2/Mk2 gasoline
+                //rpmCoefficient = 1500 for Audi 80 b2
                 rpm *= digifiz_parameters.rpmCoefficient/100; //4 cylinder motor, 60 sec in min, 2 strokes per revolution
-                averageRPM += (rpm-averageRPM)*0.2;
+                
+                averageRPM += ((rpm-averageRPM)*digifiz_parameters.rpmFilterK)/1000;
             }
         }
         else
         {
             averageRPM += (0-averageRPM)*0.5;
         }
+
+        
 
         //For test fuel intake
 #ifdef TESTMODE

@@ -19,12 +19,12 @@ uint8_t maincolor_b;
 ColoringScheme digifizStandard = {
     .scheme = {
         { 
-            .r = 60,
-            .g = 80,
+            .r = 20,
+            .g = 20,
             .b = 2,
             .end_segment = 1,
             .type = COLOR_SCHEME_BACKLIGHT,
-            .basecolor_enabled = 1
+            .basecolor_enabled = 0
         },
         {
             .r = 60,
@@ -465,7 +465,9 @@ void setFuel(uint8_t litres) {
 // Set the RPM data
 void setRPMData(uint16_t inp_d) {
     // Implementation placeholder
-    uint32_t data = (49*(uint32_t)inp_d)/digifiz_parameters.maxRPM;
+    if (inp_d>digifiz_parameters.maxRPM)
+        inp_d = digifiz_parameters.maxRPM;
+    uint32_t data = (49*(uint32_t)inp_d)/8000;
     if (data<1)
         data=1;
     if (data>49)

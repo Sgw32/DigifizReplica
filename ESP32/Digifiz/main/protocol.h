@@ -46,6 +46,8 @@ typedef enum {
     PARAMETER_BACKCOLOR_R,          // 34
     PARAMETER_BACKCOLOR_G,          // 35
     PARAMETER_BACKCOLOR_B,          // 36
+    PARAMETER_RPM_FILTER,           // 37
+    PARAMETER_SPEED_FILTER,         // 38
     // Additional parameters and functions
     PARAMETER_UPTIME = 123,
     PARAMETER_READ_ADDITION = 128,

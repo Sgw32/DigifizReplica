@@ -84,6 +84,8 @@ typedef struct __attribute__((packed)) digifiz_pars
     uint16_t oilThermistorDefRes;   // 2 bytes
     uint16_t ambThermistorDefRes;   // 2 bytes
     uint8_t reserved1;              // 1 byte
+    uint16_t rpmFilterK;   // 2 bytes
+    uint16_t speedFilterK;   // 2 bytes
 } digifiz_pars;
 
 // Ensure that the size of digifiz_pars is divisible by 4
