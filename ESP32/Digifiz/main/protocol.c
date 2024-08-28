@@ -259,6 +259,30 @@ void processData(int parameter,long value)
       printLnCString("PARAMETER_SET_HOUR\n");
       set_hour(value);
     }
+    else if (par==PARAMETER_TOGGLE_MILES)
+    {
+      printLnCString("PARAMETER_TOGGLE_MILES\n");
+      if (!(digifiz_parameters.digifiz_options&OPTION_MILES))
+        digifiz_parameters.digifiz_options|=OPTION_MILES;
+      else
+        digifiz_parameters.digifiz_options&=~OPTION_MILES;
+    }
+    else if (par==PARAMETER_TOGGLE_GALLONS)
+    {
+      printLnCString("PARAMETER_TOGGLE_GALLONS\n");
+      if (!(digifiz_parameters.digifiz_options&OPTION_GALLONS))
+        digifiz_parameters.digifiz_options|=OPTION_GALLONS;
+      else
+        digifiz_parameters.digifiz_options&=~OPTION_GALLONS;
+    }
+    else if (par==PARAMETER_TOGGLE_FAHRENHEIT)
+    {
+      printLnCString("PARAMETER_TOGGLE_FAHRENHEIT\n");
+      if (!(digifiz_parameters.digifiz_options&OPTION_FAHRENHEIT))
+        digifiz_parameters.digifiz_options|=OPTION_FAHRENHEIT;
+      else
+        digifiz_parameters.digifiz_options&=~OPTION_FAHRENHEIT;
+    }
     else
     {
       if (par==PARAMETER_SET_MINUTE)
@@ -463,12 +487,19 @@ void printAbout()
 void printADC()
 {
   printLnCString("ADC:\n");
+  //printLnCString("getCoolantRawADCVal:");
   printLnFloat((float)getCoolantRawADCVal());
+  //printLnCString("getFuelRawADCVal:");
   printLnFloat((float)getFuelRawADCVal());
+  //printLnCString("getLightRawADCVal:");
   printLnFloat((float)getLightRawADCVal());
+  //printLnCString("getAmbTempRawADCVal:");
   printLnFloat((float)getAmbTempRawADCVal());
+  //printLnCString("getOilTempRawADCVal:");
   printLnFloat((float)getOilTempRawADCVal());
+  //rintLnCString("getIntakePressRawADCVal:");
   printLnFloat((float)getIntakePressRawADCVal());
+  //printLnCString("getFuelPressRawADCVal:");
   printLnFloat((float)getFuelPressRawADCVal());
 }
 

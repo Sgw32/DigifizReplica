@@ -43,16 +43,16 @@ ColoringScheme digifizStandard = {
             .basecolor_enabled = 1
         },
         { 
-            .r = 60,
-            .g = 80,
+            .r = 2,
+            .g = 240,
             .b = 2,
             .end_segment = 17,
             .type = COLOR_SCHEME_SIGNAL_MFA1_IND,
             .basecolor_enabled = 0
         },
         { 
-            .r = 60,
-            .g = 80,
+            .r = 2,
+            .g = 240,
             .b = 2,
             .end_segment = 18,
             .type = COLOR_SCHEME_SIGNAL_MFA2_IND,
@@ -83,16 +83,16 @@ ColoringScheme digifizStandard = {
             .basecolor_enabled = 0
         },
         { 
-            .r = 60,
-            .g = 80,
+            .r = 2,
+            .g = 240,
             .b = 2,
             .end_segment = 22,
             .type = COLOR_SCHEME_SIGNAL_RIGHT_TURN_IND,
             .basecolor_enabled = 0
         },
         { 
-            .r = 60,
-            .g = 80,
+            .r = 2,
+            .g = 240,
             .b = 2,
             .end_segment = 23,
             .type = COLOR_SCHEME_SIGNAL_LEFT_TURN_IND,
@@ -123,8 +123,8 @@ ColoringScheme digifizStandard = {
             .basecolor_enabled = 0
         },
         { 
-            .r = 60,
-            .g = 80,
+            .r = 2,
+            .g = 240,
             .b = 2,
             .end_segment = 27,
             .type = COLOR_SCHEME_SIGNAL_FOGLIGHTS1,
