@@ -24,10 +24,29 @@ bool checkEngineActive;
 //int mHour = 0;
 //int mMinute = 0;
 
+unsigned long wdg_previousMillis = 0;
+const long wdg_interval = 60000; // Reset every 60 seconds
+
 void initDisplay()
 {
     mx.begin();
     mx2.begin();
+    delay(10);
+    mx.begin();
+    mx2.begin();
+    delay(10);
+    mx.begin();
+    mx2.begin();
+    delay(10);
+    mx.begin();
+    mx2.begin();
+    delay(10);
+    mx.begin();
+    mx2.begin();
+    delay(10);
+    mx.begin();
+    mx2.begin();
+    delay(1);
     mx.update(MD_MAX72XX::OFF);
     //mx2.update(MD_MAX72XX::OFF);
     mx.clear();
@@ -57,6 +76,13 @@ void setBacklight(bool onoff)
 
 void fireDigifiz()
 {
+  unsigned long wdg_currentMillis = millis();
+  if (wdg_currentMillis - wdg_previousMillis >= wdg_interval) {
+    wdg_previousMillis = wdg_currentMillis;
+    mx.begin(); // Re-initialize the display
+    mx2.begin(); // Re-initialize the display
+  }
+
   mx.update();
   //mx2.update();
 }

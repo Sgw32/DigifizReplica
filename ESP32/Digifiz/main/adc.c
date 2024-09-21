@@ -83,6 +83,55 @@ void read_adc_values() {
     ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, fuelPressureChannel, &adc_raw.fuelPressRawADCVal));
 }
 
+void log_sensor_data() {
+    // Define a tag for the log
+    const char *TAG = "SENSOR_DATA";
+    
+    ESP_LOGI(TAG, "coolantRawADCVal: %d", adc_raw.coolantRawADCVal);
+    ESP_LOGI(TAG, "fuelRawADCVal: %d", adc_raw.fuelRawADCVal);
+    ESP_LOGI(TAG, "lightRawADCVal: %d", adc_raw.lightRawADCVal);
+    ESP_LOGI(TAG, "ambTempRawADCVal: %d", adc_raw.ambTempRawADCVal);
+    ESP_LOGI(TAG, "oilTempRawADCVal: %d", adc_raw.oilTempRawADCVal);
+    ESP_LOGI(TAG, "intakePressRawADCVal: %d", adc_raw.intakePressRawADCVal);
+    ESP_LOGI(TAG, "fuelPressRawADCVal: %d", adc_raw.fuelPressRawADCVal);
+}
+
+void read_initial_adc_values() {
+    int adc = 0;
+    for (int i=0;i!=256;i++)
+    {
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, lightSensorChannel, &adc));
+        adc_raw.lightRawADCVal+=adc;
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, coolantChannel, &adc));
+        adc_raw.coolantRawADCVal+=adc;
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, gasolineChannel, &adc));
+        adc_raw.fuelRawADCVal+=adc;
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, oilChannel, &adc));
+        adc_raw.oilTempRawADCVal+=adc;
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, airChannel, &adc));
+        adc_raw.ambTempRawADCVal+=adc;
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, intakePressureChannel, &adc));
+        adc_raw.intakePressRawADCVal+=adc;
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, fuelPressureChannel, &adc));
+        adc_raw.fuelPressRawADCVal+=adc;
+    }
+    adc_raw.lightRawADCVal/=256;
+    adc_raw.coolantRawADCVal/=256;
+    adc_raw.fuelRawADCVal/=256;
+    adc_raw.oilTempRawADCVal/=256;
+    adc_raw.ambTempRawADCVal/=256;
+    adc_raw.intakePressRawADCVal/=256;
+    adc_raw.fuelPressRawADCVal/=256;
+    if (adc_raw.coolantRawADCVal>0)
+        processFirstCoolantTemperature();
+    if (adc_raw.oilTempRawADCVal>0)
+        processFirstOilTemperature();
+    if (adc_raw.fuelRawADCVal>0)
+        processFirstGasLevel();
+    if (adc_raw.ambTempRawADCVal>0)
+        processFirstAmbientTemperature();
+}
+
 static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle)
 {
     adc_cali_handle_t handle = NULL;
@@ -166,20 +215,14 @@ void initADC() {
     adc_calibration_init(ADC_UNIT_1, intakePressureChannel, ADC_ATTEN_DB_12, &adc1_cali_chan5_handle);
     adc_calibration_init(ADC_UNIT_1, fuelPressureChannel, ADC_ATTEN_DB_12,   &adc1_cali_chan6_handle);
 
-    for (uint8_t i=0;i!=10;i++)
+    for (uint8_t i=0;i!=3;i++)
     {
         read_adc_values();
     }
-
+    //read_initial_adc_values();
+    //log_sensor_data();
     //Init values:
-    if (adc_raw.coolantRawADCVal>0)
-        processFirstCoolantTemperature();
-    if (adc_raw.oilTempRawADCVal>0)
-        processFirstOilTemperature();
-    if (adc_raw.fuelRawADCVal>0)
-        processFirstGasLevel();
-    if (adc_raw.ambTempRawADCVal>0)
-        processFirstAmbientTemperature();
+    
     ESP_LOGI(LOG_TAG, "initADC ended");
 }
 
@@ -376,7 +419,7 @@ float getAmbientTemperatureFahrenheit() {
 // Get the brightness level
 uint8_t getBrightnessLevel() {
     lightLevel += (getRawBrightnessLevel()-lightLevel)*0.03f;
-    return (uint8_t)constrain((lightLevel-300.0f)/6,6,100); //0..0.3V -> 0..400 (of 4095)
+    return (uint8_t)constrain((lightLevel-300.0f)/6,6,60); //0..0.3V -> 0..400 (of 4095)
 }
 
 // Get the raw brightness level
@@ -406,14 +449,18 @@ void processOilTemperature() {
 void processGasLevel() {
     //TODO add values
     V0 = adc_raw.fuelRawADCVal;
-    R2 = constrain(220 * V0 / (4095.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
-#ifndef FUEL_LEVEL_EXPERIMENTAL
-    float R2scaled = (((float)R2-
-              digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                                                digifiz_parameters.tankMinResistance));
-#else
-    float R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f; //This is a polynome calculated using VAG sensor gauge
-#endif
+    R2 = constrain(220 * V0 / (4095.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 220 Ohm in series with fuel sensor
+    float R2scaled = 0.0f;
+    if (digifiz_parameters.digifiz_options.option_linear_fuel)
+    {
+        R2scaled = (((float)R2-
+                    digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
+                                                        digifiz_parameters.tankMinResistance));
+    }
+    else
+    {
+        R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f; //This is a polynome calculated using VAG sensor gauge
+    }
     //printf("ADC fuel: %f %f\n",V0, gasolineLevel);
     gasolineLevel += tauGasoline*((1.0f-R2scaled)-gasolineLevel); //percents
     gasolineLevelFiltered += tauGasolineConsumption*(R2scaled-gasolineLevelFiltered); //percents
@@ -458,14 +505,19 @@ void processFirstOilTemperature() {
 // Process the first gas level data
 void processFirstGasLevel() {
     V0 = adc_raw.fuelRawADCVal;
+    float R2scaled = 0.0f;
     R2 = constrain(220 * V0 / (4095.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
-#ifndef FUEL_LEVEL_EXPERIMENTAL
-    float R2scaled = (((float)R2-
+    if (digifiz_parameters.digifiz_options.option_linear_fuel)
+    {
+        R2scaled = (((float)R2-
               digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
                                                 digifiz_parameters.tankMinResistance));
-#else
-    float R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
-#endif
+    }
+    else
+    {
+        R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
+    }
+    
     //35 = full
     //265 = empty
     gasolineLevel = 1.0f - R2scaled; //percents

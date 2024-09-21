@@ -1,3 +1,12 @@
+unused/
+unused/*
+*.zip
+ESP32/Digifiz/tmp/
+ESP32/Digifiz/build/
+ESP32/Digifiz/managed_components
+*.sys
+*.log
+*.lock
 # Prerequisites
 *.d
 

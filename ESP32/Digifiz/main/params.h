@@ -40,13 +40,35 @@ extern "C" {
 
 extern const char LOG_TAG[];
 
+#define OPTION_MFA_MANUFACTURER (1<<0)
+#define OPTION_MILES (1<<1)
+#define OPTION_GALLONS (1<<2)
+#define OPTION_FAHRENHEIT (1<<3)
+#define OPTION_KELVIN (1<<4)
+#define OPTION_LBAR (1<<5)
+
 typedef struct __attribute__((packed)) digifiz_pars
 {
     uint8_t header[4];              // 4 bytes
     uint32_t mileage;               // 4 bytes
     uint32_t daily_mileage[2];      // 8 bytes
     uint32_t uptime;                // 4 bytes
-    uint32_t digifiz_options;       // 4 bytes
+    union DigifizOptions
+    {
+        uint32_t packed_options;       // 4 bytes
+        struct 
+        {
+            uint32_t mfa_manufacturer:1;
+            uint32_t option_miles:1;
+            uint32_t option_gallons:1;
+            uint32_t option_fahrenheit:1;
+            uint32_t option_kelvin:1;
+            uint32_t option_lbar:1;
+            uint32_t option_linear_fuel:1;
+            uint32_t testmode_on:1;
+            uint32_t reserved:24;
+        };
+    } digifiz_options;
     uint16_t rpmCoefficient;        // 2 bytes
     uint16_t speedCoefficient;      // 2 bytes
     uint16_t coolantThermistorB;    // 2 bytes

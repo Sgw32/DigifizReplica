@@ -25,12 +25,13 @@ extern "C" {
 
 extern const char TAG[];
 
-#define GALLONS
-#define MILES
-#define FAHRENHEIT  
+// #define GALLONS
+// #define MILES
+// #define FAHRENHEIT  
 //#define KELVIN
 
 #define RPM_8000
+#define DIESEL_MODE
 #define DEFAULT_MILEAGE   000000L
 
 //#define TESTMODE

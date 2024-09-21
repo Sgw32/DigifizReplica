@@ -5,6 +5,8 @@
 
 uint32_t statusTime;
 
+uint8_t protocol_locked = 0;
+
 extern float spd_m_speedometer;
 extern float averageRPM;
 
@@ -27,6 +29,9 @@ void initComProtocol()
 #ifdef USE_UIOD
     UIODserial.begin(9600);
     //UIODserial.setTimeout(100);
+#endif
+#ifdef LOCK_PROTOCOL
+    protocol_locked = 1;
 #endif
     statusTime = millis();
 }
@@ -173,6 +178,9 @@ void processData(int parameter,long value)
             saveParameters();
             return;
   }
+
+  if ((protocol_locked)&&(par!=PARAMETER_PROTOCOL_UNLOCK))
+     return;
   
   if (par<PARAMETER_READ_ADDITION)
   {
@@ -502,6 +510,25 @@ void processData(int parameter,long value)
         break;
       case PARAMETER_GET_GPIO_PINS:
         processGPIOPinsValue(value);
+      case PARAMETER_PROTOCOL_LOCK:
+      #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_PROTOCOL_LOCK");
+        #endif
+        #ifdef USE_UIOD
+        #endif
+        if (value==123)
+           protocol_locked = 1;
+        break;        
+      case PARAMETER_PROTOCOL_UNLOCK:
+      #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_PROTOCOL_UNLOCK");
+        #endif
+        #ifdef USE_UIOD
+        #endif
+        if (value==123)
+           protocol_locked = 0;
+        break;        
+
       default:
         break;
     }

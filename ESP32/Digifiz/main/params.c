@@ -116,8 +116,8 @@ void load_defaults()
     digifiz_parameters.mileage = DEFAULT_MILEAGE*3600L;
     digifiz_parameters.daily_mileage[0] = 0;
     digifiz_parameters.daily_mileage[1] = 0;
-    digifiz_parameters.autoBrightness = 1;
-    digifiz_parameters.brightnessLevel = 60;
+    digifiz_parameters.autoBrightness = 0;
+    digifiz_parameters.brightnessLevel = 50;
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
     digifiz_parameters.tankCapacity = 70;
 #else
@@ -133,6 +133,9 @@ void load_defaults()
 #endif
 #else
     digifiz_parameters.maxRPM = 7000;
+#endif
+#ifdef DIESEL_MODE
+    digifiz_parameters.maxRPM = 6000;
 #endif
     digifiz_parameters.mfaBlock = 0; //0 or 1
     digifiz_parameters.averageConsumption[0] = 0;
@@ -150,29 +153,29 @@ void load_defaults()
     digifiz_parameters.oilThermistorDefRes = OIL_R_AT_NORMAL_T;
     digifiz_parameters.ambThermistorDefRes = AMBIENT_R_AT_NORMAL_T;
     digifiz_parameters.uptime = 0;
-    digifiz_parameters.digifiz_options = 0;
+    digifiz_parameters.digifiz_options.packed_options = 0;
     digifiz_parameters.mainc_r = 180;
     digifiz_parameters.mainc_g = 240;
     digifiz_parameters.mainc_b = 6;
     digifiz_parameters.rpmFilterK = 70;
 #ifdef MANUFACTURER_MFA_SWITCH
-    digifiz_parameters.digifiz_options |= OPTION_MFA_MANUFACTURER;
+    digifiz_parameters.digifiz_options.mfa_manufacturer = 1;
 #endif
     
 #ifdef GALLONS
-    digifiz_parameters.digifiz_options |= OPTION_GALLONS;
+    digifiz_parameters.digifiz_options.option_gallons = 1;
 #endif
 
 #ifdef MILES
-    digifiz_parameters.digifiz_options |= OPTION_MILES;
+    digifiz_parameters.digifiz_options.option_miles = 1;
 #endif
 
 #ifdef FAHRENHEIT 
-    digifiz_parameters.digifiz_options |= OPTION_FAHRENHEIT;
+    digifiz_parameters.digifiz_options.option_fahrenheit = 1;
 #endif
 
 #ifdef KELVIN 
-    digifiz_parameters.digifiz_options |= OPTION_KELVIN;
+    digifiz_parameters.digifiz_options.option_kelvin = 1;
 #endif
     computeCRC();
 }
@@ -237,33 +240,33 @@ void initEEPROM()
     }
 
     #ifdef MANUFACTURER_MFA_SWITCH
-        digifiz_parameters.digifiz_options |= OPTION_MFA_MANUFACTURER;
+        digifiz_parameters.digifiz_options.mfa_manufacturer = 1;
     #else
-        digifiz_parameters.digifiz_options &= ~OPTION_MFA_MANUFACTURER;
+        digifiz_parameters.digifiz_options.mfa_manufacturer = 0;
     #endif
         
     #ifdef GALLONS
-        digifiz_parameters.digifiz_options |= OPTION_GALLONS;
+        digifiz_parameters.digifiz_options.option_gallons = 1;
     #else
-        digifiz_parameters.digifiz_options &= ~OPTION_GALLONS;
+        digifiz_parameters.digifiz_options.option_gallons = 0;
     #endif
 
     #ifdef MILES
-        digifiz_parameters.digifiz_options |= OPTION_MILES;
+        digifiz_parameters.digifiz_options.option_miles = 1;
     #else
-        digifiz_parameters.digifiz_options &= ~OPTION_MILES;
+        digifiz_parameters.digifiz_options.option_miles = 0;
     #endif
 
     #ifdef FAHRENHEIT 
-        digifiz_parameters.digifiz_options |= OPTION_FAHRENHEIT;
+        digifiz_parameters.digifiz_options.option_fahrenheit = 1;
     #else
-        digifiz_parameters.digifiz_options &= ~OPTION_FAHRENHEIT;
+        digifiz_parameters.digifiz_options.option_fahrenheit = 0;
     #endif
 
     #ifdef KELVIN 
-        digifiz_parameters.digifiz_options |= OPTION_KELVIN;
+        digifiz_parameters.digifiz_options.option_kelvin = 1;
     #else
-        digifiz_parameters.digifiz_options &= ~OPTION_KELVIN;
+        digifiz_parameters.digifiz_options.option_kelvin = 0;
     #endif
 
     ESP_LOGI(TAG, "initEEPROM ended");

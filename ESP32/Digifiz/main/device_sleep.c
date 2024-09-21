@@ -6,6 +6,7 @@
 #include "esp_err.h"
 #include "setup.h"
 #include "display_next.h"
+#include "digifiz_watchdog.h"
 #include <stdio.h>
 
 #include "freertos/FreeRTOS.h"
@@ -36,6 +37,10 @@ static void deep_sleep_task(void *args)
             } else {
                 printf("Wake up from GPIO\n");
             }
+            // Reinitialize the watchdog timer after waking from deep sleep
+            if (watchdog_reinit() != ESP_OK) {
+                ESP_LOGE("Watchdog", "Failed to reinitialize watchdog timer");
+            }
             break;
         }
         case ESP_SLEEP_WAKEUP_UNDEFINED:
@@ -62,6 +67,7 @@ static void deep_sleep_task(void *args)
         if (sleepMode)
         {
             //printf("Entering deep sleep\n");
+            watchdog_delete();
             ESP_ERROR_CHECK(esp_sleep_enable_ext1_wakeup(ext_wakeup_pin_1_mask, ESP_EXT1_WAKEUP_ANY_LOW));
             ESP_ERROR_CHECK(rtc_gpio_pulldown_dis(ext_wakeup_pin_1));
             ESP_ERROR_CHECK(rtc_gpio_pullup_en(ext_wakeup_pin_1));

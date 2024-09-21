@@ -49,7 +49,7 @@ void processMFA()
     bMFAReset = digifiz_reg_in.mfaReset;
     bMFASensor = 0;//gpio_get_level(TOUCH_PIN);
 #ifndef DISABLE_MANUFACTURER_MFA
-    if (digifiz_parameters.digifiz_options&OPTION_MFA_MANUFACTURER)
+    if (digifiz_parameters.digifiz_options.mfa_manufacturer)
     {
       if ((bMFAMode==0)&&(prevMFAMode==1))
       {

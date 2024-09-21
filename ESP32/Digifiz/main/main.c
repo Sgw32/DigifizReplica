@@ -33,6 +33,7 @@
 #include "reg_inout.h"
 #include "buzzer.h"
 #include "emergency.h"
+#include "digifiz_watchdog.h"
 
 #include "millis.h"
 
@@ -139,6 +140,12 @@ void shutdown_handler(void)
 
 //100 Hz loop
 void adcLoop(void *pvParameters) {
+    vTaskDelay(pdMS_TO_TICKS(300));
+    xSemaphoreTake(displayMutex, portMAX_DELAY); // Take the mutex
+    read_initial_adc_values();
+    log_sensor_data();
+    xSemaphoreGive(displayMutex); // Give back the mutex
+    vTaskDelay(pdMS_TO_TICKS(100));
     while(1) {
         // Print current time in hours and minutes
         // Read ADC values from multiple pins
@@ -214,7 +221,7 @@ void displayUpdate(void *pvParameters) {
         if (spd_m>0)
         {
             spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
-            if (digifiz_parameters.digifiz_options&OPTION_MILES)
+            if (digifiz_parameters.digifiz_options.option_miles)
                 spd_m *= 0.6214;
             spd_m /= 100;
         }
@@ -265,7 +272,7 @@ void displayUpdate(void *pvParameters) {
                  (digifiz_parameters.coolantMax - digifiz_parameters.coolantMin)*14.0f), averageRPM, spd_m_speedometer);
         }
 
-        if (digifiz_parameters.digifiz_options&OPTION_GALLONS)
+        if (digifiz_parameters.digifiz_options.option_gallons)
         {
             fuel = getGallonsInTank();
             if (fuel<2)
@@ -281,7 +288,7 @@ void displayUpdate(void *pvParameters) {
             else
             setRefuelSign(false);  
         }
-
+ 
         setFuel(fuel);
         setCoolantData(getDisplayedCoolantTemp());
         processIndicators();
@@ -373,6 +380,15 @@ void on_cpu_1(void *pvParameters)
 
 void app_main(void)
 {
+    // Create the mutex for watchdog synchronization
+    watchdog_mutex_create();
+
+    // Initialize the watchdog timer
+    if (watchdog_init() != ESP_OK) {
+        ESP_LOGE("Watchdog", "Failed to initialize watchdog timer");
+        return;
+    }
+
     const esp_partition_t *partition = esp_ota_get_running_partition();
 	printf("Currently running partition: %s\r\n", partition->label);
     esp_ota_img_states_t ota_state;
@@ -386,6 +402,7 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_register_shutdown_handler(shutdown_handler));
     while (1) 
     {
+        watchdog_update();
         vTaskDelay(MAIN_TASK_DELAY_MS / portTICK_PERIOD_MS);
         //printf("app_main\n");
     }

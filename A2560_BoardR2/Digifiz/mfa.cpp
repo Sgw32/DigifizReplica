@@ -116,7 +116,9 @@ digifiz_parameters.mfaState+=1;
     if (digifiz_parameters.mfaState>5) // 0 1 2 3 4 5
         digifiz_parameters.mfaState = 0;
 #endif
+#ifdef SAVE_BY_MFA_MODE
     saveParameters();
+#endif
 }
 
 void pressMFABlock()

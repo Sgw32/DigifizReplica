@@ -473,7 +473,7 @@ void setRPMData(uint16_t inp_d) {
     if (data>49)
         data=49; 
     display.rpm_padding=0;
-    memset(display.rpm,0,5);
+    memset(display.rpm,0,5); 
     display.rpm_last = 0;
     uint8_t *ptr = (uint8_t*)&display;
     for (uint16_t i = 28; i < 28+data; i++)
@@ -708,12 +708,12 @@ void displayMFAType(uint8_t mfaType) {
             break;
         case MFA_STATE_OIL_TEMP:
             display.mfa_dots&=0b00;
-            if (digifiz_parameters.digifiz_options&OPTION_FAHRENHEIT)
+            if (digifiz_parameters.digifiz_options.option_fahrenheit)
             {
               setMFADisplayedNumber((int16_t)getOilTemperatureFahrenheit());
               setFloatDot(false);
             }
-            else if (digifiz_parameters.digifiz_options&OPTION_KELVIN)
+            else if (digifiz_parameters.digifiz_options.option_kelvin)
             {
               setMFADisplayedNumber((int16_t)(getOilTemperature()+273.15f));
               setFloatDot(false);
@@ -726,12 +726,12 @@ void displayMFAType(uint8_t mfaType) {
             break;
         case MFA_STATE_AIR_TEMP:
             display.mfa_dots&=0b00;
-            if (digifiz_parameters.digifiz_options&OPTION_FAHRENHEIT)
+            if (digifiz_parameters.digifiz_options.option_fahrenheit)
             {
               setMFADisplayedNumber((int16_t)getAmbientTemperatureFahrenheit());
               setFloatDot(false);
             }
-            else if (digifiz_parameters.digifiz_options&OPTION_KELVIN)
+            else if (digifiz_parameters.digifiz_options.option_kelvin)
             { 
               setMFADisplayedNumber((int16_t)(getAmbientTemperature()+273.15f));
               setFloatDot(false);

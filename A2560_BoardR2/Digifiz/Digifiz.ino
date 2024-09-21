@@ -301,7 +301,15 @@ void loop()
     digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] = getCurrentIntakeFuelConsumption();//getFuelConsumption()*digifiz_parameters.tankCapacity;
     #endif
     
-    setMileage(uptimeDisplayEnabled ? (digifiz_parameters.uptime/3600) : (digifiz_parameters.mileage/3600)); //to km
+    if (millis()<5000)
+    {
+      setMileage(getLoadResult());
+    }
+    else
+    {
+      setMileage(uptimeDisplayEnabled ? (digifiz_parameters.uptime/3600) : (digifiz_parameters.mileage/3600)); //to km
+    }
+    
     #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
     setDailyMileage((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
     #endif
@@ -317,7 +325,7 @@ void loop()
     saveParametersCounter++;
     setBacklight(digifiz_parameters.backlight_on ? true : false);
     //setAudiOptions(0x9);
-    if (saveParametersCounter==EEPROM_SAVE_INTERVAL)
+    if (saveParametersCounter>EEPROM_SAVE_INTERVAL)
     {
         digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock] = current_averageSpeed;
         saveParameters();
@@ -330,4 +338,7 @@ void loop()
     displayMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState);
     setDot(false);
   }
+  setMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState);
+  processMFA();
+  protocolParse();
 }

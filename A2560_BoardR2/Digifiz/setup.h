@@ -20,10 +20,11 @@
     
 #define NEW_REVISION
 
-#define EEPROM_SAVE_INTERVAL 32
-
+#define EEPROM_SAVE_INTERVAL 128
+#define LOCK_PROTOCOL
+//#define SAVE_BY_MFA_MODE
 //#define GALLONS
-//#define MILES
+#define MILES
 //#define FAHRENHEIT  
 //#define KELVIN
 
@@ -36,8 +37,8 @@
 #define UIODserial Serial1
 
 //DEFAULT for miniUIOD if ONLY mUIOD is installed!!!
-//#define BTserial Serial1
-//#define UIODserial Serial1
+// #define BTserial Serial1
+// #define UIODserial Serial1
 
 
 //DEFAULT for UIOD Digifiz Replica (LCD one)
@@ -58,6 +59,22 @@
 #ifndef DISABLE_SENSOR_BUTTON
 #define DISABLE_SENSOR_BUTTON
 #endif
+#endif
+
+#if defined(AUDI_DISPLAY)
+#undef BTserial
+#undef UIODserial
+#undef USE_UIOD
+#undef USE_BTSERIAL
+#undef UIOD_PARSE_INPUT
+
+//DEFAULT for miniUIOD if ONLY mUIOD is installed!!!
+#define BTserial Serial1
+#define UIODserial Serial1
+
+#define USE_UIOD
+#define UIOD_PARSE_INPUT //default for UIOD
+
 #endif
 
 #define COOLANT_R_AT_NORMAL_T 1000.0f //VW OEM

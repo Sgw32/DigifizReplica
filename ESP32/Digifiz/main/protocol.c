@@ -243,6 +243,10 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_RPM_FILTER\n");
         digifiz_parameters.rpmFilterK = value;
         break;
+      case PARAMETER_SET_LINEAR_FUEL_CALC:
+        printLnCString("PARAMETER_SET_LINEAR_FUEL_CALC\n");
+        digifiz_parameters.digifiz_options.option_linear_fuel = value&1;
+        break;
       case PARAMETER_UPTIME:
         printLnCString("PARAMETER_UPTIME\n");
         digifiz_parameters.uptime = value;
@@ -262,26 +266,26 @@ void processData(int parameter,long value)
     else if (par==PARAMETER_TOGGLE_MILES)
     {
       printLnCString("PARAMETER_TOGGLE_MILES\n");
-      if (!(digifiz_parameters.digifiz_options&OPTION_MILES))
-        digifiz_parameters.digifiz_options|=OPTION_MILES;
+      if (!(digifiz_parameters.digifiz_options.option_miles))
+        digifiz_parameters.digifiz_options.option_miles = 1;
       else
-        digifiz_parameters.digifiz_options&=~OPTION_MILES;
+        digifiz_parameters.digifiz_options.option_miles = 0;
     }
     else if (par==PARAMETER_TOGGLE_GALLONS)
     {
       printLnCString("PARAMETER_TOGGLE_GALLONS\n");
-      if (!(digifiz_parameters.digifiz_options&OPTION_GALLONS))
-        digifiz_parameters.digifiz_options|=OPTION_GALLONS;
+      if (!(digifiz_parameters.digifiz_options.option_gallons))
+        digifiz_parameters.digifiz_options.option_gallons = 1;
       else
-        digifiz_parameters.digifiz_options&=~OPTION_GALLONS;
+        digifiz_parameters.digifiz_options.option_gallons = 0;
     }
     else if (par==PARAMETER_TOGGLE_FAHRENHEIT)
     {
       printLnCString("PARAMETER_TOGGLE_FAHRENHEIT\n");
-      if (!(digifiz_parameters.digifiz_options&OPTION_FAHRENHEIT))
-        digifiz_parameters.digifiz_options|=OPTION_FAHRENHEIT;
+      if (!(digifiz_parameters.digifiz_options.option_fahrenheit))
+        digifiz_parameters.digifiz_options.option_fahrenheit = 1;
       else
-        digifiz_parameters.digifiz_options&=~OPTION_FAHRENHEIT;
+        digifiz_parameters.digifiz_options.option_fahrenheit = 0;
     }
     else
     {
@@ -507,25 +511,25 @@ void printHelp()
 {
   printLnCString("Digifiz Replica by PHOL-LABS.\n");
   printLnCString("Your dashboard is:\n");
-  if (digifiz_parameters.digifiz_options&OPTION_MFA_MANUFACTURER)
+  if (digifiz_parameters.digifiz_options.mfa_manufacturer)
     printLnCString("MFA ON\n");
   else
     printLnCString("MFA OFF\n");
 
-  if (digifiz_parameters.digifiz_options&OPTION_MILES)
+  if (digifiz_parameters.digifiz_options.option_miles)
     printLnCString("MPH\n");
   else
     printLnCString("KMH\n");
-  if (digifiz_parameters.digifiz_options&OPTION_FAHRENHEIT)
+  if (digifiz_parameters.digifiz_options.option_fahrenheit)
     printLnCString("Fahrenheit\n");
   else
   {
-    if (digifiz_parameters.digifiz_options&OPTION_KELVIN)
+    if (digifiz_parameters.digifiz_options.option_kelvin)
       printLnCString("Lelvin\n");
     else
       printLnCString("Celsium\n");
   }
-  if (digifiz_parameters.digifiz_options&OPTION_GALLONS)
+  if (digifiz_parameters.digifiz_options.option_gallons)
     printLnCString("Gallons\n");
   else
     printLnCString("Liters\n");

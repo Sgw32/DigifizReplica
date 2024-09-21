@@ -78,6 +78,9 @@ int getOilTempRawADCVal(void);
 int getIntakePressRawADCVal(void);
 int getFuelPressRawADCVal(void);
 
+void read_initial_adc_values();
+void log_sensor_data();
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+
+<head>
+    <title>NVS WiFi connect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <style>
+        .column {
+            float: left;
+            width: 100%;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .btn {
+            float: left;
+            width: 100%;
+            margin: 2px;
+
+        }
+
+        .cl1 {
+            float: left;
+            width: 100%;
+            margin: 2px;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .cl01 {
+            float: left;
+            width: 100%;
+            text-align: center;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .cl02 {
+            float: left;
+            width: 100%;
+            text-align: center;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .hdr {
+            float: left;
+            width: 100%;
+            text-align: center;
+            color: white;
+            background-color: blue;
+            padding: 5px;
+            margin: 5px;
+        }
+
+        .logstr {
+            width: 100%;
+            float: left;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="hdr">Set WiFi params to NVS</div>
+
+    <div class="column">
+        <button class="btn" id="goHome" >Home Page</button>
+    </div>
+
+
+    <div class="cl1">
+        <label class="cl01" for="nvsApStaMode">Connect mode</label>
+        <select class="cl02" id="nvsApStaMode">
+            <option value="modeSta" selected>Connect to Wifi</option>
+            <option value="modeAp">Create AP 192.168.4.1</option>
+        </select>
+    </div>
+
+    <div id="modeSta" style="display:block">
+        <div class="cl1">
+            <label class="cl01" for="nvsStaSsid">Wifi SSID</label>
+            <input class="cl02" type="text" id="nvsStaSsid" placeholder="SSID..">
+        </div>
+
+        <div class="cl1">
+            <label class="cl01" for="nvsStaPass">Wifi Password</label>
+            <input class="cl02" type="text" id="nvsStaPass" placeholder="Password..">
+        </div>
+    </div>
+    <div id="modeAp" style="display:none">
+        <div class="cl1">
+            <label class="cl01" for="nvsApSsid">softAP SSID</label>
+            <input class="cl02" type="text" id="nvsApSsid" placeholder="SSID..">
+        </div>
+
+        <div class="cl1">
+            <label class="cl01" for="nvsApPass">softAP Password</label>
+            <input class="cl02" type="text" id="nvsApPass" placeholder="Password..">
+        </div>
+    </div>
+
+    <div class="column">
+        <button class="btn" id="Wifi_Upload">Write WiFi data </button>
+        <button class="btn" id="Wifi_Restart">Write WiFi data and restart</button>
+    </div>
+    <script>
+    </script>
+
+    <script>/*WIFI обновление*/
+
+        document.getElementById("nvsApStaMode").addEventListener("input", function (e) {
+            if (e.target.value == "modeSta") {
+                document.getElementById("modeSta").style.display = "block";
+                document.getElementById("modeAp").style.display = "none";
+            } else {
+                document.getElementById("modeSta").style.display = "none";
+                document.getElementById("modeAp").style.display = "block";
+            }
+        });
+
+        document.getElementById("Wifi_Restart").addEventListener("click", function (e) {
+            send_wifi_data();
+            socket.send(JSON.stringify({ name: "Wifi_Restart", msg: "restart" }));
+        });
+        document.getElementById("Wifi_Upload").addEventListener("click", function (e) {
+            send_wifi_data();
+            socket.send(JSON.stringify({ name: "Wifi_Restart", msg: "write" }));
+        });
+        document.getElementById("goHome").addEventListener("click", function (e) {
+            //onclick="window.location.href = '/'"
+            socket.close();
+            window.location.href = '/';
+        });
+
+        function send_wifi_data() {
+            let ssid;
+            let pass;
+            let ApStaMode
+            if (document.getElementById("nvsApStaMode").value == "modeSta") {
+                ssid = document.getElementById("nvsStaSsid");
+                pass = document.getElementById("nvsStaPass");
+            }
+            else {
+                ssid = document.getElementById("nvsApSsid");
+                pass = document.getElementById("nvsApPass");
+            }
+            ApStaMode = document.getElementById("nvsApStaMode");
+            socket.send(JSON.stringify({ name: ApStaMode.id, msg: ApStaMode.value }));
+            socket.send(JSON.stringify({ name: ssid.id, msg: ssid.value }));
+            socket.send(JSON.stringify({ name: pass.id, msg: pass.value }));
+        }
+        function receiveWsData(data) {
+            try {
+                let obj = JSON.parse(data);
+                document.getElementById(obj.name).value = obj.msg;
+                if (obj.name == "nvsApStaMode") {
+                    document.getElementById(obj.name).dispatchEvent(new Event('input'));
+                }
+            }
+            catch
+            {
+                console.log(data + " catch");
+            }
+        };
+    </script>
+
+    <script>  // Прием, обработка и отправка данных в WS
+    </script>
+
+    <script> // основной старт скрипта, открыть сокет
+        // создать сокет по адресу
+        let protocol = "ws:"
+        if(document.location.protocol == "https:") protocol = "wss:"
+        let wsHostStr = protocol + "//" + document.location.host + document.location.pathname;
+        wsHostStr += (document.location.pathname == '/') ? "ws" : "/ws";
+        var socket = new WebSocket(wsHostStr);
+    </script>
+
+    <script> // события WS
+        socket.onopen = function () {
+            console.log("connect");
+        };
+        socket.onclose = function (event) {
+            console.log("close");
+            setTimeout(() => document.location.reload(), 2000);
+        };
+        socket.onerror = function () {
+            console.log("error");
+            setTimeout(() => document.location.reload(), 2000);
+        };
+        socket.onmessage = function (event) {
+            receiveWsData(event.data);
+        };
+    </script>
+
+</body>
+
+</html>

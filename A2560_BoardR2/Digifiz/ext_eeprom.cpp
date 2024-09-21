@@ -3,8 +3,9 @@
 ExternalEEPROM myMem; //myMem is external EEPROM (24LC512)
 uint8_t external_faulty;
 digifiz_pars digifiz_parameters;
-
+EEPROMLoadResult eeprom_load_result = EEPROM_NO_LOAD_ATTEMPT;
 uint8_t memory_block_selected = 0;
+uint8_t memory_locked = 0;
 
 bool checkMagicBytes()
 {    
@@ -33,27 +34,7 @@ bool checkMagicBytes()
 
 bool checkInternalMagicBytes()
 {    
-    uint8_t test1,test2,test3,test4;
-    uint8_t cnt = 0;
-    for (int j=0;j!=EEPROM_DOUBLING;j++)
-    {
-      for (cnt=0;cnt!=10;cnt++) //What if we have a wrong negative results???
-      {
-        //Give it 10 chances
-        EEPROM.get(INTERNAL_OFFSET+0+EEPROM_GAP_SIZE*j,test1);
-        EEPROM.get(INTERNAL_OFFSET+1+EEPROM_GAP_SIZE*j,test2);
-        EEPROM.get(INTERNAL_OFFSET+2+EEPROM_GAP_SIZE*j,test3);
-        EEPROM.get(INTERNAL_OFFSET+3+EEPROM_GAP_SIZE*j,test4);
-        if ((test1=='D')&&
-            (test2=='I')&&
-            (test3=='G')&&
-            (test4=='I'))
-        {
-            return true;
-        }
-      }
-    }
-    return false;
+    return true;
 }
 
 
@@ -62,19 +43,58 @@ void saveParameters()
   #ifdef DISABLE_EEPROM
   return;
   #endif
-  computeCRC();
-  cli();
-  if (!external_faulty)
-  {
-    myMem.put(EXTERNAL_OFFSET+4+EEPROM_GAP_SIZE*memory_block_selected,digifiz_parameters);
-  }
-  EEPROM.put(INTERNAL_OFFSET+4+EEPROM_GAP_SIZE*memory_block_selected,digifiz_parameters);
-  sei();
-  memory_block_selected++;
-  if (memory_block_selected==EEPROM_DOUBLING)
-    memory_block_selected=0;
-}
 
+  // Compute the CRC of the current parameters
+  computeCRC();
+
+  // Check if parameters have changed, if so, proceed with writing
+  bool dataChanged = false;
+  // Buffer to hold the parameters read from EEPROM for comparison
+  digifiz_pars buffer;
+  
+  // Read existing data to compare and check for changes
+  EEPROM.get(INTERNAL_OFFSET + 4 + EEPROM_GAP_SIZE * memory_block_selected, buffer);
+
+  // Only proceed if data has changed
+  if (memcmp(&buffer, &digifiz_parameters, sizeof(digifiz_parameters)) != 0)
+  {
+    dataChanged = true;
+  }
+
+  // Proceed if data has changed or external EEPROM is not faulty
+  if (dataChanged || !external_faulty)
+  {
+    cli();  // Disable interrupts for the critical section
+
+    // If external EEPROM is available and not faulty, write to it
+    if (!external_faulty)
+    {
+      myMem.put(EXTERNAL_OFFSET + 4 + EEPROM_GAP_SIZE * memory_block_selected, digifiz_parameters);
+    }
+
+    // Write to internal EEPROM
+    EEPROM.put(INTERNAL_OFFSET + 4 + EEPROM_GAP_SIZE * memory_block_selected, digifiz_parameters);
+
+    sei();  // Re-enable interrupts
+
+    // Optional: Verify the written data
+    digifiz_pars verifyBuffer;
+    EEPROM.get(INTERNAL_OFFSET + 4 + EEPROM_GAP_SIZE * memory_block_selected, verifyBuffer);
+
+    // If verification fails, log an error or take corrective action
+    if (memcmp(&verifyBuffer, &digifiz_parameters, sizeof(digifiz_parameters)) != 0)
+    {
+      // Handle error
+    }
+
+    // Increment memory block pointer
+    memory_block_selected++;
+    if (memory_block_selected == EEPROM_DOUBLING)
+    {
+      memory_block_selected = 0;
+    }
+  }
+}
 void computeCRC()
 {
   uint8_t res = 0;
@@ -93,6 +113,7 @@ uint8_t getCurrentMemoryBlock()
 
 void load_defaults()
 {
+    memcpy(digifiz_parameters.preamble,"DIGI",4);
 #if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
     digifiz_parameters.rpmCoefficient = 3000;
 #else
@@ -185,6 +206,7 @@ void initEEPROM()
         //Serial.println("No memory detected. ");
         if (checkInternalMagicBytes()) //check if we have internal memory present.
         {
+          eeprom_load_result = EEPROM_CORRUPTED;
           for (int j=0;j!=EEPROM_DOUBLING;j++) //try to read correct fragment "EEPROM_DOUBLING" times
           {
             EEPROM.get(INTERNAL_OFFSET+4+EEPROM_GAP_SIZE*j,digifiz_parameters);
@@ -195,17 +217,37 @@ void initEEPROM()
               crc^=digi_buf[i];
             }
             if (crc==digifiz_parameters.crc) //fragment is good, stop here. 
-              break;  
+            {
+              switch (j)
+              {
+                case 0:
+                  eeprom_load_result = EEPROM_OK1;
+                  break;
+                case 1:
+                  eeprom_load_result = EEPROM_OK2;
+                  break;
+                case 2:
+                  eeprom_load_result = EEPROM_OK3;
+                  break;
+                default:
+                  eeprom_load_result = EEPROM_OK_UNKNOWN;
+                  break;
+              }
+              break;
+            }  
+          }
+          if (eeprom_load_result == EEPROM_CORRUPTED)
+          {
+            load_defaults(); //from table, not from memory
+            saveParameters();
+            saveParameters();
+            saveParameters();
           }
         }
         else
         {
+          eeprom_load_result = EEPROM_CORRUPTED;
           //We have corrupted all "EEPROM_DOUBLING" slots in memory, rewrite all the data
-          EEPROM.put(INTERNAL_OFFSET+0,'D');
-          EEPROM.put(INTERNAL_OFFSET+1,'I');
-          EEPROM.put(INTERNAL_OFFSET+2,'G');
-          EEPROM.put(INTERNAL_OFFSET+3,'I');
-          EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
           //save it 3 times
           saveParameters();
           saveParameters();
@@ -214,6 +256,7 @@ void initEEPROM()
     }
     else
     {
+        eeprom_load_result = EEPROM_OK_TEST;
         //EEPROM doubling mechanism
         //Prefer external over internal
         if (!checkInternalMagicBytes())
@@ -224,11 +267,6 @@ void initEEPROM()
           {
             //No magic bytes detected both in internal and external 
             //write example digifiz parameters
-            myMem.put(EXTERNAL_OFFSET+0,'D');
-            myMem.put(EXTERNAL_OFFSET+1,'I');
-            myMem.put(EXTERNAL_OFFSET+2,'G');
-            myMem.put(EXTERNAL_OFFSET+3,'I');
-            myMem.put(EXTERNAL_OFFSET+4,digifiz_parameters);
             saveParameters();
             saveParameters();
             saveParameters();
@@ -251,11 +289,6 @@ void initEEPROM()
                 break;  
             }
           }
-          EEPROM.put(INTERNAL_OFFSET+0,'D');
-          EEPROM.put(INTERNAL_OFFSET+1,'I');
-          EEPROM.put(INTERNAL_OFFSET+2,'G');
-          EEPROM.put(INTERNAL_OFFSET+3,'I');
-          EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
           saveParameters();
           saveParameters();
           saveParameters();
@@ -279,11 +312,6 @@ void initEEPROM()
               if (crc==digifiz_parameters.crc)
                 break;  
             }
-            myMem.put(EXTERNAL_OFFSET+0,'D');
-            myMem.put(EXTERNAL_OFFSET+1,'I');
-            myMem.put(EXTERNAL_OFFSET+2,'G');
-            myMem.put(EXTERNAL_OFFSET+3,'I');
-            myMem.put(EXTERNAL_OFFSET+4,digifiz_parameters);
             saveParameters();
             saveParameters();
             saveParameters();
@@ -305,15 +333,27 @@ void initEEPROM()
               if (crc==digifiz_parameters.crc)
                 break;  
             }
-            EEPROM.put(INTERNAL_OFFSET+0,'D');
-            EEPROM.put(INTERNAL_OFFSET+1,'I');
-            EEPROM.put(INTERNAL_OFFSET+2,'G');
-            EEPROM.put(INTERNAL_OFFSET+3,'I');
-            EEPROM.put(INTERNAL_OFFSET+4,digifiz_parameters);
             saveParameters();
             saveParameters();
             saveParameters();
           }
         }
    }
+   
+}
+
+
+void lockMemory()
+{
+    memory_locked = 1;
+}
+
+void unlockMemory()
+{
+    memory_locked = 0;
+}
+
+EEPROMLoadResult getLoadResult()
+{
+    return eeprom_load_result;
 }

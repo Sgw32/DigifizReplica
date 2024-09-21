@@ -6,14 +6,27 @@
 #include "Arduino.h"
 #include "setup.h"
 
-#define INTERNAL_OFFSET 32
-#define EXTERNAL_OFFSET 32
+#define INTERNAL_OFFSET (32+256)
+#define EXTERNAL_OFFSET (32+256)
 
 #define EEPROM_GAP_SIZE 256
 #define EEPROM_DOUBLING 3
 
+typedef enum
+{
+    EEPROM_NO_LOAD_ATTEMPT = 555,
+    EEPROM_CORRUPTED = 800,
+    EEPROM_OK1 = 100,
+    EEPROM_OK2 = 200,
+    EEPROM_OK3 = 300,
+    EEPROM_OK_UNKNOWN = 400,
+    EEPROM_OK_TEST = 500,
+    EEPROM_CHECKED_CORRUPTED = 900,
+} EEPROMLoadResult;
+
 typedef struct digifiz_pars
 {
+    uint8_t  preamble[4];
     uint16_t rpmCoefficient; //used //div 100 //16 //2
     uint16_t speedCoefficient; //used //div 100 //32 //4
     uint16_t coolantThermistorB; //used //34 //6
@@ -42,10 +55,10 @@ typedef struct digifiz_pars
     uint16_t coolantMinResistance; //80 //52
     uint16_t coolantMaxResistance; //82 //54
     uint16_t medianDispFilterThreshold; //84 //56 
-    uint8_t crc; //crc
     uint16_t coolantThermistorDefRes; 
     uint32_t uptime;
     uint32_t digifiz_options; 
+    uint8_t crc; //crc
 };
 
 #define OPTION_MFA_MANUFACTURER 1
@@ -93,5 +106,29 @@ void computeCRC();
  * @return uint8_t 
  */
 uint8_t getCurrentMemoryBlock();
+
+
+/**
+ * @brief locks memory saving
+ * 
+ */
+void lockMemory();
+
+
+/**
+ * @brief unlocks memory saving
+ * 
+ */
+void unlockMemory();
+
+
+/**
+ * @brief Get the EEPROM load result on boot
+ * 
+ * @return EEPROMLoadResult 
+ */
+EEPROMLoadResult getLoadResult();
+
+
 
 #endif

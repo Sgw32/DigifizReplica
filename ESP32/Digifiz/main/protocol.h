@@ -48,6 +48,7 @@ typedef enum {
     PARAMETER_BACKCOLOR_B,          // 36
     PARAMETER_RPM_FILTER,           // 37
     PARAMETER_SPEED_FILTER,         // 38
+    PARAMETER_SET_LINEAR_FUEL_CALC,         // 39
     // Additional parameters and functions
     PARAMETER_UPTIME = 123,
     PARAMETER_READ_ADDITION = 128,
@@ -74,7 +75,9 @@ typedef enum {
     PARAMETER_GET_YEAR = 239,
     PARAMETER_GET_HOUR = 238,
     PARAMETER_GET_MINUTE = 237,
-    PARAMETER_GET_GPIO_PINS = 236
+    PARAMETER_GET_GPIO_PINS = 236,
+    PARAMETER_MEMORY_LOCK = 235,
+    PARAMETER_MEMORY_UNLOCK = 234,
 } DigifizProtocol;
 
 void initComProtocol();
