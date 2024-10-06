@@ -1,6 +1,6 @@
-[![Build Digifiz Next](https://github.com/Sgw32/DigifizReplica/actions/workflows/main.yml/badge.svg)](https://github.com/Sgw32/DigifizReplica/actions/workflows/main.yml)
+[![Build Digifiz Next](https://github.com/Sgw32/DigifizReplica/actions/workflows/build_main.yml/badge.svg)](https://github.com/Sgw32/DigifizReplica/actions/workflows/build_main.yml)
 
-[![Build Digifiz Replica Arduino](https://github.com/Sgw32/DigifizReplica/actions/workflows/legacy_arduino.yml/badge.svg)](https://github.com/Sgw32/DigifizReplica/actions/workflows/legacy_arduino.yml)
+[![Build Digifiz Replica Arduino](https://github.com/Sgw32/DigifizReplica/actions/workflows/build_legacy_arduino.yml/badge.svg)](https://github.com/Sgw32/DigifizReplica/actions/workflows/build_legacy_arduino.yml)
 
 # Official Digifiz Replica repository
 
