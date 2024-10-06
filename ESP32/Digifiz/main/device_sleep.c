@@ -78,12 +78,12 @@ static void deep_sleep_task(void *args)
     }
 }
 
-static void example_deep_sleep_register_rtc_timer_wakeup(void)
-{
-    const int wakeup_time_sec = 20;
-    printf("Enabling timer wakeup, %ds\n", wakeup_time_sec);
-    ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000));
-}
+// static void example_deep_sleep_register_rtc_timer_wakeup(void)
+// {
+//     const int wakeup_time_sec = 20;
+//     printf("Enabling timer wakeup, %ds\n", wakeup_time_sec);
+//     ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000));
+// }
 
 esp_err_t initDeviceSleep() {
     ESP_LOGI(LOG_TAG, "initDeviceSleep started");
