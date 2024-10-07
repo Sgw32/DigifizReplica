@@ -9,7 +9,7 @@
 //223..225 execute commands
 
 typedef enum {
-    PARAMETER_RPMCOEFFICIENT,       // 0
+    PARAMETER_ZERO_RESERVED,       // 0
     PARAMETER_SPEEDCOEEFICIENT,     // 1
     PARAMETER_COOLANTTHERMISTORB,   // 2
     PARAMETER_OILTHERMISTORB,       // 3
@@ -31,8 +31,8 @@ typedef enum {
     PARAMETER_NORMAL_RESISTANCE_COOLANT,    // 19
     PARAMETER_NORMAL_RESISTANCE_OIL,        // 20
     PARAMETER_NORMAL_RESISTANCE_AMB,        // 21
-    // Skip to 23 for the next value
-    PARAMETER_DOT_OFF = 23,
+    PARAMETER_RPMCOEFFICIENT,        // 22
+    PARAMETER_DOT_OFF,
     PARAMETER_BACKLIGHT_ON,         // 24
     PARAMETER_M_D_FILTER,           // 25
     PARAMETER_COOLANT_MAX_R,        // 26
@@ -48,7 +48,10 @@ typedef enum {
     PARAMETER_BACKCOLOR_B,          // 36
     PARAMETER_RPM_FILTER,           // 37
     PARAMETER_SPEED_FILTER,         // 38
-    PARAMETER_SET_LINEAR_FUEL_CALC,         // 39
+    PARAMETER_SET_FUEL_CALC_FUNCTION,         // 39
+    PARAMETER_SET_RPM_OPTIONS,         // 40
+    PARAMETER_SET_TEMP_OPTIONS,         // 41
+    PARAMETER_SET_SIGNAL_OPTIONS,         // 41
     // Additional parameters and functions
     PARAMETER_UPTIME = 123,
     PARAMETER_READ_ADDITION = 128,
@@ -78,16 +81,20 @@ typedef enum {
     PARAMETER_TOGGLE_MILES = 233,
     PARAMETER_TOGGLE_GALLONS = 232,
     PARAMETER_TOGGLE_FAHRENHEIT = 231,
+    PARAMETER_SAVE_PARAMS = 230,
 } DigifizProtocol;
+
+// Structure to map parameter names to enum values
+typedef struct {
+    const char *name;
+    DigifizProtocol value;
+} ParameterMap;
 
 void initComProtocol();
 void changeBLEName();
 void protocolParse(char* buf, uint8_t len);
 void processData(int par, long value);
 void processGPIOPinsValue(long value);
-void printHelp();
-void printAbout();
-void printADC();
 
 void printLnCString(char* data);
 void printLnUINT8(uint8_t val);

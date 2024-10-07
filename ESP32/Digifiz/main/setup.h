@@ -21,6 +21,7 @@ extern "C" {
 
 #define EEPROM_SAVE_INTERVAL 32
 
+#define TEMPERATURE_ALARM_PERIOD 250
 //#define DEBUG_SLEEP_DISABLE
 
 extern const char TAG[];

@@ -56,6 +56,7 @@ enum
     COLOR_SCHEME_SPEEDOMETER,
     COLOR_SCHEME_TIME,
     COLOR_SCHEME_RPM,
+    COLOR_SCHEME_RPM_REDLINE,
     COLOR_SCHEME_TEMPERATURE,
     COLOR_SCHEME_FUEL,
     COLOR_SCHEME_REFUEL,
@@ -80,6 +81,9 @@ enum
     __MAX_COLOR_SCHEME
 };
 
+#define COLORING_SCHEME_MAX_ELEMENTS 50
+#define COLORING_SCHEME_REDLINING_LIMIT 69
+
 typedef struct RGBColoringElement
 {
     uint8_t r;
@@ -92,7 +96,7 @@ typedef struct RGBColoringElement
 
 typedef struct ColoringScheme
 {
-    RGBColoringElement scheme[50];
+    RGBColoringElement scheme[COLORING_SCHEME_MAX_ELEMENTS];
 } ColoringScheme;
 
 typedef struct __attribute__((packed)) DigifizNextDisplay

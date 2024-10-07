@@ -5,18 +5,184 @@
 #include "esp_log.h"
 #include <string.h>
 #include "digifiz_time.h"
+#include "vehicle_data.h"
+#include <stdlib.h>
+#include <ctype.h>
 
 uint32_t statusTime;
 
 extern float spd_m_speedometer;
 extern float averageRPM;
 extern digifiz_pars digifiz_parameters; 
-#define MAX_SIZE 128
+#define MAX_SIZE 512
 char ws_data_send[MAX_SIZE];
 char tmp_buffer[12];  // uint8_t can be at most 3 digits + null terminator
 char cmd_buffer[128];
 char cmd_buffer_par[64];
 char cmd_buffer_val[64];
+
+// Mapping array
+static const ParameterMap parameter_map[] = {
+    {"PARAMETER_ZERO_RESERVED", PARAMETER_ZERO_RESERVED},
+    {"PARAMETER_SPEEDCOEEFICIENT", PARAMETER_SPEEDCOEEFICIENT},
+    {"PARAMETER_COOLANTTHERMISTORB", PARAMETER_COOLANTTHERMISTORB},
+    {"PARAMETER_OILTHERMISTORB", PARAMETER_OILTHERMISTORB},
+    {"PARAMETER_AIRTHERMISTORB", PARAMETER_AIRTHERMISTORB},
+    {"PARAMETER_TANKMINRESISTANCE", PARAMETER_TANKMINRESISTANCE},
+    {"PARAMETER_TANKMAXRESISTANCE", PARAMETER_TANKMAXRESISTANCE},
+    {"PARAMETER_TAU_COOLANT", PARAMETER_TAU_COOLANT},
+    {"PARAMETER_TAU_OIL", PARAMETER_TAU_OIL},
+    {"PARAMETER_TAU_AIR", PARAMETER_TAU_AIR},
+    {"PARAMETER_TAU_TANK", PARAMETER_TAU_TANK},
+    {"PARAMETER_MILEAGE", PARAMETER_MILEAGE},
+    {"PARAMETER_DAILY_MILEAGE", PARAMETER_DAILY_MILEAGE},
+    {"PARAMETER_AUTO_BRIGHTNESS", PARAMETER_AUTO_BRIGHTNESS},
+    {"PARAMETER_BRIGHTNESS_LEVEL", PARAMETER_BRIGHTNESS_LEVEL},
+    {"PARAMETER_TANK_CAPACITY", PARAMETER_TANK_CAPACITY},
+    {"PARAMETER_MFA_STATE", PARAMETER_MFA_STATE},
+    {"PARAMETER_BUZZER_OFF", PARAMETER_BUZZER_OFF},
+    {"PARAMETER_MAX_RPM", PARAMETER_MAX_RPM},
+    {"PARAMETER_NORMAL_RESISTANCE_COOLANT", PARAMETER_NORMAL_RESISTANCE_COOLANT},
+    {"PARAMETER_NORMAL_RESISTANCE_OIL", PARAMETER_NORMAL_RESISTANCE_OIL},
+    {"PARAMETER_NORMAL_RESISTANCE_AMB", PARAMETER_NORMAL_RESISTANCE_AMB},
+    {"PARAMETER_RPMCOEFFICIENT", PARAMETER_RPMCOEFFICIENT},
+    {"PARAMETER_DOT_OFF", PARAMETER_DOT_OFF},
+    {"PARAMETER_BACKLIGHT_ON", PARAMETER_BACKLIGHT_ON},
+    {"PARAMETER_M_D_FILTER", PARAMETER_M_D_FILTER},
+    {"PARAMETER_COOLANT_MAX_R", PARAMETER_COOLANT_MAX_R},
+    {"PARAMETER_COOLANT_MIN_R", PARAMETER_COOLANT_MIN_R},
+    {"PARAMETER_COMMAND_MFA_RESET", PARAMETER_COMMAND_MFA_RESET},
+    {"PARAMETER_COMMAND_MFA_MODE", PARAMETER_COMMAND_MFA_MODE},
+    {"PARAMETER_COMMAND_MFA_BLOCK", PARAMETER_COMMAND_MFA_BLOCK},
+    {"PARAMETER_MAINCOLOR_R", PARAMETER_MAINCOLOR_R},
+    {"PARAMETER_MAINCOLOR_G", PARAMETER_MAINCOLOR_G},
+    {"PARAMETER_MAINCOLOR_B", PARAMETER_MAINCOLOR_B},
+    {"PARAMETER_BACKCOLOR_R", PARAMETER_BACKCOLOR_R},
+    {"PARAMETER_BACKCOLOR_G", PARAMETER_BACKCOLOR_G},
+    {"PARAMETER_BACKCOLOR_B", PARAMETER_BACKCOLOR_B},
+    {"PARAMETER_RPM_FILTER", PARAMETER_RPM_FILTER},
+    {"PARAMETER_SPEED_FILTER", PARAMETER_SPEED_FILTER},
+    {"PARAMETER_SET_FUEL_CALC_FUNCTION", PARAMETER_SET_FUEL_CALC_FUNCTION},
+    {"PARAMETER_SET_RPM_OPTIONS", PARAMETER_SET_RPM_OPTIONS},
+    {"PARAMETER_SET_TEMP_OPTIONS", PARAMETER_SET_TEMP_OPTIONS},
+    {"PARAMETER_SET_SIGNAL_OPTIONS", PARAMETER_SET_SIGNAL_OPTIONS},
+    {"PARAMETER_UPTIME", PARAMETER_UPTIME},
+    {"PARAMETER_READ_ADDITION", PARAMETER_READ_ADDITION},
+    {"PARAMETER_SET_HOUR", PARAMETER_SET_HOUR},
+    {"PARAMETER_SET_MINUTE", PARAMETER_SET_MINUTE},
+    {"PARAMETER_RESET_DAILY_MILEAGE", PARAMETER_RESET_DAILY_MILEAGE},
+    {"PARAMETER_RESET_DIGIFIZ", PARAMETER_RESET_DIGIFIZ},
+    {"PARAMETER_GET_ACCUMULATED_UPTIME", PARAMETER_GET_ACCUMULATED_UPTIME},
+    {"PARAMETER_GET_COOLANT_TEMPERATURE", PARAMETER_GET_COOLANT_TEMPERATURE},
+    {"PARAMETER_GET_OIL_TEMPERATURE", PARAMETER_GET_OIL_TEMPERATURE},
+    {"PARAMETER_GET_AMBIENT_TEMPERATURE", PARAMETER_GET_AMBIENT_TEMPERATURE},
+    {"PARAMETER_GET_FUEL_IN_TANK", PARAMETER_GET_FUEL_IN_TANK},
+    {"PARAMETER_GET_SPEED", PARAMETER_GET_SPEED},
+    {"PARAMETER_GET_RPM", PARAMETER_GET_RPM},
+    {"PARAMETER_SET_DAY", PARAMETER_SET_DAY},
+    {"PARAMETER_SET_MONTH", PARAMETER_SET_MONTH},
+    {"PARAMETER_SET_YEAR", PARAMETER_SET_YEAR},
+    {"PARAMETER_GET_DAY", PARAMETER_GET_DAY},
+    {"PARAMETER_GET_MONTH", PARAMETER_GET_MONTH},
+    {"PARAMETER_GET_YEAR", PARAMETER_GET_YEAR},
+    {"PARAMETER_GET_HOUR", PARAMETER_GET_HOUR},
+    {"PARAMETER_GET_MINUTE", PARAMETER_GET_MINUTE},
+    {"PARAMETER_GET_GPIO_PINS", PARAMETER_GET_GPIO_PINS},
+    {"PARAMETER_MEMORY_LOCK", PARAMETER_MEMORY_LOCK},
+    {"PARAMETER_MEMORY_UNLOCK", PARAMETER_MEMORY_UNLOCK},
+    {"PARAMETER_TOGGLE_MILES", PARAMETER_TOGGLE_MILES},
+    {"PARAMETER_TOGGLE_GALLONS", PARAMETER_TOGGLE_GALLONS},
+    {"PARAMETER_TOGGLE_FAHRENHEIT", PARAMETER_TOGGLE_FAHRENHEIT},
+    {"PARAMETER_SAVE_PARAMS", PARAMETER_SAVE_PARAMS},
+};
+
+static void printAbout()
+{
+  printLnCString("Digifiz Replica by PHOL-LABS.\n");
+  printLnCString("Fedor Zagumennov,\n");
+  printLnCString("Pavel Myasnikov,\n");
+  printLnCString("Cherry Fox / Duplux Indicators,\n");
+  printLnCString("Egor Avramenko.\n");
+}
+
+static void printADC()
+{
+  printLnCString("ADC:\n");
+  //printLnCString("getCoolantRawADCVal:");
+  printLnFloat((float)getCoolantRawADCVal());
+  //printLnCString("getFuelRawADCVal:");
+  printLnFloat((float)getFuelRawADCVal());
+  //printLnCString("getLightRawADCVal:");
+  printLnFloat((float)getLightRawADCVal());
+  //printLnCString("getAmbTempRawADCVal:");
+  printLnFloat((float)getAmbTempRawADCVal());
+  //printLnCString("getOilTempRawADCVal:");
+  printLnFloat((float)getOilTempRawADCVal());
+  //rintLnCString("getIntakePressRawADCVal:");
+  printLnFloat((float)getIntakePressRawADCVal());
+  //printLnCString("getFuelPressRawADCVal:");
+  printLnFloat((float)getFuelPressRawADCVal());
+}
+
+static void printStatusJSON()
+{
+  update_json_string();
+  printLnCString(g_jsonString);
+}
+
+static void printHelp()
+{
+  printLnCString("Digifiz Replica by PHOL-LABS.\n");
+  printLnCString("Your dashboard is:\n");
+  if (digifiz_parameters.digifiz_options.mfa_manufacturer)
+    printLnCString("MFA ON\n");
+  else
+    printLnCString("MFA OFF\n");
+
+  if (digifiz_parameters.digifiz_options.option_miles)
+    printLnCString("MPH\n");
+  else
+    printLnCString("KMH\n");
+  if (digifiz_parameters.digifiz_options.option_fahrenheit)
+    printLnCString("Fahrenheit\n");
+  else
+  {
+    if (digifiz_parameters.digifiz_options.option_kelvin)
+      printLnCString("Lelvin\n");
+    else
+      printLnCString("Celsium\n");
+  }
+  if (digifiz_parameters.digifiz_options.option_gallons)
+    printLnCString("Gallons\n");
+  else
+    printLnCString("Liters\n");
+  printLnUINT32(digifiz_parameters.maxRPM);
+  printLnCString(" RPM\n");
+}
+
+// Function to map parameter name to enum value
+static int getParameterValue(const char *name, int *value) {
+    size_t i;
+    size_t map_size = sizeof(parameter_map) / sizeof(parameter_map[0]);
+    for (i = 0; i < map_size; i++) {
+        if (strcmp(parameter_map[i].name, name) == 0) {
+            *value = parameter_map[i].value;
+            return 1; // Success
+        }
+    }
+    return 0; // Not found
+}
+
+// Function to check if a string is a valid integer
+static int is_number(const char *str) {
+    if (*str == '\0') return 0;
+    if (*str == '-' || *str == '+') str++;
+    while (*str) {
+        if (!isdigit((unsigned char)*str)) return 0;
+        str++;
+    }
+    return 1;
+}
 
 void initComProtocol()
 {
@@ -25,12 +191,12 @@ void initComProtocol()
 
 void changeBLEName()
 {
-    
+    //We do not have BLE, to be deleted
 }
 
 void processGPIOPinsValue(long value)
 {
-    
+    //TODO implement
 }
 
 void printLnCString(char* data)
@@ -243,9 +409,21 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_RPM_FILTER\n");
         digifiz_parameters.rpmFilterK = value;
         break;
-      case PARAMETER_SET_LINEAR_FUEL_CALC:
-        printLnCString("PARAMETER_SET_LINEAR_FUEL_CALC\n");
+      case PARAMETER_SET_FUEL_CALC_FUNCTION:
+        printLnCString("PARAMETER_SET_FUEL_CALC_FUNCTION\n");
         digifiz_parameters.digifiz_options.option_linear_fuel = value&1;
+        break;
+      case PARAMETER_SET_RPM_OPTIONS:
+        printLnCString("PARAMETER_SET_RPM_OPTIONS\n");
+        digifiz_parameters.rpm_options.packed_options = value;
+        break;
+      case PARAMETER_SET_TEMP_OPTIONS:
+        printLnCString("PARAMETER_SET_TEMP_OPTIONS\n");
+        digifiz_parameters.temp_options.packed_options = value;
+        break;
+      case PARAMETER_SET_SIGNAL_OPTIONS:
+        printLnCString("PARAMETER_SET_SIGNAL_OPTIONS\n");
+        digifiz_parameters.sign_options.packed_options = value;
         break;
       case PARAMETER_UPTIME:
         printLnCString("PARAMETER_UPTIME\n");
@@ -287,6 +465,11 @@ void processData(int parameter,long value)
       else
         digifiz_parameters.digifiz_options.option_fahrenheit = 0;
     }
+    else if (par==PARAMETER_SAVE_PARAMS)
+    {
+      printLnCString("PARAMETER_SAVE_PARAMS\n");
+      saveParameters();
+    }
     else
     {
       if (par==PARAMETER_SET_MINUTE)
@@ -322,7 +505,6 @@ void processData(int parameter,long value)
     switch(par)
     {
       case PARAMETER_GET_ACCUMULATED_UPTIME:
-        printLnCString("PARAMETER_GET_ACCUMULATED_UPTIME\n");
         printLnFloat(digifiz_parameters.uptime);
         break;
       case PARAMETER_GET_COOLANT_TEMPERATURE:
@@ -456,10 +638,6 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_MAX_RPM\n");
         printLnUINT32(digifiz_parameters.maxRPM);
         break;
-      case PARAMETER_BACKLIGHT_ON:
-        printLnCString("PARAMETER_BACKLIGHT_ON\n");
-        printLnUINT8(digifiz_parameters.backlight_on);
-        break;
       case PARAMETER_NORMAL_RESISTANCE_COOLANT:
         printLnCString("PARAMETER_NORMAL_RESISTANCE_COOLANT\n");
         printLnUINT32(digifiz_parameters.coolantThermistorDefRes);
@@ -472,69 +650,75 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_NORMAL_RESISTANCE_AMB\n");
         printLnUINT32(digifiz_parameters.ambThermistorDefRes);
         break;
+      case PARAMETER_DOT_OFF:
+        printLnCString("PARAMETER_DOT_OFF\n");
+        printLnUINT32(digifiz_parameters.displayDot);
+        break;
+      case PARAMETER_BACKLIGHT_ON:
+        printLnCString("PARAMETER_BACKLIGHT_ON\n");
+        printLnUINT8(digifiz_parameters.backlight_on);
+        break;
+      case PARAMETER_M_D_FILTER:
+        printLnCString("PARAMETER_M_D_FILTER\n");
+        printLnUINT8(digifiz_parameters.medianDispFilterThreshold);
+        break;
+      case PARAMETER_COOLANT_MAX_R:
+        printLnCString("PARAMETER_COOLANT_MAX_R\n");
+        printLnUINT8(digifiz_parameters.coolantMax);
+        break;
+      case PARAMETER_COOLANT_MIN_R:
+        printLnCString("PARAMETER_COOLANT_MIN_R\n");
+        printLnUINT8(digifiz_parameters.coolantMin);
+        break;
+      case PARAMETER_MAINCOLOR_R:
+        printLnCString("PARAMETER_MAINCOLOR_R\n");
+        printLnUINT8(digifiz_parameters.mainc_r);
+        break;
+      case PARAMETER_MAINCOLOR_G:
+        printLnCString("PARAMETER_MAINCOLOR_G\n");
+        printLnUINT8(digifiz_parameters.mainc_g);
+        break;
+      case PARAMETER_MAINCOLOR_B:
+        printLnCString("PARAMETER_MAINCOLOR_B\n");
+        printLnUINT8(digifiz_parameters.mainc_b);
+        break;
+      case PARAMETER_BACKCOLOR_R:
+        printLnCString("PARAMETER_BACKCOLOR_R\n");
+        printLnUINT8(digifiz_parameters.backc_r);
+        break;
+      case PARAMETER_BACKCOLOR_G:
+        printLnCString("PARAMETER_BACKCOLOR_G\n");
+        printLnUINT8(digifiz_parameters.backc_g);
+        break;
+      case PARAMETER_BACKCOLOR_B:
+        printLnCString("PARAMETER_BACKCOLOR_B\n");
+        printLnUINT8(digifiz_parameters.backc_b);
+        break;
+      case PARAMETER_RPM_FILTER:
+        printLnCString("PARAMETER_RPM_FILTER\n");
+        printLnUINT8(digifiz_parameters.rpmFilterK);
+        break;
+      case PARAMETER_SPEED_FILTER:
+        printLnCString("PARAMETER_SPEED_FILTER\n");
+        printLnUINT8(digifiz_parameters.speedFilterK);
+        break;
+      case PARAMETER_SET_RPM_OPTIONS:
+        printLnCString("PARAMETER_GET_RPM_OPTIONS\n");
+        printLnUINT8(digifiz_parameters.rpm_options.packed_options);
+        break;
+      case PARAMETER_SET_TEMP_OPTIONS:
+        printLnCString("PARAMETER_GET_TEMP_OPTIONS\n");
+        printLnUINT8(digifiz_parameters.temp_options.packed_options);
+        break;
+      case PARAMETER_SET_SIGNAL_OPTIONS:
+        printLnCString("PARAMETER_GET_SIGNAL_OPTIONS\n");
+        printLnUINT8(digifiz_parameters.sign_options.packed_options);
+        break;
       default:
         break;
     }
   }
   //saveParameters();
-}
-
-void printAbout()
-{
-  printLnCString("Digifiz Replica by PHOL-LABS.\n");
-  printLnCString("Fedor Zagumennov,\n");
-  printLnCString("Pavel Myasnikov,\n");
-  printLnCString("Cherry Fox / Duplux Indicators,\n");
-  printLnCString("Egor Avramenko.\n");
-}
-
-void printADC()
-{
-  printLnCString("ADC:\n");
-  //printLnCString("getCoolantRawADCVal:");
-  printLnFloat((float)getCoolantRawADCVal());
-  //printLnCString("getFuelRawADCVal:");
-  printLnFloat((float)getFuelRawADCVal());
-  //printLnCString("getLightRawADCVal:");
-  printLnFloat((float)getLightRawADCVal());
-  //printLnCString("getAmbTempRawADCVal:");
-  printLnFloat((float)getAmbTempRawADCVal());
-  //printLnCString("getOilTempRawADCVal:");
-  printLnFloat((float)getOilTempRawADCVal());
-  //rintLnCString("getIntakePressRawADCVal:");
-  printLnFloat((float)getIntakePressRawADCVal());
-  //printLnCString("getFuelPressRawADCVal:");
-  printLnFloat((float)getFuelPressRawADCVal());
-}
-
-void printHelp()
-{
-  printLnCString("Digifiz Replica by PHOL-LABS.\n");
-  printLnCString("Your dashboard is:\n");
-  if (digifiz_parameters.digifiz_options.mfa_manufacturer)
-    printLnCString("MFA ON\n");
-  else
-    printLnCString("MFA OFF\n");
-
-  if (digifiz_parameters.digifiz_options.option_miles)
-    printLnCString("MPH\n");
-  else
-    printLnCString("KMH\n");
-  if (digifiz_parameters.digifiz_options.option_fahrenheit)
-    printLnCString("Fahrenheit\n");
-  else
-  {
-    if (digifiz_parameters.digifiz_options.option_kelvin)
-      printLnCString("Lelvin\n");
-    else
-      printLnCString("Celsium\n");
-  }
-  if (digifiz_parameters.digifiz_options.option_gallons)
-    printLnCString("Gallons\n");
-  else
-    printLnCString("Liters\n");
-  printLnUINT32(digifiz_parameters.maxRPM);
-  printLnCString(" RPM\n");
 }
 
 void clearProtocolBuffer(void)
@@ -579,13 +763,41 @@ void protocolParse(char* buf, uint8_t len)
                 {
                     printAbout();
                 }
+                else if (strcmp(cmd_buffer_par,"save")==0)
+                {
+                    saveParameters();
+                }
                 else if (strcmp(cmd_buffer_par,"adc")==0)
                 {
                     printADC();
                 }
+                else if (strcmp(cmd_buffer_par,"status_json")==0)
+                {
+                    printStatusJSON();
+                }
                 else
                 {
-                    parameter_p = atoi(cmd_buffer);
+
+                    if (is_number(cmd_buffer)) {
+                        // Convert the parameter string to an integer
+                        uint32_t param_num = strtol(cmd_buffer, NULL, 10);
+                        if (param_num > 255) { // Adjust the upper bound as needed
+                            printLnCString("Parameter number out of range:\n");
+                            printLnUINT32(param_num);
+                            memset(cmd_buffer,0,sizeof(cmd_buffer));
+                            return;
+                        }
+                        parameter_p = param_num;
+                    } else {
+                        // Attempt to map the parameter name to its enum value
+                        if (!getParameterValue(cmd_buffer, &parameter_p)) {
+                            printLnCString("Unknown parameter name\n");
+                            memset(cmd_buffer,0,sizeof(cmd_buffer));
+                            return;
+                        }
+                    }
+
+                    value_p = 0;                    
                     value_p = atol(cmd_buffer_val);
                     if(value_p<0)
                         value_p=0;

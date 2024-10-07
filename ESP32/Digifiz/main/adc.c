@@ -9,6 +9,7 @@
 #include "esp_attr.h"
 #include "esp_sleep.h"
 #include "esp_log.h"
+#include "millis.h"
 
 #ifndef NEW_REVISION
 const float R2_Ambient = 3300.0f; //for Coolant
@@ -277,6 +278,34 @@ uint8_t getGallonsInTank() {
 
 // Get the displayed coolant temperature
 uint8_t getDisplayedCoolantTemp() {
+    static uint8_t alarm = 0;
+    static uint32_t lastMillis = 0;
+    uint8_t minSegments = digifiz_parameters.temp_options.sensor_connected_ind ? 1 : 0;
+    //if minSegments was set to 1 (connected int) - and sensor not connected, reset it anyway. 
+    
+    if ((coolantT>120.0f)&&digifiz_parameters.temp_options.alarm_function)
+    {
+        if ((millis()-lastMillis)>TEMPERATURE_ALARM_PERIOD)
+        {
+            if (alarm)
+                alarm = 0;
+            else
+                alarm = 1;
+        }
+        lastMillis = millis();
+    }
+    else
+    {
+        //If alarm conditions not active, reset alarm
+        alarm = 0;
+    }
+    //If sensor not connected
+    if (coolantT<-60.0f)
+        minSegments = 0;
+    //If alarm active - return 0 segments(it is switched in TEMPERATURE_ALARM_PERIOD freq)
+    if (alarm)
+        return 0;
+    
     #ifdef AUDI_DISPLAY
     //16 LEDs
     return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin)/
@@ -292,7 +321,7 @@ uint8_t getDisplayedCoolantTemp() {
     #if !defined(AUDI_RED_DISPLAY) && !defined(AUDI_DISPLAY)
         //14 LEDs
         return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin)/
-                (digifiz_parameters.coolantMax - digifiz_parameters.coolantMin)*14.0f),0,14.0f); 
+                (digifiz_parameters.coolantMax - digifiz_parameters.coolantMin)*14.0f),minSegments,14.0f); 
     
     #endif   
 }
@@ -459,6 +488,13 @@ void processGasLevel() {
     }
     else
     {
+        //This formula is valid only for range tankMinResistance/tankMaxResistance 35/265
+        //So if range is different, adjust R2 accordingly
+        R2 = R2 - digifiz_parameters.tankMinResistance; //0-230 Range
+        //Adjust for new range:
+        //equals 1 if they are 265/35, otherwise adjusted for range 265/35:
+        R2 *= (265.0f-35.0f)/(digifiz_parameters.tankMaxResistance-digifiz_parameters.tankMinResistance);
+        R2 += 35.0f; //New range: 265-35
         R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f; //This is a polynome calculated using VAG sensor gauge
     }
     //printf("ADC fuel: %f %f\n",V0, gasolineLevel);

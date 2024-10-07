@@ -15,6 +15,7 @@ float brightnessFiltered = 6.0f;
 uint8_t maincolor_r;
 uint8_t maincolor_g;
 uint8_t maincolor_b;
+int16_t redline_scheme_id = -1;
 
 ColoringScheme digifizStandard = {
     .scheme = {
@@ -142,7 +143,7 @@ ColoringScheme digifizStandard = {
             .r = 60,
             .g = 8,
             .b = 2,
-            .end_segment = 69,
+            .end_segment = COLORING_SCHEME_REDLINING_LIMIT,
             .type = COLOR_SCHEME_RPM,
             .basecolor_enabled = 1
         },
@@ -151,7 +152,7 @@ ColoringScheme digifizStandard = {
             .g = 8,
             .b = 2,
             .end_segment = 77,
-            .type = COLOR_SCHEME_RPM,
+            .type = COLOR_SCHEME_RPM_REDLINE,
             .basecolor_enabled = 0
         },
         { 
@@ -310,6 +311,15 @@ void initDisplay() {
     display.lights_on_ind = 0;
     display.foglight_ind2 = 0;
     display.backlight_leds = 0b111111111111;
+
+    for (uint8_t i=0;i!=COLORING_SCHEME_MAX_ELEMENTS;i++)
+    {
+        if (digifizStandard.scheme[i].type==COLOR_SCHEME_RPM_REDLINE)
+        {
+            redline_scheme_id = i;
+            break;
+        }
+    }
     //display.rpm_padding = 0xF;
     //display.rpm[0] = 0xFF;
     setFuel(99);
@@ -825,26 +835,46 @@ void setBackWindowHeatIndicator(bool onoff)
 }
 void processIndicators()
 {
-    if (digifiz_reg_in.blinkAll)
+    if (digifiz_parameters.sign_options.use_blink_other_inputs)
     {
-        display.left_turn_ind = 0;
-        display.right_turn_ind = 0;
-        if (!digifiz_reg_in.blinkLeftInd)
+        if (!digifiz_reg_in.fogLightsInd)
         {
-             display.left_turn_ind = 1;
+            display.left_turn_ind = 1;
         }
-        if (!digifiz_reg_in.blinkRightInd)
+        else if (!digifiz_reg_in.glheatInd)
         {
-             display.right_turn_ind = 1;
+            display.right_turn_ind = 1;
+        }
+        else
+        {
+            display.left_turn_ind = 0;
+            display.right_turn_ind = 0;
         }
     }
     else
     {
-        display.left_turn_ind = 1;
-        display.right_turn_ind = 1;
+        //Normal way:
+        if (digifiz_reg_in.blinkAll)
+        {
+            display.left_turn_ind = 0;
+            display.right_turn_ind = 0;
+            if (!digifiz_reg_in.blinkLeftInd)
+            {
+                display.left_turn_ind = 1;
+            }
+            if (!digifiz_reg_in.blinkRightInd)
+            {
+                display.right_turn_ind = 1;
+            }
+        }
+        else
+        {
+            display.left_turn_ind = 1;
+            display.right_turn_ind = 1;
+        }
     }
-
     display.brakes_ind = digifiz_reg_in.brakesInd ? 0 : 1;
+    display.foglight_ind2 = digifiz_reg_in.lightsHeatInd ? 0 : 1;
 }
 
 void getColorBySegmentNumber(uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* b)
@@ -877,7 +907,8 @@ uint16_t led_num = 0;
 // Fire up the Digifiz system
 void fireDigifiz() {
     led_num = 0;
-
+    digifizStandard.scheme[redline_scheme_id-1].end_segment = COLORING_SCHEME_REDLINING_LIMIT-
+                                                digifiz_parameters.rpm_options.redline_segments;
     if ((digifiz_parameters.mainc_r==0)&&
         (digifiz_parameters.mainc_g==0)&&
         (digifiz_parameters.mainc_b==0))

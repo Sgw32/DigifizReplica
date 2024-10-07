@@ -484,14 +484,16 @@
 	<div class="tci">
 		<div class="cl1">
             <label class="cl01" for="digifizConsole">Send command</label>
-            <input class="cl01" type="text" id="digifizConsole" placeholder="Command">
         </div>
 		<div class="cl1">
-			<button class="cl01" type="button" id="processCommandButton">Process Command</button>
+			<div class="mfa-buttons">
+				<input class="cl01" type="text" id="digifizConsole" placeholder="Command">
+				<button class="cl01" type="button" id="processCommandButton">Process Command</button>
+			</div>
 		</div>
         <div class="cl1">
             <label class="cl01" for="digifizConsoleResult">Command result</label>
-            <textarea class="cl02" type="text" id="digifizConsoleResult" placeholder="Console output"></textarea>
+            <textarea class="cl02" style="min-height: 200px;" type="text" id="digifizConsoleResult" placeholder="Console output"></textarea>
         </div>
         <div class="cl1">
             <div class="mfa-buttons">
@@ -499,6 +501,9 @@
                 <button class="cl01" type="button" id="mfaResetButton">MFA Reset</button>
             </div>
         </div>
+		<div class="cl1">
+			<button class="cl01" type="button" id="fSaveButton">Save parameters</button>
+		</div>
 		<div class="cl1">
 			<button class="cl01" type="button" id="fResetButton">Factory reset</button>
 		</div>
@@ -572,6 +577,9 @@ document.getElementById("defaultTab").click();
 	});
 	document.getElementById('mfaResetButton').addEventListener('click',function (e) {
 		socket.send(JSON.stringify({ name: "mfaReset", msg: '28 0\n' }));
+	});
+	document.getElementById('fSaveButton').addEventListener('click',function (e) {
+		socket.send(JSON.stringify({ name: "fSaveButton", msg: '230 0\n' }));
 	});
 	document.getElementById('fResetButton').addEventListener('click',function (e) {
 		socket.send(JSON.stringify({ name: "fReset", msg: '252 0\n' }));

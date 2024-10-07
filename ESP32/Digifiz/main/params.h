@@ -47,28 +47,72 @@ extern const char LOG_TAG[];
 #define OPTION_KELVIN (1<<4)
 #define OPTION_LBAR (1<<5)
 
+typedef union DigifizOptions
+{
+    uint8_t packed_options;       // 1 byte
+    struct 
+    {
+        uint8_t mfa_manufacturer:1;
+        uint8_t option_miles:1;
+        uint8_t option_gallons:1;
+        uint8_t option_fahrenheit:1;
+        uint8_t option_kelvin:1;
+        uint8_t option_lbar:1;
+        uint8_t option_linear_fuel:1;
+        uint8_t testmode_on:1;
+    };
+} u_digifiz_options;
+STATIC_ASSERT(sizeof(u_digifiz_options) == 1, "Size of u_digifiz_options is not 1");
+
+typedef union RPMOptions
+{
+    uint8_t packed_options;       // 1 byte
+    struct 
+    {
+        uint8_t redline_segments:5; //Red segments in the end
+        uint8_t reserved:3;
+    };
+} u_rpm_options;
+STATIC_ASSERT(sizeof(u_rpm_options) == 1, "Size of u_rpm_options is not 1");
+
+typedef union TemperatureOptions
+{
+    uint8_t packed_options;       // 1 byte
+    struct 
+    {
+        uint8_t red_segments:2;
+        uint8_t sensor_connected_ind:1; //have 1 segment if sensor is connected
+        uint8_t alarm_function:1;
+        uint8_t reserved:4;
+    };
+} u_temp_options;
+STATIC_ASSERT(sizeof(u_temp_options) == 1, "Size of u_temp_options is not 1");
+
+typedef union SignalOptions
+{
+    uint8_t packed_options;       // 1 byte
+    struct 
+    {
+        //Use "FOG" input on Dashboard for left signal, 
+        //use "GLASS HEAT" for right signal, disable common
+        //Common input becomes dead on rev up to 3.02 if ground is dead
+        uint8_t use_blink_other_inputs:1; 
+        uint8_t reserved:7;
+    };
+} u_signal_options;
+
+STATIC_ASSERT(sizeof(u_signal_options) == 1, "Size of u_signal_options is not 1");
+
 typedef struct __attribute__((packed)) digifiz_pars
 {
     uint8_t header[4];              // 4 bytes
     uint32_t mileage;               // 4 bytes
     uint32_t daily_mileage[2];      // 8 bytes
     uint32_t uptime;                // 4 bytes
-    union DigifizOptions
-    {
-        uint32_t packed_options;       // 4 bytes
-        struct 
-        {
-            uint32_t mfa_manufacturer:1;
-            uint32_t option_miles:1;
-            uint32_t option_gallons:1;
-            uint32_t option_fahrenheit:1;
-            uint32_t option_kelvin:1;
-            uint32_t option_lbar:1;
-            uint32_t option_linear_fuel:1;
-            uint32_t testmode_on:1;
-            uint32_t reserved:24;
-        };
-    } digifiz_options;
+    u_digifiz_options digifiz_options; //1 byte
+    u_rpm_options rpm_options;             //1 byte
+    u_temp_options temp_options;             //1 byte
+    u_signal_options sign_options;             //1 byte
     uint16_t rpmCoefficient;        // 2 bytes
     uint16_t speedCoefficient;      // 2 bytes
     uint16_t coolantThermistorB;    // 2 bytes

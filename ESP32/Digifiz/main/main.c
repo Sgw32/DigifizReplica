@@ -34,6 +34,7 @@
 #include "buzzer.h"
 #include "emergency.h"
 #include "digifiz_watchdog.h"
+#include "vehicle_data.h"
 
 #include "millis.h"
 
@@ -151,7 +152,19 @@ void adcLoop(void *pvParameters) {
         // Read ADC values from multiple pins
         xSemaphoreTake(displayMutex, portMAX_DELAY); // Take the mutex
         processADC();
+        set_coolant_temp_c(getCoolantTemperature());
+        set_oil_temp_c(getOilTemperature());
+        set_ambient_temp_c(getAmbientTemperature());
+        set_speed_kmh(spd_m_speedometer);
+        set_rpm(rpm);
+        set_fuel_level_l(getLitresInTank());
+        set_uptime_h(digifiz_parameters.uptime);
+        set_mileage_km(digifiz_parameters.mileage);
+        set_fuel_consumption_l100(getFuelConsumption());
+        set_intake_voltage_v(getIntakeVoltage());
+        set_fuel_pressure_bar(getFuelPressure());
         xSemaphoreGive(displayMutex); // Give back the mutex
+        
         vTaskDelay(pdMS_TO_TICKS(ADC_TASK_DELAY_MS));
     }
 }
@@ -367,6 +380,7 @@ void on_cpu_1(void *pvParameters)
     initTacho();
     initDeviceSleep();
     initRegInOut();
+    initVehicleJSON();
 
     xTaskCreatePinnedToCore(digifizLoop, "digifizLoop", 4096, NULL, 1, NULL, 1);
     xTaskCreatePinnedToCore(displayUpdate, "displayUpdate", 4096, NULL, 10, NULL, 1);
