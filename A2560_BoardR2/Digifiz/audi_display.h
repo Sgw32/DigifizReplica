@@ -5,7 +5,7 @@
 
 #ifdef AUDI_DISPLAY
 
-#include <MD_MAX72xx.h>
+#include "MD_MAX72xx.h"
 #include "STLED316S.h"
 #include <RTClib.h>
 #include <Wire.h>

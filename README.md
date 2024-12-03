@@ -14,7 +14,7 @@ Currently Audi Digifiz with Red and Green version is also supported.
 
 Requirements: Arduino IDE >1.8.13 (however it may work on previous versions)
 Board set to: "Arduino Mega/Atmega2560"
-Libraries: MD_MAX72xx
+Libraries: MD_MAX72xx (not needed anymore, please do not use it)
 RTClib(not by Neuron)
 SparkFun EEPROM library    
 Adafruit_BusIO

@@ -16,6 +16,7 @@
 #include <cJSON.h>
 #include "nvs_wifi_connect.h"
 #include "protocol.h"
+#include "params.h"
 #include <sys/param.h>
 #include <string.h>
 
@@ -148,7 +149,7 @@ esp_err_t update_post_handler(httpd_req_t *req)
 	char buf[1000];
 	esp_ota_handle_t ota_handle;
 	int remaining = req->content_len;
-
+    digifiz_parameters.brightnessLevel = 1;
 	const esp_partition_t *ota_partition = esp_ota_get_next_update_partition(NULL);
 	ESP_ERROR_CHECK(esp_ota_begin(ota_partition, OTA_SIZE_UNKNOWN, &ota_handle));
 

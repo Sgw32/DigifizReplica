@@ -780,6 +780,8 @@ void printHelp()
   #endif
 }
 
+extern uint8_t testMode;
+
 void protocolParse()
 {
   /*if ((millis()-statusTime)>2000)
@@ -837,6 +839,17 @@ void protocolParse()
           else if (parameter=="about")
           {
             printAbout();
+          }
+          else if (parameter=="test")
+          {
+            if (testMode==0)
+            {
+              testMode = 1;
+            }
+            else
+            {
+              testMode = 0;
+            }
           }
           else
           {

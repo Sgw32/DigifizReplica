@@ -448,7 +448,7 @@ float getAmbientTemperatureFahrenheit() {
 // Get the brightness level
 uint8_t getBrightnessLevel() {
     lightLevel += (getRawBrightnessLevel()-lightLevel)*0.03f;
-    return (uint8_t)constrain((lightLevel-300.0f)/6,6,60); //0..0.3V -> 0..400 (of 4095)
+    return (uint8_t)constrain((lightLevel-300.0f)/6,6,digifiz_parameters.brightnessLevel); //0..0.3V -> 0..400 (of 4095)
 }
 
 // Get the raw brightness level

@@ -29,7 +29,6 @@ extern uint8_t tr_status;
 extern uint8_t tr_status;
 #endif
 
-int i = 0;
 int saveParametersCounter = 0;
 uint16_t displaySpeedCnt = 0;
 //Speed related data
@@ -51,13 +50,15 @@ RTC_DS3231 myRTC;
 RTC_Millis myRTC_doubled;
 #endif
 long clockDot;
-int test = 1;
+uint8_t testMode = 0;
 DateTime startTime[2];
 int current_hour = 99;
 int current_minute = 99;
+uint8_t coolant_segments = 0;
 DateTime newTime;
 TimeSpan sinceStart = 0;
 bool clockRunning;
+uint8_t fuel = 0;
 
 extern uint8_t uptimeDisplayEnabled;
 extern digifiz_pars digifiz_parameters;
@@ -141,7 +142,7 @@ void setup()
   clockDot = millis();
   
   initReadInterrupt();
-
+  testMode = 0;
   
   //setSpeedometerData(321);
   //delay(1000);
@@ -153,46 +154,98 @@ void setup()
  */
 ISR(TIMER4_COMPA_vect)
 {
-  i=i+1;
-  spd_m = readLastSpeed();
-  //spd_m = 10000;
-  if (spd_m>0)
+  if (testMode)
   {
-    spd_m = 1000000/spd_m ; //Hz
-    spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
-    //#ifdef MILES
-    if (digifiz_parameters.digifiz_options&OPTION_MILES)
-      spd_m *= 0.6214;
-    //#endif
-    spd_m /= 100;
-  }
-#ifndef TESTMODE
-  spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
-#endif
-
-  //For test fuel intake
-  //spd_m_speedometer = 60.0f;
-
-  rpm = readLastRPM(); 
-  if (rpm>0)
-  {
-    if((getRPMDispertion()<digifiz_parameters.medianDispFilterThreshold)) //30 or LESS!!!
+    if (displaySpeedCnt==3) // 2 Hz loop(as on original Digifiz)  
     {
-    rpm = 1000000/rpm;
-    rpm *= digifiz_parameters.rpmCoefficient/100; //4 cylinder motor, 60 sec in min
-    averageRPM += (rpm-averageRPM)*0.2;
+      averageRPM+=50;
+      if (averageRPM>8000)
+        averageRPM = 0;
+      spd_m_speedometer+=1;
+      if (spd_m_speedometer>=300)
+        spd_m_speedometer=0;
+      fuel+=1;
+      if (fuel>99)
+        fuel=0;
+      if (digifiz_parameters.digifiz_options&OPTION_GALLONS)
+      {
+        if (fuel<2)
+          setRefuelSign(true);
+        else
+          setRefuelSign(false);
+      }
+      else
+      {
+        if (fuel<10)
+          setRefuelSign(true);
+        else
+          setRefuelSign(false);  
+      }
+      coolant_segments+=1;
+      if (coolant_segments>14)
+        coolant_segments=0;
     }
   }
   else
   {
-    averageRPM += (0-averageRPM)*0.5;
+    spd_m = readLastSpeed();
+    if (spd_m>0)
+    {
+      spd_m = 1000000/spd_m ; //Hz
+      spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
+      //#ifdef MILES
+      if (digifiz_parameters.digifiz_options&OPTION_MILES)
+        spd_m *= 0.6214;
+      //#endif
+      spd_m /= 100;
+    }
+    spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
+    rpm = readLastRPM(); 
+    if (rpm>0)
+    {
+      if((getRPMDispertion()<digifiz_parameters.medianDispFilterThreshold)) //30 or LESS!!!
+      {
+      rpm = 1000000/rpm;
+      rpm *= digifiz_parameters.rpmCoefficient/100; //4 cylinder motor, 60 sec in min
+      averageRPM += (rpm-averageRPM)*0.2;
+      }
+    }
+    else
+    {
+      averageRPM += (0-averageRPM)*0.5;
+    }
+
+    if (digifiz_parameters.digifiz_options&OPTION_GALLONS)
+    {
+      fuel = getGallonsInTank();
+      if (fuel<2)
+        setRefuelSign(true);
+      else
+        setRefuelSign(false);
+    }
+    else
+    {
+      fuel = getLitresInTank();
+      if (fuel<10)
+        setRefuelSign(true);
+      else
+        setRefuelSign(false);  
+    }
+
+#if !defined(DIGIFIZ_ORIGINAL_DISPLAY) && !defined(DIGIFIZ_LCD_DISPLAY)
+    coolant_segments = getDisplayedCoolantTemp();
+ #else
+    coolant_segments = getDisplayedCoolantTempOrig();
+#endif  
   }
 
-  //For test fuel intake
-  #ifdef TESTMODE
-  averageRPM = 3000.0f;
-  #endif
-    
+  displaySpeedCnt++;
+  if (displaySpeedCnt==4) // 2 Hz loop(as on original Digifiz)  
+  {
+    setSpeedometerData((uint16_t)spd_m_speedometer);
+    current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;
+    displaySpeedCnt = 0;
+  }
   if (getBuzzerEnabled())
   {
       buzzerToggle();
@@ -205,49 +258,17 @@ ISR(TIMER4_COMPA_vect)
   #ifdef FUEL_PRESSURE_SENSOR
   processFuelPressure();
   #endif
-  displaySpeedCnt++;
-  if (displaySpeedCnt==4) // 2 Hz loop(as on original Digifiz)  
-  {
-    //setSpeedometerData(getCurrentMemoryBlock());
-    
-    setSpeedometerData((uint16_t)spd_m_speedometer);
-    //setSpeedometerData(getBrightnessLevel());
-    current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;
-#ifdef TESTMODE
-  spd_m_speedometer+=1;
-  if (spd_m_speedometer==25)
-    spd_m_speedometer=0;
-#endif
-    displaySpeedCnt = 0;
-  }
-  //setSpeedometerData(getRawBrightnessLevel());
-  setRPMData(averageRPM);
-  uint8_t fuel = 0;
-  if (digifiz_parameters.digifiz_options&OPTION_GALLONS)
-  {
-    fuel = getGallonsInTank();
-    if (fuel<2)
-      setRefuelSign(true);
-    else
-      setRefuelSign(false);
-  }
-  else
-  {
-    fuel = getLitresInTank();
-    if (fuel<10)
-      setRefuelSign(true);
-    else
-      setRefuelSign(false);  
-  }
   
+  setRPMData(averageRPM);
+
   setFuel(fuel);
+
   #if !defined(DIGIFIZ_ORIGINAL_DISPLAY) && !defined(DIGIFIZ_LCD_DISPLAY)
-    setCoolantData(getDisplayedCoolantTemp());
+    setCoolantData(coolant_segments);
   #else
-    setCoolantData(getDisplayedCoolantTempOrig());
+    setCoolantData(coolant_segments);
       if (!(tr_status&0x80))
       tr_status|=0x80;
-    //fireDigifiz();
   #endif  
 }
 
@@ -260,16 +281,16 @@ void loop()
   #ifdef DIGIFIZ_LCD_DISPLAY
   processLCDIndicators();
   fireDigifiz();
-  #endif
+  #else
   #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
   fireDigifiz();
   #else
   fireDigifiz();
   #endif
+  #endif
   if ((millis()-clockDot)>500)
   {
       setDot(true);
-      
   }
   if ((millis()-clockDot)>1000)
   {

@@ -8,7 +8,7 @@
 #ifndef AUDI_DISPLAY
 #ifndef AUDI_RED_DISPLAY
 
-#include <MD_MAX72xx.h>
+#include "MD_MAX72xx.h"
 #include <RTClib.h>
 #include <Wire.h>
 #include "MS5611.h"
@@ -72,8 +72,6 @@
 
 void initDisplay(); 
 void setRPM(int rpmdata);
-void blinking();
-void blinking2();
 void setClockData(uint8_t clock_hours,uint8_t clock_minutes);
 void setMFAClockData(uint8_t mfa_clock_hours,uint8_t mfa_clock_minutes);
 void setMFADisplayedNumber(int16_t data);

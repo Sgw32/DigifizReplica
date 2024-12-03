@@ -116,8 +116,8 @@ void load_defaults()
     digifiz_parameters.mileage = DEFAULT_MILEAGE*3600L;
     digifiz_parameters.daily_mileage[0] = 0;
     digifiz_parameters.daily_mileage[1] = 0;
-    digifiz_parameters.autoBrightness = 0;
-    digifiz_parameters.brightnessLevel = 50;
+    digifiz_parameters.autoBrightness = 1;
+    digifiz_parameters.brightnessLevel = 25;
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
     digifiz_parameters.tankCapacity = 70;
 #else

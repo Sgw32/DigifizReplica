@@ -25,10 +25,11 @@ bool checkEngineActive;
 //int mMinute = 0;
 
 unsigned long wdg_previousMillis = 0;
-const long wdg_interval = 60000; // Reset every 60 seconds
+const long wdg_interval = 90000; // Reset every 90 seconds
 
 void initDisplay()
 {
+    //Initialize several times
     mx.begin();
     mx2.begin();
     delay(10);
@@ -79,47 +80,13 @@ void fireDigifiz()
   unsigned long wdg_currentMillis = millis();
   if (wdg_currentMillis - wdg_previousMillis >= wdg_interval) {
     wdg_previousMillis = wdg_currentMillis;
-    mx.begin(); // Re-initialize the display
-    mx2.begin(); // Re-initialize the display
+    mx.reinit(); // Re-initialize the display
+    mx2.reinit(); // Re-initialize the display
+    mx.update(MD_MAX72XX::OFF);
+    //mx2.update(MD_MAX72XX::OFF);
   }
-
   mx.update();
   //mx2.update();
-}
-
-
-void blinking()
-{
-    // Uses the test function of the MAX72xx to blink the display on and off.
-    int  nDelay = 1000;
-
-    PRINTS("\nBlinking");
-    mx.clear();
-
-    for (uint8_t col=0; col<12; col++)
-    {
-    mx.setColumn(col, 0xff);
-    delay(100);
-    mx.setColumn(col, 0x00);
-    delay(100);
-    }
-}
-
-void blinking2()
-{
-    // Uses the test function of the MAX72xx to blink the display on and off.
-    int  nDelay = 1000;
-
-    PRINTS("\nBlinking");
-    mx2.clear();
-
-    for (uint8_t col=0; col<24; col++)
-    {
-    mx2.setColumn(col, 0xff);
-    delay(100);
-    mx2.setColumn(col, 0x00);
-    delay(100);
-    }
 }
 
 void setMFABlock(uint8_t block)
