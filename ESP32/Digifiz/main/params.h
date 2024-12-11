@@ -97,7 +97,8 @@ typedef union SignalOptions
         //use "GLASS HEAT" for right signal, disable common
         //Common input becomes dead on rev up to 3.02 if ground is dead
         uint8_t use_blink_other_inputs:1; 
-        uint8_t reserved:7;
+        uint8_t enable_touch_sensor:1; 
+        uint8_t reserved:6;
     };
 } u_signal_options;
 

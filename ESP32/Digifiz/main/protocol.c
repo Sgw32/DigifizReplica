@@ -93,6 +93,7 @@ static const ParameterMap parameter_map[] = {
     {"PARAMETER_TOGGLE_MILES", PARAMETER_TOGGLE_MILES},
     {"PARAMETER_TOGGLE_GALLONS", PARAMETER_TOGGLE_GALLONS},
     {"PARAMETER_TOGGLE_FAHRENHEIT", PARAMETER_TOGGLE_FAHRENHEIT},
+    {"PARAMETER_TOGGLE_TOUCH_SENSOR", PARAMETER_TOGGLE_TOUCH_SENSOR},
     {"PARAMETER_SAVE_PARAMS", PARAMETER_SAVE_PARAMS},
 };
 
@@ -178,8 +179,11 @@ static int is_number(const char *str) {
     if (*str == '\0') return 0;
     if (*str == '-' || *str == '+') str++;
     while (*str) {
+      if (((unsigned char)*str)!=' ')
+      {
         if (!isdigit((unsigned char)*str)) return 0;
-        str++;
+      }
+      str++;
     }
     return 1;
 }
@@ -464,6 +468,14 @@ void processData(int parameter,long value)
         digifiz_parameters.digifiz_options.option_fahrenheit = 1;
       else
         digifiz_parameters.digifiz_options.option_fahrenheit = 0;
+    }
+    else if (par==PARAMETER_TOGGLE_TOUCH_SENSOR)
+    {
+      printLnCString("PARAMETER_TOGGLE_TOUCH_SENSOR\n");
+      if (!(digifiz_parameters.sign_options.enable_touch_sensor))
+        digifiz_parameters.sign_options.enable_touch_sensor = 1;
+      else
+        digifiz_parameters.sign_options.enable_touch_sensor = 0;
     }
     else if (par==PARAMETER_SAVE_PARAMS)
     {
@@ -778,9 +790,9 @@ void protocolParse(char* buf, uint8_t len)
                 else
                 {
 
-                    if (is_number(cmd_buffer)) {
+                    if (is_number(cmd_buffer_par)) {
                         // Convert the parameter string to an integer
-                        uint32_t param_num = strtol(cmd_buffer, NULL, 10);
+                        uint32_t param_num = strtol(cmd_buffer_par, NULL, 10);
                         if (param_num > 255) { // Adjust the upper bound as needed
                             printLnCString("Parameter number out of range:\n");
                             printLnUINT32(param_num);
@@ -790,8 +802,9 @@ void protocolParse(char* buf, uint8_t len)
                         parameter_p = param_num;
                     } else {
                         // Attempt to map the parameter name to its enum value
-                        if (!getParameterValue(cmd_buffer, &parameter_p)) {
+                        if (!getParameterValue(cmd_buffer_par, &parameter_p)) {
                             printLnCString("Unknown parameter name\n");
+                            printLnCString(cmd_buffer_par);
                             memset(cmd_buffer,0,sizeof(cmd_buffer));
                             return;
                         }

@@ -25,7 +25,7 @@ ColoringScheme digifizStandard = {
             .b = 2,
             .end_segment = 1,
             .type = COLOR_SCHEME_BACKLIGHT,
-            .basecolor_enabled = 0
+            .basecolor_enabled = 2
         },
         {
             .r = 60,
@@ -161,7 +161,7 @@ ColoringScheme digifizStandard = {
             .b = 2,
             .end_segment = 95,
             .type = COLOR_SCHEME_BACKLIGHT,
-            .basecolor_enabled = 0
+            .basecolor_enabled = 2
         },
         { 
             .r = 60,
@@ -228,12 +228,12 @@ ColoringScheme digifizStandard = {
             .basecolor_enabled = 1
         },
         { 
-            .r = 60,
-            .g = 80,
+            .r = 20,
+            .g = 20,
             .b = 2,
             .end_segment = 270,
             .type = COLOR_SCHEME_BACKLIGHT,
-            .basecolor_enabled = 1
+            .basecolor_enabled = 2
         },
         { 
             .r = 60,
@@ -886,11 +886,17 @@ void getColorBySegmentNumber(uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* 
         endSegment = digifizStandard.scheme[i].end_segment;
         if ((segment>=startSegment)&&(segment<endSegment))
         {
-            if (digifizStandard.scheme[i].basecolor_enabled)
+            if (digifizStandard.scheme[i].basecolor_enabled==1)
             {
                 (*r) = maincolor_r;
                 (*g) = maincolor_g;
                 (*b) = maincolor_b;
+            }
+            else if (digifizStandard.scheme[i].basecolor_enabled==2)
+            {
+                (*r) = maincolor_r/3;
+                (*g) = maincolor_g/3;
+                (*b) = maincolor_b/3;
             }
             else
             {
@@ -931,7 +937,7 @@ void fireDigifiz() {
             uint8_t b = 0;
 
             getColorBySegmentNumber(led_num,&r,&g,&b);
-
+            led_strip_set_pixel(led_strip, led_num, 0,0,0);
             if (bit)
             {
                 led_strip_set_pixel(led_strip, led_num, ((uint32_t)r*((uint32_t)backlightLevel))/100,

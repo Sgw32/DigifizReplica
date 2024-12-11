@@ -32,7 +32,7 @@ extern const char TAG[];
 //#define KELVIN
 
 #define RPM_8000
-#define DIESEL_MODE
+//#define DIESEL_MODE
 #define DEFAULT_MILEAGE   000000L
 
 //#define TESTMODE

@@ -239,35 +239,35 @@ void initEEPROM()
         saveParameters();
     }
 
-    #ifdef MANUFACTURER_MFA_SWITCH
-        digifiz_parameters.digifiz_options.mfa_manufacturer = 1;
-    #else
-        digifiz_parameters.digifiz_options.mfa_manufacturer = 0;
-    #endif
+    // #ifdef MANUFACTURER_MFA_SWITCH
+    //     digifiz_parameters.digifiz_options.mfa_manufacturer = 1;
+    // #else
+    //     digifiz_parameters.digifiz_options.mfa_manufacturer = 0;
+    // #endif
         
-    #ifdef GALLONS
-        digifiz_parameters.digifiz_options.option_gallons = 1;
-    #else
-        digifiz_parameters.digifiz_options.option_gallons = 0;
-    #endif
+    // #ifdef GALLONS
+    //     digifiz_parameters.digifiz_options.option_gallons = 1;
+    // #else
+    //     digifiz_parameters.digifiz_options.option_gallons = 0;
+    // #endif
 
-    #ifdef MILES
-        digifiz_parameters.digifiz_options.option_miles = 1;
-    #else
-        digifiz_parameters.digifiz_options.option_miles = 0;
-    #endif
+    // #ifdef MILES
+    //     digifiz_parameters.digifiz_options.option_miles = 1;
+    // #else
+    //     digifiz_parameters.digifiz_options.option_miles = 0;
+    // #endif
 
-    #ifdef FAHRENHEIT 
-        digifiz_parameters.digifiz_options.option_fahrenheit = 1;
-    #else
-        digifiz_parameters.digifiz_options.option_fahrenheit = 0;
-    #endif
+    // #ifdef FAHRENHEIT 
+    //     digifiz_parameters.digifiz_options.option_fahrenheit = 1;
+    // #else
+    //     digifiz_parameters.digifiz_options.option_fahrenheit = 0;
+    // #endif
 
-    #ifdef KELVIN 
-        digifiz_parameters.digifiz_options.option_kelvin = 1;
-    #else
-        digifiz_parameters.digifiz_options.option_kelvin = 0;
-    #endif
+    // #ifdef KELVIN 
+    //     digifiz_parameters.digifiz_options.option_kelvin = 1;
+    // #else
+    //     digifiz_parameters.digifiz_options.option_kelvin = 0;
+    // #endif
 
     ESP_LOGI(TAG, "initEEPROM ended");
 }
