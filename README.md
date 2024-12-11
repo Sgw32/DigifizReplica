@@ -68,8 +68,7 @@ Currently, hardware is closed source and is available for sale.
 
 ## Support us
 
-Paypal is now blocked in Russia, unfortuntaly I have no residence permit in other countries, where paypal is working.
-Several ways of PayPal donation still exist. 
+Paypal: sgw32nc@gmail.com
 Crypto: 
 0xeDc17cb23241eACe19DF3617291aa7d2d92E62DC (ETH, USDT ERC20)
 Buy something here (3d print and just 3d models):
