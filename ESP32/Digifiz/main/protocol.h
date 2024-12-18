@@ -81,8 +81,8 @@ typedef enum {
     PARAMETER_TOGGLE_MILES = 233,
     PARAMETER_TOGGLE_GALLONS = 232,
     PARAMETER_TOGGLE_FAHRENHEIT = 231,
-    PARAMETER_TOGGLE_TOUCH_SENSOR = 230,
     PARAMETER_SAVE_PARAMS = 230,
+    PARAMETER_TOGGLE_TOUCH_SENSOR = 229,
 } DigifizProtocol;
 
 // Structure to map parameter names to enum values
