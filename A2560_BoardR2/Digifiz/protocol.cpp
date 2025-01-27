@@ -179,7 +179,7 @@ void processData(int parameter,long value)
             return;
   }
 
-  if ((protocol_locked)&&(par!=PARAMETER_PROTOCOL_UNLOCK))
+  if ((protocol_locked)&&(par!=PARAMETER_MEMORY_UNLOCK))
      return;
   
   if (par<PARAMETER_READ_ADDITION)
@@ -187,13 +187,13 @@ void processData(int parameter,long value)
     switch(par)
     {
       case PARAMETER_RPMCOEFFICIENT:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_RPMCOEFFICIENT");
         #endif
         digifiz_parameters.rpmCoefficient = value;
         break;
       case PARAMETER_SPEEDCOEEFICIENT:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_SPEEDCOEEFICIENT");
         #endif
         digifiz_parameters.speedCoefficient = value;
@@ -201,53 +201,62 @@ void processData(int parameter,long value)
       case PARAMETER_COOLANTTHERMISTORB:
       #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_COOLANTTHERMISTORB");
+        updateADCSettings();
         #endif
         digifiz_parameters.coolantThermistorB = value;
         break;  
       case PARAMETER_OILTHERMISTORB:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_OILTHERMISTORB");
+        updateADCSettings();
         #endif
         digifiz_parameters.oilThermistorB = value;
+        updateADCSettings();
         break;  
       case PARAMETER_AIRTHERMISTORB:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_AIRTHERMISTORB");
         #endif
         digifiz_parameters.airThermistorB = value;
+        updateADCSettings();
         break;  
       case PARAMETER_TANKMINRESISTANCE:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_TANKMINRESISTANCE");
         #endif
         digifiz_parameters.tankMinResistance = value;
+        updateADCSettings();
         break;  
       case PARAMETER_TANKMAXRESISTANCE:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_TANKMAXRESISTANCE");
         #endif
         digifiz_parameters.tankMaxResistance = value;
+        updateADCSettings();
         break; 
       case PARAMETER_TAU_COOLANT:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_TAU_COOLANT");
         #endif
         digifiz_parameters.tauCoolant = value;
+        updateADCSettings();
         break;
       case PARAMETER_TAU_OIL:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_TAU_OIL");
         #endif
         digifiz_parameters.tauOil = value;
+        updateADCSettings();
         break;
       case PARAMETER_TAU_AIR:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_TAU_AIR");
         #endif
         digifiz_parameters.tauAir = value;
+        updateADCSettings();
         break;
       case PARAMETER_TAU_TANK:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_TAU_TANK");
         #endif
         digifiz_parameters.tauTank = value;
@@ -277,28 +286,50 @@ void processData(int parameter,long value)
         digifiz_parameters.brightnessLevel = value;
         break;
       case PARAMETER_TANK_CAPACITY:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_TANK_CAPACITY");
         #endif
         digifiz_parameters.tankCapacity = value;
+        updateADCSettings();
         break;
       case PARAMETER_MFA_STATE:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_MFA_STATE");
         #endif
         digifiz_parameters.mfaState = value;
         break;
       case PARAMETER_BUZZER_OFF:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_BUZZER_OFF");
         #endif
         digifiz_parameters.buzzerOff = value;
         break;
       case PARAMETER_MAX_RPM:
-      #ifdef USE_BTSERIAL
+        #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_MAX_RPM");
         #endif
         digifiz_parameters.maxRPM = value;
+        break;
+      case PARAMETER_NORMAL_RESISTANCE_COOLANT:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_NORMAL_RESISTANCE_COOLANT");
+        #endif
+        digifiz_parameters.coolantThermistorDefRes = value;
+        updateADCSettings();
+        break;
+      case PARAMETER_NORMAL_RESISTANCE_OIL:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_NORMAL_RESISTANCE_OIL");
+        #endif
+        digifiz_parameters.oilThermistorDefRes = value;
+        updateADCSettings();
+        break;
+      case PARAMETER_NORMAL_RESISTANCE_AMB:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_NORMAL_RESISTANCE_AMB");
+        #endif
+        digifiz_parameters.ambThermistorDefRes = value;
+        updateADCSettings();
         break;
       case PARAMETER_DOT_OFF:
       #ifdef USE_BTSERIAL
@@ -323,12 +354,14 @@ void processData(int parameter,long value)
         BTserial.println("PARAMETER_COOLANT_MAX_R");
         #endif
         digifiz_parameters.coolantMaxResistance = value;
+        updateADCSettings();
         break;
       case PARAMETER_COOLANT_MIN_R:
       #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_COOLANT_MIN_R");
         #endif
         digifiz_parameters.coolantMinResistance = value;
+        updateADCSettings();
         break;
       case PARAMETER_COMMAND_MFA_RESET:
       #ifdef USE_BTSERIAL
@@ -348,6 +381,36 @@ void processData(int parameter,long value)
         #endif
         pressMFABlock();
         break;
+      case PARAMETER_RPM_FILTER:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_RPM_FILTER");
+        #endif
+        digifiz_parameters.rpmFilterK = value;
+        break;
+      case PARAMETER_SET_FUEL_CALC_FUNCTION:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_SET_FUEL_CALC_FUNCTION");
+        #endif
+        digifiz_parameters.digifiz_options.option_linear_fuel = value&1;
+        break;
+      case PARAMETER_SET_RPM_OPTIONS:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_SET_RPM_OPTIONS");
+        #endif
+        digifiz_parameters.rpm_options.packed_options = value;
+        break;
+      case PARAMETER_SET_TEMP_OPTIONS:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_SET_TEMP_OPTIONS");
+        #endif
+        digifiz_parameters.temp_options.packed_options = value;
+        break;
+      case PARAMETER_SET_SIGNAL_OPTIONS:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_SET_SIGNAL_OPTIONS");
+        #endif
+        digifiz_parameters.sign_options.packed_options = value;
+        break;
       case PARAMETER_UPTIME:
         #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_UPTIME");
@@ -364,13 +427,66 @@ void processData(int parameter,long value)
     //commands
     if (par==PARAMETER_SET_HOUR)
     {
-            DateTime newTime1 = DateTime(tme.year(), tme.month(), tme.day(), constrain(value,0,24),tme.minute(),0);
-            myRTC.adjust(newTime1);
+      #ifdef USE_BTSERIAL
+      BTserial.println("PARAMETER_SET_HOUR");
+      #endif
+      DateTime newTime1 = DateTime(tme.year(), tme.month(), tme.day(), constrain(value,0,24),tme.minute(),0);
+      myRTC.adjust(newTime1);
+    }
+    else if (par==PARAMETER_TOGGLE_MILES)
+    {
+      #ifdef USE_BTSERIAL
+      BTserial.println("PARAMETER_TOGGLE_MILES");
+      #endif
+      if (!(digifiz_parameters.digifiz_options.option_miles))
+        digifiz_parameters.digifiz_options.option_miles = 1;
+      else
+        digifiz_parameters.digifiz_options.option_miles = 0;
+    }
+    else if (par==PARAMETER_TOGGLE_GALLONS)
+    {
+      #ifdef USE_BTSERIAL
+      BTserial.println("PARAMETER_TOGGLE_GALLONS");
+      #endif
+      if (!(digifiz_parameters.digifiz_options.option_gallons))
+        digifiz_parameters.digifiz_options.option_gallons = 1;
+      else
+        digifiz_parameters.digifiz_options.option_gallons = 0;
+    }
+    else if (par==PARAMETER_TOGGLE_FAHRENHEIT)
+    {
+      #ifdef USE_BTSERIAL
+      BTserial.println("PARAMETER_TOGGLE_FAHRENHEIT");
+      #endif
+      if (!(digifiz_parameters.digifiz_options.option_fahrenheit))
+        digifiz_parameters.digifiz_options.option_fahrenheit = 1;
+      else
+        digifiz_parameters.digifiz_options.option_fahrenheit = 0;
+    }
+    else if (par==PARAMETER_TOGGLE_TOUCH_SENSOR)
+    {
+      #ifdef USE_BTSERIAL
+      BTserial.println("PARAMETER_TOGGLE_TOUCH_SENSOR");
+      #endif
+      if (!(digifiz_parameters.sign_options.enable_touch_sensor))
+        digifiz_parameters.sign_options.enable_touch_sensor = 1;
+      else
+        digifiz_parameters.sign_options.enable_touch_sensor = 0;
+    }
+    else if (par==PARAMETER_SAVE_PARAMS)
+    {
+      #ifdef USE_BTSERIAL
+      BTserial.println("PARAMETER_SAVE_PARAMS");
+      #endif
+      saveParameters();
     }
     else
     {
       if (par==PARAMETER_SET_MINUTE)
       {
+          #ifdef USE_BTSERIAL
+          BTserial.println("PARAMETER_UPTIME");
+          #endif
           DateTime newTime2 = DateTime(tme.year(), tme.month(), tme.day(), tme.hour() ,constrain(value,0,60),0);
           myRTC.adjust(newTime2);
       }
@@ -378,10 +494,14 @@ void processData(int parameter,long value)
       {
         if (par==PARAMETER_RESET_DAILY_MILEAGE)
         {
+          #ifdef USE_BTSERIAL
+          BTserial.println("PARAMETER_UPTIME");
+          #endif
           digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock] = 0;
         }
-      }
+      } 
     }
+    
 
     //reads
     /*
@@ -510,18 +630,18 @@ void processData(int parameter,long value)
         break;
       case PARAMETER_GET_GPIO_PINS:
         processGPIOPinsValue(value);
-      case PARAMETER_PROTOCOL_LOCK:
+      case PARAMETER_MEMORY_LOCK:
       #ifdef USE_BTSERIAL
-        BTserial.println("PARAMETER_PROTOCOL_LOCK");
+        BTserial.println("PARAMETER_MEMORY_LOCK");
         #endif
         #ifdef USE_UIOD
         #endif
         if (value==123)
            protocol_locked = 1;
         break;        
-      case PARAMETER_PROTOCOL_UNLOCK:
+      case PARAMETER_MEMORY_UNLOCK:
       #ifdef USE_BTSERIAL
-        BTserial.println("PARAMETER_PROTOCOL_UNLOCK");
+        BTserial.println("PARAMETER_MEMORY_UNLOCK");
         #endif
         #ifdef USE_UIOD
         #endif
@@ -747,30 +867,40 @@ void printAbout()
   #endif
 }
 
+static void printADC()
+{
+  BTserial.println("ADC:\n");
+  BTserial.println((float)getRawCoolantTemperature());
+  BTserial.println((float)getRawGasLevel());
+  BTserial.println((float)getRawLightLevel());
+  BTserial.println((float)getRawAmbientTemperature());
+  BTserial.println((float)getRawOilTemperature());
+}
+
 void printHelp()
 {
   #ifdef USE_BTSERIAL
   BTserial.println("Digifiz Replica by PHOL-LABS.");
   BTserial.println("Your dashboard is:");
-  if (digifiz_parameters.digifiz_options&OPTION_MFA_MANUFACTURER)
+  if (digifiz_parameters.digifiz_options.mfa_manufacturer)
     BTserial.println("MFA ON");
   else
     BTserial.println("MFA OFF");
 
-  if (digifiz_parameters.digifiz_options&OPTION_MILES)
+  if (digifiz_parameters.digifiz_options.option_miles)
     BTserial.println("MPH");
   else
     BTserial.println("KMH");
-  if (digifiz_parameters.digifiz_options&OPTION_FAHRENHEIT)
+  if (digifiz_parameters.digifiz_options.option_fahrenheit)
     BTserial.println("Fahrenheit");
   else
   {
-    if (digifiz_parameters.digifiz_options&OPTION_KELVIN)
-      BTserial.println("Lelvin");
+    if (digifiz_parameters.digifiz_options.option_kelvin)
+      BTserial.println("Kelvin");
     else
       BTserial.println("Celsium");
   }
-  if (digifiz_parameters.digifiz_options&OPTION_GALLONS)
+  if (digifiz_parameters.digifiz_options.option_gallons)
     BTserial.println("Gallons");
   else
     BTserial.println("Liters");
@@ -839,6 +969,14 @@ void protocolParse()
           else if (parameter=="about")
           {
             printAbout();
+          }
+          else if (parameter=="adc")
+          {
+            printADC();
+          }
+          else if (parameter=="test_mode")
+          {
+              digifiz_parameters.digifiz_options.testmode_on=!digifiz_parameters.digifiz_options.testmode_on;
           }
           else if (parameter=="test")
           {

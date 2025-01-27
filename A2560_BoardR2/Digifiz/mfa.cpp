@@ -38,7 +38,7 @@ void processMFA()
 {
 
 #ifndef DISABLE_MANUFACTURER_MFA
-    if (digifiz_parameters.digifiz_options&OPTION_MFA_MANUFACTURER)
+    if (digifiz_parameters.digifiz_options.mfa_manufacturer)
     {
       if ((digitalRead(MFA_MODE_PIN)==LOW)&&(prevMFAMode==HIGH))
       {
@@ -56,26 +56,30 @@ void processMFA()
     }
 #endif
 #ifndef DISABLE_SENSOR_BUTTON
-    if ((digitalRead(MFA_SENSOR_PIN)==HIGH)&&(prevMFASensor==LOW))
+    if (digifiz_parameters.sign_options.enable_touch_sensor)
     {
-        //Pressed MFA Sensor(on Digifiz)
-        sensorPressed = 1;
-        pressSensorTime = millis();
+        if ((digitalRead(MFA_SENSOR_PIN)==HIGH)&&(prevMFASensor==LOW))
+        {
+            //Pressed MFA Sensor(on Digifiz)
+            sensorPressed = 1;
+            pressSensorTime = millis();
+        }
+        
+        if ((digitalRead(MFA_SENSOR_PIN)==LOW) //logic is inversed!
+            &&sensorPressed)
+        {
+            sensorPressed = 0;
+            if ((millis() - pressSensorTime)<1000)
+                pressMFASensorShort();
+            else if ((millis() - pressSensorTime)<3000)
+                pressMFASensorLong();
+            else if ((millis() - pressSensorTime)<7000)
+                pressMFASensorSuperLong();
+            else if ((millis() - pressSensorTime)>7000)
+                pressMFASensorSuperSuperLong();
+        }
     }
     
-    if ((digitalRead(MFA_SENSOR_PIN)==LOW) //logic is inversed!
-        &&sensorPressed)
-    {
-        sensorPressed = 0;
-        if ((millis() - pressSensorTime)<1000)
-            pressMFASensorShort();
-        else if ((millis() - pressSensorTime)<3000)
-            pressMFASensorLong();
-        else if ((millis() - pressSensorTime)<7000)
-            pressMFASensorSuperLong();
-        else if ((millis() - pressSensorTime)>7000)
-            pressMFASensorSuperSuperLong();
-    }
 #endif
     prevMFAMode = digitalRead(MFA_MODE_PIN);
     prevMFABlock = digitalRead(MFA_BLOCK_PIN);

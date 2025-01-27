@@ -5,7 +5,7 @@
 #include "ext_eeprom.h"
 
 void initADC();
-
+void updateADCSettings();
 //RAW values 0..1024
 uint16_t getRawCoolantTemperature();
 uint16_t getRawOilTemperature();

@@ -167,7 +167,7 @@ ISR(TIMER4_COMPA_vect)
       fuel+=1;
       if (fuel>99)
         fuel=0;
-      if (digifiz_parameters.digifiz_options&OPTION_GALLONS)
+      if (digifiz_parameters.digifiz_options.option_gallons)
       {
         if (fuel<2)
           setRefuelSign(true);
@@ -194,7 +194,7 @@ ISR(TIMER4_COMPA_vect)
       spd_m = 1000000/spd_m ; //Hz
       spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
       //#ifdef MILES
-      if (digifiz_parameters.digifiz_options&OPTION_MILES)
+      if (digifiz_parameters.digifiz_options.option_miles)
         spd_m *= 0.6214;
       //#endif
       spd_m /= 100;
@@ -207,7 +207,7 @@ ISR(TIMER4_COMPA_vect)
       {
       rpm = 1000000/rpm;
       rpm *= digifiz_parameters.rpmCoefficient/100; //4 cylinder motor, 60 sec in min
-      averageRPM += (rpm-averageRPM)*0.2;
+      averageRPM += (rpm-averageRPM)*digifiz_parameters.rpmFilterK/140; //default = 0.2
       }
     }
     else
@@ -215,7 +215,7 @@ ISR(TIMER4_COMPA_vect)
       averageRPM += (0-averageRPM)*0.5;
     }
 
-    if (digifiz_parameters.digifiz_options&OPTION_GALLONS)
+    if (digifiz_parameters.digifiz_options.option_gallons)
     {
       fuel = getGallonsInTank();
       if (fuel<2)

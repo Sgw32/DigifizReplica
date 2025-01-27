@@ -176,12 +176,9 @@ float constrain(float input, float min, float max)
         return min;
     return input;
 }
-// Initialize the ADC
-void initADC() {
-    ESP_LOGI(LOG_TAG, "initADC started");
-    // Implementation placeholder
-    coolantT = oilT = airT = 0.0;
-    lightLevel = 0;
+
+void updateADCSettings()
+{
     coolantB = digifiz_parameters.coolantThermistorB;
     oilB = digifiz_parameters.oilThermistorB;
     airB = digifiz_parameters.airThermistorB;
@@ -195,6 +192,14 @@ void initADC() {
     tauGasoline = (float)digifiz_parameters.tauTank*TAU*0.03;
     tauGasolineConsumption = (float)digifiz_parameters.tauTank*TAU*0.01;
     tankCapacity = digifiz_parameters.tankCapacity;
+}
+// Initialize the ADC
+void initADC() {
+    ESP_LOGI(LOG_TAG, "initADC started");
+    // Implementation placeholder
+    coolantT = oilT = airT = 0.0;
+    lightLevel = 0;
+    updateADCSettings();
 
     //-------------ADC1 Init---------------//
     ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc1_handle));
@@ -448,7 +453,14 @@ float getAmbientTemperatureFahrenheit() {
 // Get the brightness level
 uint8_t getBrightnessLevel() {
     lightLevel += (getRawBrightnessLevel()-lightLevel)*0.03f;
-    return (uint8_t)constrain((lightLevel-300.0f)/8,6,digifiz_parameters.brightnessLevel); //0..0.3V -> 0..400 (of 4095)
+    float m_lightLevel = lightLevel;
+    if (digifiz_parameters.sign_options.invert_light_input)
+    {
+        //~2200 - darkness
+        //~10-50 - lightness
+        m_lightLevel = constrain(800.0f-m_lightLevel,0, 800.0f);
+    }
+    return (uint8_t)constrain((m_lightLevel-300.0f)/8,6,digifiz_parameters.brightnessLevel); //0..0.3V -> 0..400 (of 4095)
 }
 
 // Get the raw brightness level

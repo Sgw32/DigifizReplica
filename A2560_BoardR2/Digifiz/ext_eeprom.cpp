@@ -116,8 +116,14 @@ void load_defaults()
     memcpy(digifiz_parameters.preamble,"DIGI",4);
 #if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
     digifiz_parameters.rpmCoefficient = 3000;
+    digifiz_parameters.rpmFilterK = 70;
 #else
     digifiz_parameters.rpmCoefficient = 1500;
+    digifiz_parameters.rpmFilterK = 70;
+#ifdef DIESEL_MODE
+    digifiz_parameters.rpmCoefficient = 400;
+    digifiz_parameters.rpmFilterK = 70;
+#endif
 #endif
     digifiz_parameters.speedCoefficient = 100;
     digifiz_parameters.coolantThermistorB = COOLANT_THERMISTOR_B;
@@ -162,27 +168,39 @@ void load_defaults()
     digifiz_parameters.coolantMinResistance = 60;
     digifiz_parameters.coolantMaxResistance = 120;
     digifiz_parameters.medianDispFilterThreshold = 65535; // value below will pass
-    digifiz_parameters.coolantThermistorDefRes = 10000;
+    digifiz_parameters.coolantThermistorDefRes = COOLANT_R_AT_NORMAL_T;
+    digifiz_parameters.oilThermistorDefRes = OIL_R_AT_NORMAL_T;
+    digifiz_parameters.ambThermistorDefRes = AMBIENT_R_AT_NORMAL_T;
     digifiz_parameters.uptime = 0;
-    digifiz_parameters.digifiz_options = 0;
+    digifiz_parameters.sign_options.enable_touch_sensor = 1;
+    digifiz_parameters.digifiz_options.packed_options = 0;
+    
+#ifdef DIESEL_MODE
+    //digifiz_parameters.maxRPM = 6000;
+#endif
+#ifdef FUEL_LEVEL_EXPERIMENTAL
+    digifiz_parameters.digifiz_options.option_linear_fuel = 0;
+#else
+    digifiz_parameters.digifiz_options.option_linear_fuel = 1;
+#endif
 #ifdef MANUFACTURER_MFA_SWITCH
-    digifiz_parameters.digifiz_options |= OPTION_MFA_MANUFACTURER;
+    digifiz_parameters.digifiz_options.mfa_manufacturer = 1;
 #endif
     
 #ifdef GALLONS
-    digifiz_parameters.digifiz_options |= OPTION_GALLONS;
+    digifiz_parameters.digifiz_options.option_gallons = 1;
 #endif
 
 #ifdef MILES
-    digifiz_parameters.digifiz_options |= OPTION_MILES;
+    digifiz_parameters.digifiz_options.option_miles = 1;
 #endif
 
 #ifdef FAHRENHEIT 
-    digifiz_parameters.digifiz_options |= OPTION_FAHRENHEIT;
+    digifiz_parameters.digifiz_options.option_fahrenheit = 1;
 #endif
 
 #ifdef KELVIN 
-    digifiz_parameters.digifiz_options |= OPTION_KELVIN;
+    digifiz_parameters.digifiz_options.option_kelvin = 1;
 #endif
     computeCRC();
 }

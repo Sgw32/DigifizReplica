@@ -1,22 +1,22 @@
 #include "adc.h"
 #include "setup.h"
 
-const float R1_Coolant = COOLANT_R_AT_NORMAL_T; //for Coolant
+float R1_Coolant = COOLANT_R_AT_NORMAL_T; //for Coolant
 
 #ifndef NEW_REVISION
-const float R2_Ambient = 10000.0f; //for Coolant
+float R2_Ambient = 10000.0f; //for Coolant
 #else
-const float R2_Ambient = 1000.0f; //for Coolant
+float R2_Ambient = 1000.0f; //for Coolant
 #endif
 
 #ifdef OIL_RES_10000
-const float R2_Oil = 220;
+float R2_Oil = 220;
 #else
-const float R2_Oil = 220;
+float R2_Oil = 220;
 #endif
 
-const float R1_Oil = OIL_R_AT_NORMAL_T; //for Coolant
-const float R1_Ambient = AMBIENT_R_AT_NORMAL_T; //for Coolant
+float R1_Oil = OIL_R_AT_NORMAL_T; //for Coolant
+float R1_Ambient = AMBIENT_R_AT_NORMAL_T; //for Coolant
 
 float logR2, R2, coolantT, oilT, airT;
 float coolantB = 4000;
@@ -51,6 +51,23 @@ uint32_t consumptionCounter;
 
 extern digifiz_pars digifiz_parameters;
 
+void updateADCSettings()
+{
+    coolantB = digifiz_parameters.coolantThermistorB;
+    oilB = digifiz_parameters.oilThermistorB;
+    airB = digifiz_parameters.airThermistorB;
+    R1_Coolant = digifiz_parameters.coolantThermistorDefRes;
+    R1_Oil = digifiz_parameters.oilThermistorDefRes;
+    R1_Ambient = digifiz_parameters.ambThermistorDefRes;
+
+    tauCoolant = (float)digifiz_parameters.tauCoolant*TAU;
+    tauOil = (float)digifiz_parameters.tauOil*TAU*0.1;
+    tauAir = (float)digifiz_parameters.tauAir*TAU*0.1;
+    tauGasoline = (float)digifiz_parameters.tauTank*TAU*0.03;
+    tauGasolineConsumption = (float)digifiz_parameters.tauTank*TAU*0.01;
+    tankCapacity = digifiz_parameters.tankCapacity;
+}
+
 void initADC()
 {
     //pinMode(A0, INPUT); //GURTANL.K
@@ -64,15 +81,7 @@ void initADC()
     consumptionCounter = millis();
     coolantT = oilT = airT = 0.0;
     lightLevel = 0;
-    coolantB = digifiz_parameters.coolantThermistorB;
-    oilB = digifiz_parameters.oilThermistorB;
-    airB = digifiz_parameters.airThermistorB;
-    tauCoolant = (float)digifiz_parameters.tauCoolant*TAU;
-    tauOil = (float)digifiz_parameters.tauOil*TAU*0.1;
-    tauAir = (float)digifiz_parameters.tauAir*TAU*0.1;
-    tauGasoline = (float)digifiz_parameters.tauTank*TAU*0.03;
-    tauGasolineConsumption = (float)digifiz_parameters.tauTank*TAU*0.01;
-    tankCapacity = digifiz_parameters.tankCapacity;
+    updateADCSettings();
     
     //Init values:
     processFirstCoolantTemperature();
@@ -236,15 +245,19 @@ float getCurrentIntakeFuelConsumption()
 
 void processGasLevel()
 {
+    float R2scaled = 0.0f;
     V0 = (float)analogRead(gasolinePin);
     R2 = constrain(220 * V0 / (1023.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
-#ifndef FUEL_LEVEL_EXPERIMENTAL
-    float R2scaled = (((float)R2-
+    if (digifiz_parameters.digifiz_options.option_linear_fuel)
+    {
+        R2scaled = (((float)R2-
               digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
                                                 digifiz_parameters.tankMinResistance));
-#else
-    float R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
-#endif
+    }
+    else
+    {
+        R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
+    }
 
     gasolineLevel += tauGasoline*((1.0f-R2scaled)-gasolineLevel); //percents
     gasolineLevelFiltered += tauGasolineConsumption*(R2scaled-gasolineLevelFiltered); //percents
@@ -291,17 +304,21 @@ void processFirstOilTemperature()
 
 void processFirstGasLevel()
 {
+    float R2scaled = 0.0f;
     for (int i=0;i!=300;i++)
       V0 += (float)analogRead(gasolinePin);
     V0/=300;
     R2 = constrain(220 * V0 / (1023.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
-#ifndef FUEL_LEVEL_EXPERIMENTAL
-    float R2scaled = (((float)R2-
+    if (digifiz_parameters.digifiz_options.option_linear_fuel)
+    {
+        R2scaled = (((float)R2-
               digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
                                                 digifiz_parameters.tankMinResistance));
-#else
-    float R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
-#endif
+    }
+    else
+    {
+        R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
+    }
     //35 = full
     //265 = empty
     gasolineLevel = 1.0f - R2scaled; //percents
@@ -328,14 +345,17 @@ float getGasLevel()
 {
     V0 = (float)analogRead(gasolinePin);
     R2 = constrain(220 * V0 / (1023.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
-    
-#ifndef FUEL_LEVEL_EXPERIMENTAL
-    float R2scaled = (((float)R2-
-              digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
+    float R2scaled = 0.0f;
+    if (digifiz_parameters.digifiz_options.option_linear_fuel)
+    {
+        R2scaled = (((float)R2-digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
                                                 digifiz_parameters.tankMinResistance));
-#else
-    float R2scaled = 1.0f-(1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
-#endif
+    }
+    else
+    {
+        R2scaled = 1.0f-(1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
+    }
+   
     gasolineLevel += tauGasoline*(R2scaled-gasolineLevel); //percents
     gasolineLevelFiltered += tauGasolineConsumption*(R2scaled-gasolineLevelFiltered); //percents
     return gasolineLevel;

@@ -94,6 +94,11 @@ typedef struct RGBColoringElement
     uint8_t basecolor_enabled;
 } RGBColoringElement;
 
+typedef struct CompiledColoringScheme
+{
+    RGBColoringElement scheme[DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS];
+} CompiledColoringScheme;
+
 typedef struct ColoringScheme
 {
     RGBColoringElement scheme[COLORING_SCHEME_MAX_ELEMENTS];

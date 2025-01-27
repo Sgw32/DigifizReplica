@@ -99,8 +99,8 @@ void setRPM(int rpmdata)
 void setBacklight(bool onoff)
 {
   backlightStatus = onoff;
-  setMilesKMH((digifiz_parameters.digifiz_options&OPTION_MILES) ? 1 : 0);
-  setLBar((digifiz_parameters.digifiz_options&OPTION_LBAR) ? 1 : 0);
+  setMilesKMH((digifiz_parameters.digifiz_options.option_miles) ? 1 : 0);
+  setLBar((digifiz_parameters.digifiz_options.option_lbar) ? 1 : 0);
   stled.setLED(LEDall, onoff); //always
   stled2.setLED(audiOptions, true);
   stled2.setLED(~audiOptions, false);

@@ -198,7 +198,7 @@ void displayMFAType(uint8_t mfaType)
             setFloatDot(true);
             break;  
         case MFA_STATE_TRIP_MEAN_MPH:
-            if (digifiz_parameters.digifiz_options&OPTION_MILES)
+            if (digifiz_parameters.digifiz_options.option_miles)
                 setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
             else
                 setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock])*0.6214);

@@ -26,6 +26,7 @@ float constrain(float input, float min, float max);
 
 void initADC();
 void processADC();
+void updateADCSettings();
 void read_adc_values();
 
 //RAW values 0..1024

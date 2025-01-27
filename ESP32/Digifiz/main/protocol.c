@@ -106,6 +106,38 @@ static void printAbout()
   printLnCString("Egor Avramenko.\n");
 }
 
+static void setMainTemplateColor(char* color_values)
+{
+  uint8_t r = 0, g = 0, b = 0;
+  // Parse the color values (format: "R G B")
+  if (sscanf(color_values, "%hhu %hhu %hhu", &r, &g, &b) == 3) {
+      // Successfully parsed RGB values
+      printf("Received RGB values: R=%u, G=%u, B=%u\n", r, g, b);
+      digifiz_parameters.mainc_r = r;
+      digifiz_parameters.mainc_g = g;
+      digifiz_parameters.mainc_b = b;
+  } else {
+      // Failed to parse the values
+      printf("Invalid color format: %s\n", color_values);
+  }
+}
+
+static void setBacklightTemplateColor(char* color_values)
+{
+  uint8_t r = 0, g = 0, b = 0;
+  // Parse the color values (format: "R G B")
+  if (sscanf(color_values, "%hhu %hhu %hhu", &r, &g, &b) == 3) {
+      // Successfully parsed RGB values
+      printf("Received RGB values: R=%u, G=%u, B=%u\n", r, g, b);
+      digifiz_parameters.backc_r = r;
+      digifiz_parameters.backc_g = g;
+      digifiz_parameters.backc_b = b;
+  } else {
+      // Failed to parse the values
+      printf("Invalid color format: %s\n", color_values);
+  }
+}
+
 static void printADC()
 {
   printLnCString("ADC:\n");
@@ -276,38 +308,47 @@ void processData(int parameter,long value)
       case PARAMETER_COOLANTTHERMISTORB:
         printLnCString("PARAMETER_COOLANTTHERMISTORB\n");
         digifiz_parameters.coolantThermistorB = value;
+        updateADCSettings();
         break;  
       case PARAMETER_OILTHERMISTORB:
         printLnCString("PARAMETER_OILTHERMISTORB\n");
         digifiz_parameters.oilThermistorB = value;
+        updateADCSettings();
         break;  
       case PARAMETER_AIRTHERMISTORB:
         printLnCString("PARAMETER_AIRTHERMISTORB\n");
         digifiz_parameters.airThermistorB = value;
+        updateADCSettings();
         break;  
       case PARAMETER_TANKMINRESISTANCE:
         printLnCString("PARAMETER_TANKMINRESISTANCE\n");
         digifiz_parameters.tankMinResistance = value;
+        updateADCSettings();
         break;  
       case PARAMETER_TANKMAXRESISTANCE:
         printLnCString("PARAMETER_TANKMAXRESISTANCE\n");
         digifiz_parameters.tankMaxResistance = value;
+        updateADCSettings();
         break; 
       case PARAMETER_TAU_COOLANT:
         printLnCString("PARAMETER_TAU_COOLANT\n");
         digifiz_parameters.tauCoolant = value;
+        updateADCSettings();
         break;
       case PARAMETER_TAU_OIL:
         printLnCString("PARAMETER_TAU_OIL\n");
         digifiz_parameters.tauOil = value;
+        updateADCSettings();
         break;
       case PARAMETER_TAU_AIR:
         printLnCString("PARAMETER_TAU_AIR\n");
         digifiz_parameters.tauAir = value;
+        updateADCSettings();
         break;
       case PARAMETER_TAU_TANK:
         printLnCString("PARAMETER_TAU_TANK\n");
         digifiz_parameters.tauTank = value;
+        updateADCSettings();
         break;
       case PARAMETER_MILEAGE:
         printLnCString("PARAMETER_MILEAGE\n");
@@ -328,6 +369,7 @@ void processData(int parameter,long value)
       case PARAMETER_TANK_CAPACITY:
         printLnCString("PARAMETER_TANK_CAPACITY\n");
         digifiz_parameters.tankCapacity = value;
+        updateADCSettings();
         break;
       case PARAMETER_MFA_STATE:
         printLnCString("PARAMETER_MFA_STATE\n");
@@ -344,14 +386,17 @@ void processData(int parameter,long value)
       case PARAMETER_NORMAL_RESISTANCE_COOLANT:
         printLnCString("PARAMETER_NORMAL_RESISTANCE_COOLANT\n");
         digifiz_parameters.coolantThermistorDefRes = value;
+        updateADCSettings();
         break;
       case PARAMETER_NORMAL_RESISTANCE_OIL:
         printLnCString("PARAMETER_NORMAL_RESISTANCE_OIL\n");
         digifiz_parameters.oilThermistorDefRes = value;
+        updateADCSettings();
         break;
       case PARAMETER_NORMAL_RESISTANCE_AMB:
         printLnCString("PARAMETER_NORMAL_RESISTANCE_AMB\n");
         digifiz_parameters.ambThermistorDefRes = value;
+        updateADCSettings();
         break;
       case PARAMETER_DOT_OFF:
         printLnCString("PARAMETER_DOT_OFF\n");
@@ -368,10 +413,12 @@ void processData(int parameter,long value)
       case PARAMETER_COOLANT_MAX_R:
         printLnCString("PARAMETER_COOLANT_MAX_R\n");
         digifiz_parameters.coolantMax = value;
+        updateADCSettings();
         break;
       case PARAMETER_COOLANT_MIN_R:
         printLnCString("PARAMETER_COOLANT_MIN_R\n");
         digifiz_parameters.coolantMin = value;
+        updateADCSettings();
         break;
       case PARAMETER_COMMAND_MFA_RESET:
         printLnCString("PARAMETER_COMMAND_MFA_RESET\n");
@@ -782,6 +829,18 @@ void protocolParse(char* buf, uint8_t len)
                 else if (strcmp(cmd_buffer_par,"adc")==0)
                 {
                     printADC();
+                }
+                else if (strcmp(cmd_buffer_par,"test_mode")==0)
+                {
+                    digifiz_parameters.digifiz_options.testmode_on=!digifiz_parameters.digifiz_options.testmode_on;
+                }
+                else if (strcmp(cmd_buffer_par,"set_c_main")==0)
+                {
+                    setMainTemplateColor(cmd_buffer_val);
+                }
+                else if (strcmp(cmd_buffer_par,"set_c_back")==0)
+                {
+                    setBacklightTemplateColor(cmd_buffer_val);
                 }
                 else if (strcmp(cmd_buffer_par,"status_json")==0)
                 {

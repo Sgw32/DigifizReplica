@@ -24,7 +24,7 @@
 #define LOCK_PROTOCOL
 //#define SAVE_BY_MFA_MODE
 //#define GALLONS
-#define MILES
+//#define MILES
 //#define FAHRENHEIT  
 //#define KELVIN
 
@@ -46,7 +46,7 @@
 //#define UIODserial Serial
 
 #define RPM_8000
-
+#define DIESEL_MODE
 #define DEFAULT_MILEAGE   000000L //78893L //103256L
 
 //#define TESTMODE

@@ -1,6 +1,11 @@
 #include "display_next.h"
 #include "reg_inout.h"
 #include "esp_log.h"
+#include "mjs.h"
+
+
+#define TAG "display_next"
+#define SCRIPT_KEY "display_next_script"
 
 uint8_t selectedBrightness = 20;
 uint32_t mRPMData = 4000;
@@ -17,7 +22,66 @@ uint8_t maincolor_g;
 uint8_t maincolor_b;
 int16_t redline_scheme_id = -1;
 
-ColoringScheme digifizStandard = {
+// Sample script (to be written to NVS initially)
+const char *default_mjs_script =
+    "function setColors() {"
+    "  let arr = [];"
+    "  for (let i = 0; i < 283; i++) {"
+    "    arr.push({r: i % 256, g: (i * 2) % 256, b: (i * 3) % 256});"
+    "  }"
+    "  return arr;"
+    "}";
+
+static CompiledColoringScheme digifizCustom = {};
+
+// Function to run the mJS script
+void run_mjs_script(const char *script) {
+    struct mjs *mjs = mjs_create();
+
+    mjs_val_t func = 0;
+    mjs_val_t res = 0;
+
+    //mjs_own(mjs, &func);
+
+    // Load the script into mJS
+    enum mjs_err err = mjs_exec(mjs, script, NULL);
+    if (err != MJS_OK) {
+        ESP_LOGE(TAG, "mJS execution error: %s", mjs_strerror(mjs, err));
+        mjs_destroy(mjs);
+        return;
+    }
+
+    // Call the setColors() function
+    func = mjs_get(mjs, mjs_get_global(mjs), "setColors", 0);
+    if (!mjs_is_function(func)) {
+        ESP_LOGE(TAG, "Function setColors not found");
+        mjs_destroy(mjs);
+        return;
+    }
+
+    mjs_val_t result = mjs_call(mjs, &res, func, 0, 0);
+    if (!mjs_is_array(result)) {
+        ESP_LOGE(TAG, "setColors() did not return an array");
+        mjs_destroy(mjs);
+        return;
+    }
+
+    // Parse the result into the RGB array
+    for (int i = 0; i < (DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS); i++) {
+        mjs_val_t item = mjs_array_get(mjs, result, i);
+        uint8_t r = mjs_get_int(mjs, mjs_get(mjs, item, "r", 0));
+        uint8_t g = mjs_get_int(mjs, mjs_get(mjs, item, "g", 0));
+        uint8_t b = mjs_get_int(mjs, mjs_get(mjs, item, "b", 0));
+        digifizCustom.scheme[i].r = r;
+        digifizCustom.scheme[i].g = g;
+        digifizCustom.scheme[i].b = b;
+    }
+
+    ESP_LOGI(TAG, "RGB array initialized from mJS script");
+    mjs_destroy(mjs);
+}    
+
+static ColoringScheme digifizStandard = {
     .scheme = {
         { 
             .r = 20,
@@ -327,6 +391,8 @@ void initDisplay() {
     setMileage(123456);
     setRPMData(5);
     ESP_LOGI(LOG_TAG, "Digifiz WS2812 LED init OK.");
+    //Compile colors from mJS backend
+    run_mjs_script(default_mjs_script);
     ESP_LOGI(LOG_TAG, "initDisplay ended");
 }
 

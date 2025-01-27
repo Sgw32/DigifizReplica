@@ -98,7 +98,8 @@ typedef union SignalOptions
         //Common input becomes dead on rev up to 3.02 if ground is dead
         uint8_t use_blink_other_inputs:1; 
         uint8_t enable_touch_sensor:1; 
-        uint8_t reserved:6;
+        uint8_t invert_light_input:1;
+        uint8_t reserved:5;
     };
 } u_signal_options;
 
