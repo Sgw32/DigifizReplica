@@ -112,12 +112,15 @@ static void setMainTemplateColor(char* color_values)
   // Parse the color values (format: "R G B")
   if (sscanf(color_values, "%hhu %hhu %hhu", &r, &g, &b) == 3) {
       // Successfully parsed RGB values
+      printLnCString("Successfully set new colors.\n");
       printf("Received RGB values: R=%u, G=%u, B=%u\n", r, g, b);
       digifiz_parameters.mainc_r = r;
       digifiz_parameters.mainc_g = g;
       digifiz_parameters.mainc_b = b;
   } else {
       // Failed to parse the values
+      printLnCString("Invalid color format.\n");
+      printLnCString(color_values);
       printf("Invalid color format: %s\n", color_values);
   }
 }
@@ -128,12 +131,15 @@ static void setBacklightTemplateColor(char* color_values)
   // Parse the color values (format: "R G B")
   if (sscanf(color_values, "%hhu %hhu %hhu", &r, &g, &b) == 3) {
       // Successfully parsed RGB values
+      printLnCString("Successfully set new colors.\n");
       printf("Received RGB values: R=%u, G=%u, B=%u\n", r, g, b);
       digifiz_parameters.backc_r = r;
       digifiz_parameters.backc_g = g;
       digifiz_parameters.backc_b = b;
   } else {
       // Failed to parse the values
+      printLnCString("Invalid color format.\n");
+      printLnCString(color_values);
       printf("Invalid color format: %s\n", color_values);
   }
 }

@@ -157,6 +157,9 @@ void load_defaults()
     digifiz_parameters.mainc_r = 180;
     digifiz_parameters.mainc_g = 240;
     digifiz_parameters.mainc_b = 6;
+    digifiz_parameters.backc_r = 180;
+    digifiz_parameters.backc_g = 240;
+    digifiz_parameters.backc_b = 6;
     digifiz_parameters.rpmFilterK = 70;
 #ifdef MANUFACTURER_MFA_SWITCH
     digifiz_parameters.digifiz_options.mfa_manufacturer = 1;

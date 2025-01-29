@@ -412,7 +412,7 @@ void app_main(void)
 		}
 	}
     xTaskCreatePinnedToCore(on_cpu_0, "on_cpu_0", 4096, NULL, 3, NULL,0);
-    xTaskCreatePinnedToCore(on_cpu_1, "on_cpu_1", 4096, NULL, 3, NULL,1);
+    xTaskCreatePinnedToCore(on_cpu_1, "on_cpu_1", 4096*2, NULL, 3, NULL,1);
     ESP_ERROR_CHECK(esp_register_shutdown_handler(shutdown_handler));
     while (1) 
     {

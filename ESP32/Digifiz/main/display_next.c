@@ -17,9 +17,12 @@ DigifizNextDisplay display;
 static led_strip_handle_t led_strip;
 float brightnessFiltered = 6.0f;
 
-uint8_t maincolor_r;
-uint8_t maincolor_g;
-uint8_t maincolor_b;
+static uint8_t maincolor_r;
+static uint8_t maincolor_g;
+static uint8_t maincolor_b;
+static uint8_t backcolor_r;
+static uint8_t backcolor_g;
+static uint8_t backcolor_b;
 int16_t redline_scheme_id = -1;
 
 // Sample script (to be written to NVS initially)
@@ -305,7 +308,7 @@ static ColoringScheme digifizStandard = {
             .b = 2,
             .end_segment = 282,
             .type = COLOR_SCHEME_UPPER_BACKLIGHT,
-            .basecolor_enabled = 0
+            .basecolor_enabled = 3
         },
     }
 };
@@ -964,6 +967,12 @@ void getColorBySegmentNumber(uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* 
                 (*g) = maincolor_g/3;
                 (*b) = maincolor_b/3;
             }
+            else if (digifizStandard.scheme[i].basecolor_enabled==3)
+            {
+                (*r) = backcolor_r;
+                (*g) = backcolor_g;
+                (*b) = backcolor_b;
+            }
             else
             {
                 (*r) = digifizStandard.scheme[i].r;
@@ -992,6 +1001,11 @@ void fireDigifiz() {
     maincolor_r = digifiz_parameters.mainc_r;
     maincolor_g = digifiz_parameters.mainc_g;
     maincolor_b = digifiz_parameters.mainc_b;
+
+    backcolor_r = digifiz_parameters.backc_r;
+    backcolor_g = digifiz_parameters.backc_g;
+    backcolor_b = digifiz_parameters.backc_b;
+
     uint8_t *ptr = (uint8_t*)&display;
     for (uint16_t i = 0; i != sizeof(DigifizNextDisplay); i++)
     {
@@ -1003,7 +1017,7 @@ void fireDigifiz() {
             uint8_t b = 0;
 
             getColorBySegmentNumber(led_num,&r,&g,&b);
-            led_strip_set_pixel(led_strip, led_num, 0,0,0);
+            led_strip_set_pixel(led_strip, led_num, 10,10,10);
             if (bit)
             {
                 led_strip_set_pixel(led_strip, led_num, ((uint32_t)r*((uint32_t)backlightLevel))/100,

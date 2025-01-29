@@ -499,7 +499,7 @@
             <div class="mfa-buttons">
 				<input type="color" id="colorPicker" name="colorPicker" value="#ff0000">
                 <button class="cl01" type="button" id="setMainColor">Set main color</button>
-				<input type="color" id="colorPicker" name="colorPickerBack" value="#ff0000">
+				<input type="color" id="colorPickerBack" name="colorPickerBack" value="#ff0000">
                 <button class="cl01" type="button" id="setBackColor">Set back color</button>
                 <button class="cl01" type="button" id="mfaModeButton">MFA Mode</button>
                 <button class="cl01" type="button" id="mfaResetButton">MFA Reset</button>
@@ -517,7 +517,7 @@
 <div id="About" class="tabcontent">
 <div class="tci">
    Copyright &copy; 2021-2024 by Fedor Zagumennov (Sgw32)<br>
-   OTA 2.0 Mb <br>
+   OTA 2.0 Mb v1.0.6<br>
    Web dashboard by rdzTTGOsonde project
    <a href="https://github.com/dl9rdz/rdz_ttgo_sonde">GitHub page</a> by <a href="https://github.com/dl9rdz">dl9rdz</a>,
 <br>
@@ -584,7 +584,8 @@ document.getElementById("defaultTab").click();
 		const g = parseInt(color.slice(3, 5), 16); // Extract and convert the green value
 		const b = parseInt(color.slice(5, 7), 16); // Extract and convert the blue value
 		// Format the message
-		const message = `set_c_main ${r} ${g} ${b}`;
+		const message = `set_c_main ${r} ${g} ${b}\n`;
+		console.log(message);
 		// Send the message over the socket
 		socket.send(JSON.stringify({ name: "setMainColor", msg: message }));
 	});
@@ -596,7 +597,8 @@ document.getElementById("defaultTab").click();
 		const g = parseInt(color.slice(3, 5), 16); // Extract and convert the green value
 		const b = parseInt(color.slice(5, 7), 16); // Extract and convert the blue value
 		// Format the message
-		const message = `set_c_back ${r} ${g} ${b}`;
+		const message = `set_c_back ${r} ${g} ${b}\n`;
+		console.log(message);
 		// Send the message over the socket
 		socket.send(JSON.stringify({ name: "setBackColor", msg: message }));
 	});
