@@ -12,7 +12,7 @@ Digifiz Replica is a Digifiz replacement for Golf/ Jetta/ Scirocco cars of mk2 g
 Currently Audi Digifiz with Red and Green version is also supported. 
 
 
-Requirements: Arduino IDE >1.8.13 (however it may work on previous versions)
+Requirements for Atmega2580 version: Arduino IDE >1.8.13 (however it may work on previous versions)
 Board set to: "Arduino Mega/Atmega2560"
 Libraries: MD_MAX72xx (not needed anymore, please do not use it)
 RTClib(not by Neuron)
@@ -20,7 +20,15 @@ SparkFun EEPROM library
 Adafruit_BusIO
 MedianFilterLib2
 
-Ctl+Shift+U for firmware upload
+Ctl+Shift+U for firmware upload using USBasp
+
+![Digifiz Replica](/images/digifiz_next_photo.jpg)
+
+Requirements for ESP32 version:
+
+ESP32-IDF v5.2.1
+
+
 
 ## Digifiz Replica information
 
@@ -57,7 +65,7 @@ Both Green and Red versions are working (see setup.h file):
 - More stable configuration
 - Compile through PlatformIO
 - Docs using Doxygen
-- Very far plans: mk2 hardware redesign, Golf 3, Audi 80 B3, AutoVAZ dashboards 
+- Very far plans: mk2 hardware redesign, Golf 3, Audi 80 B3, AvtoVAZ dashboards 
 - LCD Digifiz
 
 ## License
@@ -73,3 +81,20 @@ Crypto:
 0xeDc17cb23241eACe19DF3617291aa7d2d92E62DC (ETH, USDT ERC20)
 Buy something here (3d print and just 3d models):
 https://www.cgtrader.com/sgw32
+
+## Trademarks
+
+VDO is a Trademark of the Continental Corporation
+The Volkswagen logo, the word "Volkswagen," all Volkswagen vehicle names, and the Volkswagen advertising slogan are registered trademarks of Volkswagen AG
+AUDI is a trademark of AUDI AG
+AvtoVAZ is a trademark of AvtoVAZ Concern
+
+Any images or text of trademarks used on this site are for information purposes only.
+
+Digifiz Replica dashboards, as well as Digifiz Audi are replacement parts only for the respective cars, with OEM VAG numbers assigned:
+
+191 919 065 B / 191 919 019 B / 87001181 / 191 919 005 B / 191919065B
+191919033LR 616.051.2001 6160512001
+
+And Audi OEM part number:
+88481435

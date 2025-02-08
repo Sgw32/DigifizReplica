@@ -99,7 +99,8 @@ typedef union SignalOptions
         uint8_t use_blink_other_inputs:1; 
         uint8_t enable_touch_sensor:1; 
         uint8_t invert_light_input:1;
-        uint8_t reserved:5;
+        uint8_t enable_consumption_sensor:1;
+        uint8_t reserved:4;
     };
 } u_signal_options;
 

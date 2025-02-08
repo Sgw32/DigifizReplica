@@ -392,9 +392,12 @@ float getFuelConsumption()
 
 // Get the intake pressure
 float getIntakePressure() {
-    float intp=0;
+    static float intp=0;
     V0 = adc_raw.intakePressRawADCVal;
-    intp/=100;
+    if (digifiz_parameters.sign_options.enable_consumption_sensor)
+    {
+        intp+=(V0-intp)*0.1f;
+    }
 
 #ifdef FUEL_CONSUMPTION_TESTMODE
    intp = 512;
