@@ -120,11 +120,11 @@ void load_defaults()
 #else
     digifiz_parameters.rpmCoefficient = 1500;
     digifiz_parameters.rpmFilterK = 70;
+#endif
 #ifdef DIESEL_MODE
     digifiz_parameters.rpmCoefficient = 400;
     digifiz_parameters.rpmFilterK = 70;
-#endif
-#endif
+#endif  
     digifiz_parameters.speedCoefficient = 100;
     digifiz_parameters.coolantThermistorB = COOLANT_THERMISTOR_B;
     digifiz_parameters.oilThermistorB = OIL_THERMISTOR_B;

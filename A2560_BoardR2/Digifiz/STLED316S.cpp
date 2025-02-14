@@ -313,7 +313,12 @@ void STLED316S_Common::dispNumberRev1(uint8_t digitPtr, uint32_t nbr1, uint8_t m
     if (dig2)
       _dispDataBuffer[2] = _digitTable[dig2];
     else
-      _dispDataBuffer[2] = _digitTable[17];
+    {
+      if (dig3)
+        _dispDataBuffer[2] = _digitTable[0];
+      else
+        _dispDataBuffer[2] = _digitTable[17];
+    }
     if (dig3)
       _dispDataBuffer[1] = _digitTable[dig3];
     else

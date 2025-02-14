@@ -16,6 +16,31 @@ jobs:
         with:
           submodules: 'recursive'
 
+    # --- Arduino Build ---
+      - name: Compile Arduino Sketch
+        uses: arduino/compile-sketches@v1
+        with:
+          sketch-paths: |
+            - ./A2560_BoardR2/Digifiz/
+          fqbn: "arduino:avr:mega"
+          libraries: |
+            - name: MD_MAX72xx
+            - source-url: https://github.com/sparkfun/SparkFun_External_EEPROM_Arduino_Library.git
+            - name: RTCLib
+            - source-url: https://github.com/adafruit/Adafruit_BusIO.git
+            - name: MedianFilterLib2
+          output-dir: ./build
+
+      - name: Collect Arduino Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: arduino-firmware
+          path: |
+            ./build/**/*.hex
+            ./build/**/*.bin
+            ./build/**/*.elf
+
+      # --- ESP-IDF Build ---
       - name: Set up ESP-IDF and Build
         uses: espressif/esp-idf-ci-action@v1.1.0
         with:
@@ -94,4 +119,15 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./ESP32/Digifiz/build/Digifiz.elf
           asset_name: Digifiz.elf
+          asset_content_type: application/octet-stream
+      
+      # --- Upload Arduino Firmware to Release ---
+      - name: Upload Arduino Firmware to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/A2560_BoardR2/Digifiz/*.hex
+          asset_name: Digifiz_A2560.hex
           asset_content_type: application/octet-stream

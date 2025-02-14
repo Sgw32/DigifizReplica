@@ -45,14 +45,14 @@
 //#define BTserial Serial
 //#define UIODserial Serial
 
-//#define RPM_8000
+#define RPM_8000
 //#define DIESEL_MODE
 #define DEFAULT_MILEAGE   000000L //78893L //103256L
 
 //#define TESTMODE
 //#define DIGIFIZ_ORIGINAL_DISPLAY
 //#define DIGIFIZ_LCD_DISPLAY
-#define AUDI_DISPLAY
+//#define AUDI_DISPLAY
 //#define AUDI_RED_DISPLAY
 
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)

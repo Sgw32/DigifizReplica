@@ -23,9 +23,9 @@
 #define EEPROM_SAVE_INTERVAL 128
 #define LOCK_PROTOCOL
 //#define SAVE_BY_MFA_MODE
-//#define GALLONS
-//#define MILES
-//#define FAHRENHEIT  
+#define GALLONS
+#define MILES
+#define FAHRENHEIT  
 //#define KELVIN
 
 //#define USE_UIOD
@@ -52,7 +52,7 @@
 //#define TESTMODE
 //#define DIGIFIZ_ORIGINAL_DISPLAY
 //#define DIGIFIZ_LCD_DISPLAY
-#define AUDI_DISPLAY
+//#define AUDI_DISPLAY
 //#define AUDI_RED_DISPLAY
 
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)

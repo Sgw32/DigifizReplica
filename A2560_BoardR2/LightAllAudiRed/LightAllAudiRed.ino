@@ -36,8 +36,8 @@ void loop()
     setMFAType(6);
   setAuxDigit(mileage);
   setFuel(88);
-  setMFAClockData(88,88);
-  setClockData(88,88);
+  setMFAClockData(12,34);
+  setClockData(56,78);
   setRPMData(5000);
   mileage++;
   if (PINJ&(1<<PJ3))

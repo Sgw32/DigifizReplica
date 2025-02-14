@@ -838,6 +838,105 @@ void processData(int parameter,long value)
         UIODserial.println(digifiz_parameters.backlight_on);
         #endif
         break;
+      case PARAMETER_M_D_FILTER:
+      #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_M_D_FILTER");
+        BTserial.println(digifiz_parameters.medianDispFilterThreshold);
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.medianDispFilterThreshold);
+        #endif
+        break;
+      case PARAMETER_COOLANT_MAX_R:
+      #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_COOLANT_MAX_R");
+        BTserial.println(digifiz_parameters.coolantMaxResistance);
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.coolantMaxResistance);
+        #endif
+        break;
+      case PARAMETER_COOLANT_MIN_R:
+      #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_COOLANT_MIN_R");
+        BTserial.println(digifiz_parameters.coolantMinResistance);
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.coolantMinResistance);
+        #endif
+        break;
+      case PARAMETER_COMMAND_MFA_RESET:
+      #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_COMMAND_MFA_RESET");
+        #endif
+        pressMFAReset();
+        break;
+      case PARAMETER_COMMAND_MFA_MODE:
+      #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_COMMAND_MFA_MODE");
+        #endif
+        pressMFAMode();
+        break;
+      case PARAMETER_COMMAND_MFA_BLOCK:
+      #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_COMMAND_MFA_BLOCK");
+        #endif
+        pressMFABlock();
+        break;
+      case PARAMETER_RPM_FILTER:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_RPM_FILTER");
+        BTserial.println(digifiz_parameters.rpmFilterK);
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.rpmFilterK);
+        #endif
+        break;
+      case PARAMETER_SET_FUEL_CALC_FUNCTION:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_SET_FUEL_CALC_FUNCTION");
+        BTserial.println(digifiz_parameters.digifiz_options.option_linear_fuel );
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.digifiz_options.option_linear_fuel);
+        #endif
+        break;
+      case PARAMETER_SET_RPM_OPTIONS:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_SET_RPM_OPTIONS");
+        BTserial.println(digifiz_parameters.rpm_options.packed_options );
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.rpm_options.packed_options);
+        #endif
+        break;
+      case PARAMETER_SET_TEMP_OPTIONS:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_SET_TEMP_OPTIONS");
+        BTserial.println(digifiz_parameters.temp_options.packed_options );
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.temp_options.packed_options);
+        #endif
+        break;
+      case PARAMETER_SET_SIGNAL_OPTIONS:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_SET_SIGNAL_OPTIONS");
+        BTserial.println(digifiz_parameters.sign_options.packed_options );
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.sign_options.packed_options);
+        #endif
+        break;
+      case PARAMETER_UPTIME:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_UPTIME");
+        BTserial.println(digifiz_parameters.uptime);
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.uptime);
+        #endif
+        break;  
       default:
         break;
     }

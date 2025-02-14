@@ -1,23 +1,44 @@
-name: Build Digifiz Replica Arduino
-on: 
- - push
- - pull_request
 jobs:
   compile-sketch:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v2
-      with:
-        submodules: 'recursive'
-    - uses: arduino/compile-sketches@v1
-      with:
-        sketch-paths: |
-         - ./A2560_BoardR2/Digifiz/
-        fqbn: "arduino:avr:mega"
-        libraries: |
-          - name: MD_MAX72xx
-          - source-url: https://github.com/sparkfun/SparkFun_External_EEPROM_Arduino_Library.git
-          - name: RTCLib
-          - source-url: https://github.com/adafruit/Adafruit_BusIO.git
-          - name: MedianFilterLib2
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      # --- Backup Original setup.h ---
+      - name: Backup Original setup.h
+        run: mv A2560_BoardR2/Digifiz/setup.h A2560_BoardR2/Digifiz/setup.h.orig
+
+      # --- Define Variants ---
+      - name: Set Variant List
+        run: echo "VARIANTS=setup_audi_red setup_audi_green setup_g2 setup_g2_uk setup_g2_usa setup_g2_diesel" >> $GITHUB_ENV
+
+      # --- Install Dependencies (Arduino Libraries) ---
+      - name: Install Required Arduino Libraries
+        run: |
+          arduino-cli lib install --git-url https://github.com/sparkfun/SparkFun_External_EEPROM_Arduino_Library.git
+          arduino-cli lib install "RTCLib"
+          arduino-cli lib install --git-url https://github.com/adafruit/Adafruit_BusIO.git
+          arduino-cli lib install "MedianFilterLib2"
+
+      # --- Loop and Build Each Variant ---
+      - name: Compile All Variants
+        run: |
+          for VARIANT in $VARIANTS; do
+            echo "Building $VARIANT..."
+            cp A2560_BoardR2/Digifiz/${VARIANT}.h A2560_BoardR2/Digifiz/setup.h
+            arduino-cli compile --fqbn arduino:avr:mega A2560_BoardR2/Digifiz/ --output-dir build/$VARIANT
+            mv A2560_BoardR2/Digifiz/setup.h.orig A2560_BoardR2/Digifiz/setup.h  # Restore
+          done
+
+      # --- Upload All Arduino Variants as Artifacts ---
+      - name: Collect Arduino Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: digifiz-firmware
+          path: |
+            build/**/*.hex
+            build/**/*.bin
+            build/**/*.elf

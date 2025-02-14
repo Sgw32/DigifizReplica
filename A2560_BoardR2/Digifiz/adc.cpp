@@ -160,7 +160,7 @@ float getOilTemperature()
 {
     V0 = (float)analogRead(oilPin);
     R2 = R2_Oil * V0 / (1023.0f - V0); //
-    float tempT = 1.0f/(log(R2/R1_Oil)/coolantB+1.0f/(25.0f+273.15f))-273.15f;
+    float tempT = 1.0f/(log(R2/R1_Oil)/oilB+1.0f/(25.0f+273.15f))-273.15f;
     if (tempT<-50.0f)
         return -999.9f;
     else if (tempT>200.0)
@@ -405,7 +405,7 @@ float getAmbientTemperature()
 {
     V0 = (float)analogRead(airPin);
     R2 = R2_Ambient * V0 / (1023.0f - V0); //
-    float tempT = 1.0f/(log(R2/R1_Ambient)/coolantB+1.0f/(25.0f+273.15f))-273.15f;
+    float tempT = 1.0f/(log(R2/R1_Ambient)/airB+1.0f/(25.0f+273.15f))-273.15f;
     if (tempT<-50.0f)
         return -999.9f;
     else if (tempT>200.0)
