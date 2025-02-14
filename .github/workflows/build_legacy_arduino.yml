@@ -20,6 +20,11 @@ jobs:
       # --- Verify Arduino CLI Installation ---
       - name: Check Arduino CLI Version
         run: arduino-cli version
+      # --- Install Arduino AVR Core ---
+      - name: Install Arduino AVR Core
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
       # --- Configure Arduino CLI ---
       - name: Create Arduino CLI Configuration
         run: |
