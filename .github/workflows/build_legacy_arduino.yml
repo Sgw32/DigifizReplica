@@ -1,3 +1,7 @@
+name: Build Digifiz Replica Arduino
+on: 
+ - push
+ - pull_request
 jobs:
   compile-sketch:
     runs-on: ubuntu-latest
