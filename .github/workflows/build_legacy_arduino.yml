@@ -52,8 +52,8 @@ jobs:
         run: |
           arduino-cli lib install "RTCLib"
           arduino-cli lib install "MedianFilterLib2"
-          arduino-cli lib install --config-file ~/.arduino15/arduino-cli.yaml --git-url https://github.com/sparkfun/SparkFun_External_EEPROM_Arduino_Library.git
-          arduino-cli lib install --config-file ~/.arduino15/arduino-cli.yaml --git-url https://github.com/adafruit/Adafruit_BusIO.git
+          arduino-cli lib install "SparkFun External EEPROM Arduino Library"
+          arduino-cli lib install "Adafruit BusIO"
 
       # --- Loop and Build Each Variant ---
       - name: Compile All Variants
