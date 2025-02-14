@@ -39,10 +39,9 @@ jobs:
 
       # --- Upload All Arduino Variants as Artifacts ---
       - name: Collect Arduino Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: digifiz-firmware
-          path: |
-            build/**/*.hex
-            build/**/*.bin
-            build/**/*.elf
+          path: build/
+          compression-level: 0  # Adjust for speed vs. size (0 = fastest, 9 = smallest)
+          if-no-files-found: error  # Fails if no firmware is generated
