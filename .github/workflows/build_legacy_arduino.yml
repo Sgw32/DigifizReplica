@@ -10,7 +10,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-
+      # --- Install Arduino CLI ---
+      - name: Install Arduino CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          echo "$HOME/bin" >> $GITHUB_PATH  # Add Arduino CLI to PATH
+      # --- Verify Arduino CLI Installation ---
+      - name: Check Arduino CLI Version
+        run: arduino-cli version
       # --- Backup Original setup.h ---
       - name: Backup Original setup.h
         run: mv A2560_BoardR2/Digifiz/setup.h A2560_BoardR2/Digifiz/setup.h.orig
