@@ -17,31 +17,79 @@ jobs:
           submodules: 'recursive'
 
     # --- Arduino Build ---
-      - name: Compile Arduino Sketch
-        uses: arduino/compile-sketches@v1
-        with:
-          sketch-paths: |
-            - ./A2560_BoardR2/Digifiz/
-          fqbn: "arduino:avr:mega"
-          libraries: |
-            - name: MD_MAX72xx
-            - source-url: https://github.com/sparkfun/SparkFun_External_EEPROM_Arduino_Library.git
-            - name: RTCLib
-            - source-url: https://github.com/adafruit/Adafruit_BusIO.git
-            - name: MedianFilterLib2
-          output-dir: ./build
+      # --- Install Arduino CLI ---
+      - name: Install Arduino CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          echo "$HOME/bin" >> $GITHUB_PATH  # Add Arduino CLI to PATH
+          echo "/home/runner/work/DigifizReplica/DigifizReplica/bin" >> $GITHUB_PATH  # Add Arduino CLI to PATH
+          echo "/home/runner/work/DigifizReplica/bin" >> $GITHUB_PATH  # Add Arduino CLI to PATH
+      # --- Verify Arduino CLI Installation ---
+      - name: Check Arduino CLI Version
+        run: arduino-cli version
+      # --- Install Arduino AVR Core ---
+      - name: Install Arduino AVR Core
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+      # --- Configure Arduino CLI ---
+      - name: Create Arduino CLI Configuration
+        run: |
+          mkdir -p ~/.arduino15
+          cat <<EOF > ~/.arduino15/arduino-cli.yaml
+          board_manager:
+            additional_urls: []
+          daemon:
+            port: "50051"
+          logging:
+            file: ""
+            format: text
+            level: info
+          metrics:
+            addr: ""
+            enabled: false
+          sketchbook_path: "$HOME/Arduino"
+          allow_unsafe_install: true  # Enable --git-url and --zip-path
+          EOF
+      # --- Backup Original setup.h ---
+      - name: Backup Original setup.h
+        run: mv A2560_BoardR2/Digifiz/setup.h A2560_BoardR2/Digifiz/setup.h.orig
 
+      # --- Define Variants ---
+      - name: Set Variant List
+        run: echo "VARIANTS=setup_audi_red setup_audi_green setup_g2 setup_g2_uk setup_g2_usa setup_g2_diesel" >> $GITHUB_ENV
+
+      # --- Install Dependencies (Arduino Libraries) ---
+      - name: Install Required Arduino Libraries
+        run: |
+          arduino-cli lib install "RTCLib"
+          arduino-cli lib install "MedianFilterLib2"
+          arduino-cli lib install "SparkFun External EEPROM Arduino Library"
+          arduino-cli lib install "Adafruit BusIO"
+
+      # --- Loop and Build Each Variant ---
+      - name: Compile All Variants
+        run: |
+          for VARIANT in $VARIANTS; do
+            echo "Building $VARIANT..."
+            cp A2560_BoardR2/Digifiz/${VARIANT}.h A2560_BoardR2/Digifiz/setup.h
+            arduino-cli compile --fqbn arduino:avr:mega A2560_BoardR2/Digifiz/ --output-dir build/$VARIANT
+          done
+
+      # --- Upload All Arduino Variants as Artifacts ---
       - name: Collect Arduino Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: arduino-firmware
+          name: digifiz-firmware
+          path: build/
           compression-level: 0  # Adjust for speed vs. size (0 = fastest, 9 = smallest)
           if-no-files-found: error  # Fails if no firmware is generated
-          path: |
-            ./build/**/*.hex
-            ./build/**/*.bin
-            ./build/**/*.elf
-
+     # --- Zip All Artifacts ---
+      - name: Zip All Artifacts
+        run: |
+          # Create a zip file of all the artifacts in the build directory
+          zip -r build/digifiz-firmware.zip build/*
+          
       # --- ESP-IDF Build ---
       - name: Set up ESP-IDF and Build
         uses: espressif/esp-idf-ci-action@v1.1.0
@@ -61,7 +109,8 @@ jobs:
             ESP32/Digifiz/build/bootloader/*.bin
             ESP32/Digifiz/build/partition_table/*.bin
             ESP32/Digifiz/build/*.elf
-
+            
+     
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -132,6 +181,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/A2560_BoardR2/Digifiz/*.hex
-          asset_name: Digifiz_A2560.hex
+          asset_path: ./build/digifiz-firmware.zip  # Path to the zip file
+          asset_name: digifiz-firmware.zip  # Name of the zip file
           asset_content_type: application/octet-stream
