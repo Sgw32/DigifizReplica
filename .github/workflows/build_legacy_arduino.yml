@@ -20,6 +20,25 @@ jobs:
       # --- Verify Arduino CLI Installation ---
       - name: Check Arduino CLI Version
         run: arduino-cli version
+      # --- Configure Arduino CLI ---
+      - name: Create Arduino CLI Configuration
+        run: |
+          mkdir -p ~/.arduino15
+          cat <<EOF > ~/.arduino15/arduino-cli.yaml
+          board_manager:
+            additional_urls: []
+          daemon:
+            port: "50051"
+          logging:
+            file: ""
+            format: text
+            level: info
+          metrics:
+            addr: ""
+            enabled: false
+          sketchbook_path: "$HOME/Arduino"
+          allow_unsafe_install: true  # Enable --git-url and --zip-path
+          EOF
       # --- Backup Original setup.h ---
       - name: Backup Original setup.h
         run: mv A2560_BoardR2/Digifiz/setup.h A2560_BoardR2/Digifiz/setup.h.orig
@@ -31,10 +50,10 @@ jobs:
       # --- Install Dependencies (Arduino Libraries) ---
       - name: Install Required Arduino Libraries
         run: |
-          arduino-cli lib install --git-url https://github.com/sparkfun/SparkFun_External_EEPROM_Arduino_Library.git
           arduino-cli lib install "RTCLib"
-          arduino-cli lib install --git-url https://github.com/adafruit/Adafruit_BusIO.git
           arduino-cli lib install "MedianFilterLib2"
+          arduino-cli lib install --config-file ~/.arduino15/arduino-cli.yaml --git-url https://github.com/sparkfun/SparkFun_External_EEPROM_Arduino_Library.git
+          arduino-cli lib install --config-file ~/.arduino15/arduino-cli.yaml --git-url https://github.com/adafruit/Adafruit_BusIO.git
 
       # --- Loop and Build Each Variant ---
       - name: Compile All Variants
