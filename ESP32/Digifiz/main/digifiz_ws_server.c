@@ -141,6 +141,13 @@ httpd_uri_t update_post = {
 	.user_ctx = NULL
 };
 
+uint8_t flag_update_active = 0;
+
+uint8_t get_update_in_progress(void)
+{
+    return flag_update_active;
+}
+
 /*
  * Handle OTA file upload
  */
@@ -149,10 +156,10 @@ esp_err_t update_post_handler(httpd_req_t *req)
 	char buf[1000];
 	esp_ota_handle_t ota_handle;
 	int remaining = req->content_len;
-    digifiz_parameters.brightnessLevel = 1;
+    //digifiz_parameters.brightnessLevel = 1;
 	const esp_partition_t *ota_partition = esp_ota_get_next_update_partition(NULL);
 	ESP_ERROR_CHECK(esp_ota_begin(ota_partition, OTA_SIZE_UNKNOWN, &ota_handle));
-
+    flag_update_active = 1;
 	while (remaining > 0) {
 		int recv_len = httpd_req_recv(req, buf, MIN(remaining, sizeof(buf)));
 
@@ -163,12 +170,14 @@ esp_err_t update_post_handler(httpd_req_t *req)
 		// Serious Error: Abort OTA
 		} else if (recv_len <= 0) {
 			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Protocol Error");
+            flag_update_active = 0;
 			return ESP_FAIL;
 		}
 
 		// Successful Upload: Flash firmware chunk
 		if (esp_ota_write(ota_handle, (const void *)buf, recv_len) != ESP_OK) {
 			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Flash Error");
+            flag_update_active = 0;
 			return ESP_FAIL;
 		}
 
@@ -178,6 +187,7 @@ esp_err_t update_post_handler(httpd_req_t *req)
 	// Validate and switch to new OTA image and reboot
 	if (esp_ota_end(ota_handle) != ESP_OK || esp_ota_set_boot_partition(ota_partition) != ESP_OK) {
 			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Validation / Activation Error");
+            flag_update_active = 0;
 			return ESP_FAIL;
 	}
 

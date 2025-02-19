@@ -54,7 +54,7 @@ typedef enum {
     PARAMETER_SET_FUEL_CALC_FUNCTION,         // 39
     PARAMETER_SET_RPM_OPTIONS,         // 40
     PARAMETER_SET_TEMP_OPTIONS,         // 41
-    PARAMETER_SET_SIGNAL_OPTIONS,         // 41
+    PARAMETER_SET_SIGNAL_OPTIONS,         // 42
     // Additional parameters and functions
     PARAMETER_UPTIME = 123,
     PARAMETER_READ_ADDITION = 128,

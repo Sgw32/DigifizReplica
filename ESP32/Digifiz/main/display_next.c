@@ -2,7 +2,8 @@
 #include "reg_inout.h"
 #include "esp_log.h"
 #include "mjs.h"
-
+//If updating, do not display anything
+#include "digifiz_ws_server.h"
 
 #define TAG "display_next"
 #define SCRIPT_KEY "display_next_script"
@@ -1017,7 +1018,9 @@ void fireDigifiz() {
             uint8_t b = 0;
 
             getColorBySegmentNumber(led_num,&r,&g,&b);
-            led_strip_set_pixel(led_strip, led_num, 10,10,10);
+            if (get_update_in_progress())
+                bit=0;
+            //led_strip_set_pixel(led_strip, led_num, 10,10,10);
             if (bit)
             {
                 led_strip_set_pixel(led_strip, led_num, ((uint32_t)r*((uint32_t)backlightLevel))/100,
