@@ -66,6 +66,9 @@ static const ParameterMap parameter_map[] = {
     {"PARAMETER_SET_RPM_OPTIONS", PARAMETER_SET_RPM_OPTIONS},
     {"PARAMETER_SET_TEMP_OPTIONS", PARAMETER_SET_TEMP_OPTIONS},
     {"PARAMETER_SET_SIGNAL_OPTIONS", PARAMETER_SET_SIGNAL_OPTIONS},
+    {"PARAMETER_PULLUP_RESISTANCE_COOLANT", PARAMETER_PULLUP_RESISTANCE_COOLANT},
+    {"PARAMETER_PULLUP_RESISTANCE_OIL", PARAMETER_PULLUP_RESISTANCE_OIL},
+    {"PARAMETER_PULLUP_RESISTANCE_AMB", PARAMETER_PULLUP_RESISTANCE_AMB},
     {"PARAMETER_UPTIME", PARAMETER_UPTIME},
     {"PARAMETER_READ_ADDITION", PARAMETER_READ_ADDITION},
     {"PARAMETER_SET_HOUR", PARAMETER_SET_HOUR},
@@ -482,6 +485,18 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_SET_SIGNAL_OPTIONS\n");
         digifiz_parameters.sign_options.packed_options = value;
         break;
+      case PARAMETER_PULLUP_RESISTANCE_COOLANT:
+        printLnCString("PARAMETER_PULLUP_RESISTANCE_COOLANT\n");
+        digifiz_parameters.coolantThermistorPullUpRes = value;
+        break;
+      case PARAMETER_PULLUP_RESISTANCE_OIL:
+        printLnCString("PARAMETER_PULLUP_RESISTANCE_OIL\n");
+        digifiz_parameters.oilThermistorPullUpRes = value;
+        break;
+      case PARAMETER_PULLUP_RESISTANCE_AMB:
+        printLnCString("PARAMETER_PULLUP_RESISTANCE_AMB\n");
+        digifiz_parameters.ambThermistorPullUpRes = value;
+        break;
       case PARAMETER_UPTIME:
         printLnCString("PARAMETER_UPTIME\n");
         digifiz_parameters.uptime = value;
@@ -778,6 +793,18 @@ void processData(int parameter,long value)
       case PARAMETER_SET_SIGNAL_OPTIONS:
         printLnCString("PARAMETER_GET_SIGNAL_OPTIONS\n");
         printLnUINT8(digifiz_parameters.sign_options.packed_options);
+        break;
+      case PARAMETER_PULLUP_RESISTANCE_COOLANT:
+        printLnCString("PARAMETER_PULLUP_RESISTANCE_COOLANT\n");
+        printLnUINT32(digifiz_parameters.coolantThermistorPullUpRes);
+        break;
+      case PARAMETER_PULLUP_RESISTANCE_OIL:
+        printLnCString("PARAMETER_PULLUP_RESISTANCE_OIL\n");
+        printLnUINT32(digifiz_parameters.oilThermistorPullUpRes);
+        break;
+      case PARAMETER_PULLUP_RESISTANCE_AMB:
+        printLnCString("PARAMETER_PULLUP_RESISTANCE_AMB\n");
+        printLnUINT32(digifiz_parameters.ambThermistorPullUpRes);
         break;
       default:
         break;

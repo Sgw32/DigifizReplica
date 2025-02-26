@@ -161,9 +161,10 @@ void load_defaults()
     digifiz_parameters.backc_g = 240;
     digifiz_parameters.backc_b = 6;
     digifiz_parameters.rpmFilterK = 70;
-#ifdef MANUFACTURER_MFA_SWITCH
-    digifiz_parameters.digifiz_options.mfa_manufacturer = 1;
-#endif
+
+    digifiz_parameters.oilThermistorPullUpRes = 3300;//3300*220/(3300+220); //3300 or 3300 || 220
+    digifiz_parameters.ambThermistorPullUpRes = 3300;
+    digifiz_parameters.coolantThermistorPullUpRes = 220;
     
 #ifdef GALLONS
     digifiz_parameters.digifiz_options.option_gallons = 1;

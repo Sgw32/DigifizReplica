@@ -12,15 +12,17 @@
 #include "millis.h"
 
 #ifndef NEW_REVISION
-const float R2_Ambient = 3300.0f; //for Coolant
+float R2_Ambient = 3300.0f; //for Coolant
 #else
-const float R2_Ambient = 1000.0f; //for Coolant
+float R2_Ambient = 1000.0f; //for Coolant
 #endif
 
+float R2_Coolant = 220;
+
 #ifdef OIL_RES_10000
-const float R2_Oil = 3300;
+float R2_Oil = 3300;
 #else
-const float R2_Oil = 220;
+float R2_Oil = 220;
 #endif
 
 float R1_Coolant = COOLANT_R_AT_NORMAL_T; //for Coolant
@@ -192,6 +194,13 @@ void updateADCSettings()
     tauGasoline = (float)digifiz_parameters.tauTank*TAU*0.03;
     tauGasolineConsumption = (float)digifiz_parameters.tauTank*TAU*0.01;
     tankCapacity = digifiz_parameters.tankCapacity;
+
+    if (digifiz_parameters.oilThermistorPullUpRes>0)
+        R2_Oil = (float)digifiz_parameters.oilThermistorPullUpRes; //3300 or 3300 || 220
+    if (digifiz_parameters.ambThermistorPullUpRes>0)
+        R2_Ambient = (float)digifiz_parameters.ambThermistorPullUpRes; //3300
+    if (digifiz_parameters.coolantThermistorPullUpRes>0)
+        R2_Coolant = (float)digifiz_parameters.coolantThermistorPullUpRes; //220   
 }
 // Initialize the ADC
 void initADC() {
@@ -474,7 +483,7 @@ uint16_t getRawBrightnessLevel() {
 // Process coolant temperature data
 void processCoolantTemperature() {
     V0 = adc_raw.coolantRawADCVal;
-    R2 = 220.0f * V0 / (4095.0f - V0); //
+    R2 = R2_Coolant * V0 / (4095.0f - V0); //
     float temp1 = (log(R2/R1_Coolant)/coolantB);
     temp1 += 1/(25.0f+273.15f);
     coolantT += tauCoolant*(1.0f/temp1 - 273.15f - coolantT);
