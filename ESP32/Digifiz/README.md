@@ -1,4 +1,4 @@
-[![Build Digifiz Next](https://github.com/Sgw32/DigifizReplica/actions/workflows/main.yml/badge.svg)](https://github.com/Sgw32/DigifizReplica/actions/workflows/main.yml)
+[![Build Digifiz Next](https://github.com/Sgw32/DigifizReplica/actions/workflows/build_main.yml/badge.svg)](https://github.com/Sgw32/DigifizReplica/actions/workflows/build_main.yml)
 
 # Digifiz Replica Next
 
