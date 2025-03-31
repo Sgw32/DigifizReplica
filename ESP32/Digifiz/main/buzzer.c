@@ -2,7 +2,7 @@
 #include "esp_log.h"
 #include "reg_inout.h"
 
-extern digifiz_pars digifiz_parameters;
+// extern digifiz_pars digifiz_parameters;
 uint8_t buzzerIsOn;
  
 void initBuzzer()
@@ -40,5 +40,5 @@ void buzzerOff()
 
 uint8_t getBuzzerEnabled()
 {
-    return buzzerIsOn&&(!digifiz_parameters.buzzerOff);
+    return buzzerIsOn&&(!digifiz_parameters.buzzerOff.value);
 }

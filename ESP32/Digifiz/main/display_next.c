@@ -545,8 +545,8 @@ void setFuel(uint8_t litres) {
 // Set the RPM data
 void setRPMData(uint16_t inp_d) {
     // Implementation placeholder
-    if (inp_d>digifiz_parameters.maxRPM)
-        inp_d = digifiz_parameters.maxRPM;
+    if (inp_d>digifiz_parameters.maxRPM.value)
+        inp_d = digifiz_parameters.maxRPM.value;
     uint32_t data = (49*(uint32_t)inp_d)/8000;
     if (data<1)
         data=1;
@@ -772,28 +772,28 @@ void displayMFAType(uint8_t mfaType) {
             break;
         case MFA_STATE_TRIP_DISTANCE:
             display.mfa_dots&=0b00;
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
+            setMFADisplayedNumber((uint16_t)(digifiz_status.daily_mileage[digifiz_parameters.mfaBlock.value]/3600));
             setFloatDot(false);
             break;
         case MFA_STATE_TRIP_L100KM:
             display.mfa_dots&=0b00;
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
+            setMFADisplayedNumber((uint16_t)(digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]*100));
             //setMFADisplayedNumber((uint16_t)(getCurrentIntakeFuelConsumption()*100.0f));
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
             display.mfa_dots&=0b00;
-            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
+            setMFADisplayedNumber((uint16_t)fabs(digifiz_status.averageSpeed[digifiz_parameters.mfaBlock.value]));
             setFloatDot(false);
             break;
         case MFA_STATE_OIL_TEMP:
             display.mfa_dots&=0b00;
-            if (digifiz_parameters.digifiz_options.option_fahrenheit)
+            if (digifiz_parameters.option_fahrenheit.value)
             {
               setMFADisplayedNumber((int16_t)getOilTemperatureFahrenheit());
               setFloatDot(false);
             }
-            else if (digifiz_parameters.digifiz_options.option_kelvin)
+            else if (digifiz_parameters.option_kelvin.value)
             {
               setMFADisplayedNumber((int16_t)(getOilTemperature()+273.15f));
               setFloatDot(false);
@@ -806,12 +806,12 @@ void displayMFAType(uint8_t mfaType) {
             break;
         case MFA_STATE_AIR_TEMP:
             display.mfa_dots&=0b00;
-            if (digifiz_parameters.digifiz_options.option_fahrenheit)
+            if (digifiz_parameters.option_fahrenheit.value)
             {
               setMFADisplayedNumber((int16_t)getAmbientTemperatureFahrenheit());
               setFloatDot(false);
             }
-            else if (digifiz_parameters.digifiz_options.option_kelvin)
+            else if (digifiz_parameters.option_kelvin.value)
             { 
               setMFADisplayedNumber((int16_t)(getAmbientTemperature()+273.15f));
               setFloatDot(false);
@@ -905,7 +905,7 @@ void setBackWindowHeatIndicator(bool onoff)
 }
 void processIndicators()
 {
-    if (digifiz_parameters.sign_options.use_blink_other_inputs)
+    if (digifiz_parameters. signalOptions_use_blink_alt_in.value)
     {
         if (!digifiz_reg_in.fogLightsInd)
         {
@@ -990,22 +990,22 @@ uint16_t led_num = 0;
 void fireDigifiz() {
     led_num = 0;
     digifizStandard.scheme[redline_scheme_id-1].end_segment = COLORING_SCHEME_REDLINING_LIMIT-
-                                                digifiz_parameters.rpm_options.redline_segments;
-    if ((digifiz_parameters.mainc_r==0)&&
-        (digifiz_parameters.mainc_g==0)&&
-        (digifiz_parameters.mainc_b==0))
+                                                digifiz_parameters.rpmOptions_redline_segments.value;
+    if ((digifiz_parameters.mainc_r.value==0)&&
+        (digifiz_parameters.mainc_g.value==0)&&
+        (digifiz_parameters.mainc_b.value==0))
     {
-        digifiz_parameters.mainc_r = 180;
-        digifiz_parameters.mainc_g = 240;
-        digifiz_parameters.mainc_b = 6;
+        digifiz_parameters.mainc_r.value = 180;
+        digifiz_parameters.mainc_g.value = 240;
+        digifiz_parameters.mainc_b.value = 6;
     }
-    maincolor_r = digifiz_parameters.mainc_r;
-    maincolor_g = digifiz_parameters.mainc_g;
-    maincolor_b = digifiz_parameters.mainc_b;
+    maincolor_r = digifiz_parameters.mainc_r.value;
+    maincolor_g = digifiz_parameters.mainc_g.value;
+    maincolor_b = digifiz_parameters.mainc_b.value;
 
-    backcolor_r = digifiz_parameters.backc_r;
-    backcolor_g = digifiz_parameters.backc_g;
-    backcolor_b = digifiz_parameters.backc_b;
+    backcolor_r = digifiz_parameters.backc_r.value;
+    backcolor_g = digifiz_parameters.backc_g.value;
+    backcolor_b = digifiz_parameters.backc_b.value;
 
     uint8_t *ptr = (uint8_t*)&display;
     for (uint16_t i = 0; i != sizeof(DigifizNextDisplay); i++)

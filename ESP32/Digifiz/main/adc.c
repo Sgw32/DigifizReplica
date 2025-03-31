@@ -56,8 +56,6 @@ uint32_t consumptionCounter;
 extern float averageRPM;
 extern float spd_m_speedometer;
 
-extern digifiz_pars digifiz_parameters;
-
 adc_oneshot_unit_handle_t adc1_handle;
 adc_oneshot_unit_init_cfg_t init_config1 = {
     .unit_id = ADC_UNIT_1,
@@ -181,26 +179,26 @@ float constrain(float input, float min, float max)
 
 void updateADCSettings()
 {
-    coolantB = digifiz_parameters.coolantThermistorB;
-    oilB = digifiz_parameters.oilThermistorB;
-    airB = digifiz_parameters.airThermistorB;
-    R1_Coolant = digifiz_parameters.coolantThermistorDefRes;
-    R1_Oil = digifiz_parameters.oilThermistorDefRes;
-    R1_Ambient = digifiz_parameters.ambThermistorDefRes;
+    coolantB = digifiz_parameters.coolantThermistorB.value;
+    oilB = digifiz_parameters.oilThermistorB.value;
+    airB = digifiz_parameters.airThermistorB.value;
+    R1_Coolant = digifiz_parameters.coolantThermistorDefRes.value;
+    R1_Oil = digifiz_parameters.oilThermistorDefRes.value;
+    R1_Ambient = digifiz_parameters.ambThermistorDefRes.value;
 
-    tauCoolant = (float)digifiz_parameters.tauCoolant*TAU;
-    tauOil = (float)digifiz_parameters.tauOil*TAU*0.1;
-    tauAir = (float)digifiz_parameters.tauAir*TAU*0.1;
-    tauGasoline = (float)digifiz_parameters.tauTank*TAU*0.03;
-    tauGasolineConsumption = (float)digifiz_parameters.tauTank*TAU*0.01;
-    tankCapacity = digifiz_parameters.tankCapacity;
+    tauCoolant = (float)digifiz_parameters.tauCoolant.value*TAU;
+    tauOil = (float)digifiz_parameters.tauOil.value*TAU*0.1;
+    tauAir = (float)digifiz_parameters.tauAir.value*TAU*0.1;
+    tauGasoline = (float)digifiz_parameters.tauTank.value*TAU*0.03;
+    tauGasolineConsumption = (float)digifiz_parameters.tauTank.value*TAU*0.01;
+    tankCapacity = digifiz_parameters.tankCapacity.value;
 
-    if (digifiz_parameters.oilThermistorPullUpRes>0)
-        R2_Oil = (float)digifiz_parameters.oilThermistorPullUpRes; //3300 or 3300 || 220
-    if (digifiz_parameters.ambThermistorPullUpRes>0)
-        R2_Ambient = (float)digifiz_parameters.ambThermistorPullUpRes; //3300
-    if (digifiz_parameters.coolantThermistorPullUpRes>0)
-        R2_Coolant = (float)digifiz_parameters.coolantThermistorPullUpRes; //220   
+    if (digifiz_parameters.oilThermistorPullUpRes.value>0)
+        R2_Oil = (float)digifiz_parameters.oilThermistorPullUpRes.value; //3300 or 3300 || 220
+    if (digifiz_parameters.ambThermistorPullUpRes.value>0)
+        R2_Ambient = (float)digifiz_parameters.ambThermistorPullUpRes.value; //3300
+    if (digifiz_parameters.coolantThermistorPullUpRes.value>0)
+        R2_Coolant = (float)digifiz_parameters.coolantThermistorPullUpRes.value; //220   
 }
 // Initialize the ADC
 void initADC() {
@@ -294,10 +292,10 @@ uint8_t getGallonsInTank() {
 uint8_t getDisplayedCoolantTemp() {
     static uint8_t alarm = 0;
     static uint32_t lastMillis = 0;
-    uint8_t minSegments = digifiz_parameters.temp_options.sensor_connected_ind ? 1 : 0;
+    uint8_t minSegments = digifiz_parameters.tempOptions_sensor_connected_ind.value ? 1 : 0;
     //if minSegments was set to 1 (connected int) - and sensor not connected, reset it anyway. 
     
-    if ((coolantT>120.0f)&&digifiz_parameters.temp_options.alarm_function)
+    if ((coolantT>120.0f)&&digifiz_parameters.tempOptions_alarm_function.value)
     {
         if ((millis()-lastMillis)>TEMPERATURE_ALARM_PERIOD)
         {
@@ -322,20 +320,20 @@ uint8_t getDisplayedCoolantTemp() {
     
     #ifdef AUDI_DISPLAY
     //16 LEDs
-    return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin)/
-            (digifiz_parameters.coolantMax - digifiz_parameters.coolantMin)*16.0f),0,16.0f);
+    return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin.value)/
+            (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*16.0f),0,16.0f);
     #endif
     #ifdef AUDI_RED_DISPLAY
         //17 LEDs
-        return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin)/
-                (digifiz_parameters.coolantMax - digifiz_parameters.coolantMin)*17.0f),0,17.0f);
+        return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin.value)/
+                (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*17.0f),0,17.0f);
 
     #endif
 
     #if !defined(AUDI_RED_DISPLAY) && !defined(AUDI_DISPLAY)
         //14 LEDs
-        return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin)/
-                (digifiz_parameters.coolantMax - digifiz_parameters.coolantMin)*14.0f),minSegments,14.0f); 
+        return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin.value)/
+                (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*14.0f),minSegments,14.0f); 
     
     #endif   
 }
@@ -343,8 +341,8 @@ uint8_t getDisplayedCoolantTemp() {
 // Get the original displayed coolant temperature
 uint8_t getDisplayedCoolantTempOrig() {
     //20 LCD segments
-    return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin)/
-            (digifiz_parameters.coolantMax - digifiz_parameters.coolantMin)*20.0f),0,20.0f); 
+    return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin.value)/
+            (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*20.0f),0,20.0f); 
 }
 
 // Get the coolant temperature in Celsius
@@ -403,7 +401,7 @@ float getFuelConsumption()
 float getIntakePressure() {
     static float intp=0;
     V0 = adc_raw.intakePressRawADCVal;
-    if (digifiz_parameters.sign_options.enable_consumption_sensor)
+    if (digifiz_parameters.signalOptions_enable_consumption_sensor.value)
     {
         intp+=(V0-intp)*0.1f;
     }
@@ -466,13 +464,13 @@ float getAmbientTemperatureFahrenheit() {
 uint8_t getBrightnessLevel() {
     lightLevel += (getRawBrightnessLevel()-lightLevel)*0.03f;
     float m_lightLevel = lightLevel;
-    if (digifiz_parameters.sign_options.invert_light_input)
+    if (digifiz_parameters.signalOptions_invert_light_input.value)
     {
         //~2200 - darkness
         //~10-50 - lightness
         m_lightLevel = constrain(800.0f-m_lightLevel,0, 800.0f);
     }
-    return (uint8_t)constrain((m_lightLevel-300.0f)/8,6,digifiz_parameters.brightnessLevel); //0..0.3V -> 0..400 (of 4095)
+    return (uint8_t)constrain((m_lightLevel-300.0f)/8,6,digifiz_parameters.brightnessLevel.value); //0..0.3V -> 0..400 (of 4095)
 }
 
 // Get the raw brightness level
@@ -502,22 +500,22 @@ void processOilTemperature() {
 void processGasLevel() {
     //TODO add values
     V0 = adc_raw.fuelRawADCVal;
-    R2 = constrain(220 * V0 / (4095.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 220 Ohm in series with fuel sensor
+    R2 = constrain(220 * V0 / (4095.0f - V0),digifiz_parameters.tankMinResistance.value,digifiz_parameters.tankMaxResistance.value); // 220 Ohm in series with fuel sensor
     float R2scaled = 0.0f;
-    if (digifiz_parameters.digifiz_options.option_linear_fuel)
+    if (digifiz_parameters.option_linear_fuel.value)
     {
         R2scaled = (((float)R2-
-                    digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                                                        digifiz_parameters.tankMinResistance));
+                    digifiz_parameters.tankMinResistance.value)/(digifiz_parameters.tankMaxResistance.value-
+                                                        digifiz_parameters.tankMinResistance.value));
     }
     else
     {
         //This formula is valid only for range tankMinResistance/tankMaxResistance 35/265
         //So if range is different, adjust R2 accordingly
-        R2 = R2 - digifiz_parameters.tankMinResistance; //0-230 Range
+        R2 = R2 - digifiz_parameters.tankMinResistance.value; //0-230 Range
         //Adjust for new range:
         //equals 1 if they are 265/35, otherwise adjusted for range 265/35:
-        R2 *= (265.0f-35.0f)/(digifiz_parameters.tankMaxResistance-digifiz_parameters.tankMinResistance);
+        R2 *= (265.0f-35.0f)/(digifiz_parameters.tankMaxResistance.value-digifiz_parameters.tankMinResistance.value);
         R2 += 35.0f; //New range: 265-35
         R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f; //This is a polynome calculated using VAG sensor gauge
     }
@@ -566,12 +564,12 @@ void processFirstOilTemperature() {
 void processFirstGasLevel() {
     V0 = adc_raw.fuelRawADCVal;
     float R2scaled = 0.0f;
-    R2 = constrain(220 * V0 / (4095.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
-    if (digifiz_parameters.digifiz_options.option_linear_fuel)
+    R2 = constrain(220 * V0 / (4095.0f - V0),digifiz_parameters.tankMinResistance.value,digifiz_parameters.tankMaxResistance.value); // 330 Ohm in series with fuel sensor
+    if (digifiz_parameters.option_linear_fuel.value)
     {
         R2scaled = (((float)R2-
-              digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                                                digifiz_parameters.tankMinResistance));
+              digifiz_parameters.tankMinResistance.value)/(digifiz_parameters.tankMaxResistance.value-
+                                                digifiz_parameters.tankMinResistance.value));
     }
     else
     {
