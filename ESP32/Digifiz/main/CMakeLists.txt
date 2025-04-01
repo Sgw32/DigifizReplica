@@ -12,7 +12,6 @@ idf_component_register(SRCS "mjs.c" "vehicle_data.c" "digifiz_time.c" "digifiz_w
 INCLUDE_DIRS "."
 REQUIRES  
     nvs_wifi_connect
-    xparam
     esp_http_server 
     esp_wifi
     mdns
@@ -20,7 +19,6 @@ REQUIRES
     esp_adc
     json
     app_update
-    driver
 EMBED_FILES 
 data/digifiz_ws_connect.html
 data/style.css

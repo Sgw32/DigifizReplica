@@ -47,6 +47,7 @@ float spd_m_speedometer = 0;
 int spd_m_speedometerCnt = 0; //spd_m_speedometerCnt
 float current_averageSpeed = 0;
 
+extern digifiz_pars digifiz_parameters;
 
 //RPM-related data
 float averageRPM = 0;
@@ -95,7 +96,7 @@ void set_time() {
 
     int diff_minutes = 0;
     
-    if (digifiz_parameters.mfaBlock.value)
+    if (digifiz_parameters.mfaBlock)
     {
         diff_minutes = diff_seconds2 / 60;
     }
@@ -118,8 +119,8 @@ void set_time() {
     
     sinceStart_hours = diff_hours;
     sinceStart_minutes = diff_minutes;
-    digifiz_status.duration[0]=(uint16_t)fabs(diff_seconds1);
-    digifiz_status.duration[1]=(uint16_t)fabs(diff_seconds2);
+    digifiz_parameters.duration[0]=(uint16_t)fabs(diff_seconds1);
+    digifiz_parameters.duration[1]=(uint16_t)fabs(diff_seconds2);
 }
 
 // Shutdown handler function
@@ -157,8 +158,8 @@ void adcLoop(void *pvParameters) {
         set_speed_kmh(spd_m_speedometer);
         set_rpm(rpm);
         set_fuel_level_l(getLitresInTank());
-        set_uptime_h(digifiz_status.uptime);
-        set_mileage_km(digifiz_status.mileage);
+        set_uptime_h(digifiz_parameters.uptime);
+        set_mileage_km(digifiz_parameters.mileage);
         set_fuel_consumption_l100(getFuelConsumption());
         set_intake_voltage_v(getIntakeVoltage());
         set_fuel_pressure_bar(getFuelPressure());
@@ -178,32 +179,32 @@ void digifizLoop(void *pvParameters) {
         xSemaphoreTake(displayMutex, portMAX_DELAY); // Take the mutex
         set_time();
         setRPMData(averageRPM);
-        digifiz_status.mileage+=spd_m;
-        digifiz_status.daily_mileage[digifiz_parameters.mfaBlock.value]+=spd_m;
+        digifiz_parameters.mileage+=spd_m;
+        digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]+=spd_m;
 #ifdef AVERAGE_CONSUMPTION_L100KM
-        digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value] += 0.01f*(getCurrentIntakeFuelConsumption()-digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]);//getFuelConsumption()*digifiz_parameters.tankCapacity;
+        digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] += 0.01f*(getCurrentIntakeFuelConsumption()-digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]);//getFuelConsumption()*digifiz_parameters.tankCapacity;
 #endif
 #ifdef CURRENT_CONSUMPTION_L100KM
-        digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock.value] = getCurrentIntakeFuelConsumption();//getFuelConsumption()*digifiz_parameters.tankCapacity;
+        digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] = getCurrentIntakeFuelConsumption();//getFuelConsumption()*digifiz_parameters.tankCapacity;
 #endif
-        setMileage(uptimeDisplayEnabled ? (digifiz_status.uptime/3600) : (digifiz_status.mileage/3600)); //to km
+        setMileage(uptimeDisplayEnabled ? (digifiz_parameters.uptime/3600) : (digifiz_parameters.mileage/3600)); //to km
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
-        setDailyMileage((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock.value]/3600));
+        setDailyMileage((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
 #endif
 
         saveParametersCounter++;
-        setBacklight(digifiz_parameters.backlight_on.value ? true : false);
+        setBacklight(digifiz_parameters.backlight_on ? true : false);
         if (saveParametersCounter==EEPROM_SAVE_INTERVAL)
         {
-            digifiz_status.averageSpeed[digifiz_parameters.mfaBlock.value] = current_averageSpeed;
+            digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock] = current_averageSpeed;
             saveParameters();
             saveParametersCounter=0;
             //pressMFAMode();
             //setAudiOptions(0x6);
         }
         checkEmergency(rpm);
-        setMFABlock(digifiz_parameters.mfaBlock.value ? 0 : 1); //in display h
-        displayMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState.value);
+        setMFABlock(digifiz_parameters.mfaBlock ? 0 : 1); //in display h
+        displayMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState);
         setDot(false);
         //printf("Reg in: %u %u %u\n", digifiz_reg_in.bytes[0], digifiz_reg_in.bytes[1], digifiz_reg_in.mfaReset);
         xSemaphoreGive(displayMutex); // Give back the mutex
@@ -232,8 +233,8 @@ void displayUpdate(void *pvParameters) {
         spd_m = readLastSpeed();
         if (spd_m>0)
         {
-            spd_m *= digifiz_parameters.speedCoefficient.value; //to kmh (or to miles? - why not)
-            if (digifiz_parameters.option_miles.value)
+            spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
+            if (digifiz_parameters.digifiz_options.option_miles)
                 spd_m *= 0.6214;
             spd_m /= 100;
         }
@@ -247,14 +248,14 @@ void displayUpdate(void *pvParameters) {
         rpm = readLastRPM(); 
         if (rpm>0)
         {
-            if((getRPMDispertion()<digifiz_parameters.medianDispFilterThreshold.value)) //30 or LESS!!!
+            if((getRPMDispertion()<digifiz_parameters.medianDispFilterThreshold)) //30 or LESS!!!
             {
                 //50 Hz - 1500 rev/min
                 //rpmCoefficient = 3000 for Golf 2/Mk2 gasoline
                 //rpmCoefficient = 1500 for Audi 80 b2
-                rpm *= digifiz_parameters.rpmCoefficient.value/100; //4 cylinder motor, 60 sec in min, 2 strokes per revolution
+                rpm *= digifiz_parameters.rpmCoefficient/100; //4 cylinder motor, 60 sec in min, 2 strokes per revolution
                 
-                averageRPM += ((rpm-averageRPM)*digifiz_parameters.rpmFilterK.value)/1000;
+                averageRPM += ((rpm-averageRPM)*digifiz_parameters.rpmFilterK)/1000;
             }
         }
         else
@@ -280,11 +281,11 @@ void displayUpdate(void *pvParameters) {
                 spd_m_speedometer=0;
 #endif
             displaySpeedCnt = 0;
-            printf("Status T RPM:%d %f %f %f %f\n",getDisplayedCoolantTemp(),getCoolantTemperature(),(float)((getCoolantTemperature()-digifiz_parameters.coolantMin.value)/
-                 (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*14.0f), averageRPM, spd_m_speedometer);
+            printf("Status T RPM:%d %f %f %f %f\n",getDisplayedCoolantTemp(),getCoolantTemperature(),(float)((getCoolantTemperature()-digifiz_parameters.coolantMin)/
+                 (digifiz_parameters.coolantMax - digifiz_parameters.coolantMin)*14.0f), averageRPM, spd_m_speedometer);
         }
 
-        if (digifiz_parameters.option_gallons.value)
+        if (digifiz_parameters.digifiz_options.option_gallons)
         {
             fuel = getGallonsInTank();
             if (fuel<2)
@@ -306,7 +307,7 @@ void displayUpdate(void *pvParameters) {
         processIndicators();
         if (millis()>2000)
         {
-            setBrightness(digifiz_parameters.autoBrightness.value ? getBrightnessLevel() : digifiz_parameters.brightnessLevel.value);
+            setBrightness(digifiz_parameters.autoBrightness ? getBrightnessLevel() : digifiz_parameters.brightnessLevel);
         }
         else
         {
@@ -315,7 +316,7 @@ void displayUpdate(void *pvParameters) {
 
         setRPMData(averageRPM);
         fireDigifiz();
-        setMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState.value);
+        setMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState);
         processMFA();
         regout_all(digifiz_reg_out.byte);
         regin_read(digifiz_reg_in.bytes);
@@ -342,10 +343,10 @@ void initDigifiz(void)
     // Convert current time to struct tm
     localtime_r(&current_time_t, &saved_time1);
     localtime_r(&current_time_t, &saved_time2);
-    seconds_block1 = digifiz_status.duration[0];
-    seconds_block2 = digifiz_status.duration[1];
+    seconds_block1 = digifiz_parameters.duration[0];
+    seconds_block2 = digifiz_parameters.duration[1];
     printf("Sec block1,2: %u %u", seconds_block1, seconds_block2);
-    current_averageSpeed = digifiz_status.averageSpeed[digifiz_parameters.mfaBlock.value];
+    current_averageSpeed = digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock];
     digifiz_reg_out.byte = 0;
     ESP_LOGI(LOG_TAG, "initDigifiz ended");
 }

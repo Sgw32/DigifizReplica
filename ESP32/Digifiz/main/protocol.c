@@ -13,6 +13,7 @@ uint32_t statusTime;
 
 extern float spd_m_speedometer;
 extern float averageRPM;
+extern digifiz_pars digifiz_parameters; 
 #define MAX_SIZE 512
 char ws_data_send[MAX_SIZE];
 char tmp_buffer[12];  // uint8_t can be at most 3 digits + null terminator
@@ -116,9 +117,9 @@ static void setMainTemplateColor(char* color_values)
       // Successfully parsed RGB values
       printLnCString("Successfully set new colors.\n");
       printf("Received RGB values: R=%u, G=%u, B=%u\n", r, g, b);
-      digifiz_parameters.mainc_r.value = r;
-      digifiz_parameters.mainc_g.value = g;
-      digifiz_parameters.mainc_b.value = b;
+      digifiz_parameters.mainc_r = r;
+      digifiz_parameters.mainc_g = g;
+      digifiz_parameters.mainc_b = b;
   } else {
       // Failed to parse the values
       printLnCString("Invalid color format.\n");
@@ -135,9 +136,9 @@ static void setBacklightTemplateColor(char* color_values)
       // Successfully parsed RGB values
       printLnCString("Successfully set new colors.\n");
       printf("Received RGB values: R=%u, G=%u, B=%u\n", r, g, b);
-      digifiz_parameters.backc_r.value = r;
-      digifiz_parameters.backc_g.value = g;
-      digifiz_parameters.backc_b.value = b;
+      digifiz_parameters.backc_r = r;
+      digifiz_parameters.backc_g = g;
+      digifiz_parameters.backc_b = b;
   } else {
       // Failed to parse the values
       printLnCString("Invalid color format.\n");
@@ -175,29 +176,29 @@ static void printHelp()
 {
   printLnCString("Digifiz Replica by PHOL-LABS.\n");
   printLnCString("Your dashboard is:\n");
-  if (digifiz_parameters.option_mfa_manufacturer.value)
+  if (digifiz_parameters.digifiz_options.mfa_manufacturer)
     printLnCString("MFA ON\n");
   else
     printLnCString("MFA OFF\n");
 
-  if (digifiz_parameters.option_miles.value)
+  if (digifiz_parameters.digifiz_options.option_miles)
     printLnCString("MPH\n");
   else
     printLnCString("KMH\n");
-  if (digifiz_parameters.option_fahrenheit.value)
+  if (digifiz_parameters.digifiz_options.option_fahrenheit)
     printLnCString("Fahrenheit\n");
   else
   {
-    if (digifiz_parameters.option_kelvin.value)
+    if (digifiz_parameters.digifiz_options.option_kelvin)
       printLnCString("Lelvin\n");
     else
       printLnCString("Celsium\n");
   }
-  if (digifiz_parameters.option_gallons.value)
+  if (digifiz_parameters.digifiz_options.option_gallons)
     printLnCString("Gallons\n");
   else
     printLnCString("Liters\n");
-  printLnUINT32(digifiz_parameters.maxRPM.value);
+  printLnUINT32(digifiz_parameters.maxRPM);
   printLnCString(" RPM\n");
 }
 
@@ -307,125 +308,125 @@ void processData(int parameter,long value)
     {
       case PARAMETER_RPMCOEFFICIENT:
         printLnCString("PARAMETER_RPMCOEFFICIENT\n");
-        digifiz_parameters.rpmCoefficient.value = value;
+        digifiz_parameters.rpmCoefficient = value;
         break;
       case PARAMETER_SPEEDCOEEFICIENT:
         printLnCString("PARAMETER_SPEEDCOEEFICIENT\n");
-        digifiz_parameters.speedCoefficient.value = value;
+        digifiz_parameters.speedCoefficient = value;
         break;
       case PARAMETER_COOLANTTHERMISTORB:
         printLnCString("PARAMETER_COOLANTTHERMISTORB\n");
-        digifiz_parameters.coolantThermistorB.value = value;
+        digifiz_parameters.coolantThermistorB = value;
         updateADCSettings();
         break;  
       case PARAMETER_OILTHERMISTORB:
         printLnCString("PARAMETER_OILTHERMISTORB\n");
-        digifiz_parameters.oilThermistorB.value = value;
+        digifiz_parameters.oilThermistorB = value;
         updateADCSettings();
         break;  
       case PARAMETER_AIRTHERMISTORB:
         printLnCString("PARAMETER_AIRTHERMISTORB\n");
-        digifiz_parameters.airThermistorB.value = value;
+        digifiz_parameters.airThermistorB = value;
         updateADCSettings();
         break;  
       case PARAMETER_TANKMINRESISTANCE:
         printLnCString("PARAMETER_TANKMINRESISTANCE\n");
-        digifiz_parameters.tankMinResistance.value = value;
+        digifiz_parameters.tankMinResistance = value;
         updateADCSettings();
         break;  
       case PARAMETER_TANKMAXRESISTANCE:
         printLnCString("PARAMETER_TANKMAXRESISTANCE\n");
-        digifiz_parameters.tankMaxResistance.value = value;
+        digifiz_parameters.tankMaxResistance = value;
         updateADCSettings();
         break; 
       case PARAMETER_TAU_COOLANT:
         printLnCString("PARAMETER_TAU_COOLANT\n");
-        digifiz_parameters.tauCoolant.value = value;
+        digifiz_parameters.tauCoolant = value;
         updateADCSettings();
         break;
       case PARAMETER_TAU_OIL:
         printLnCString("PARAMETER_TAU_OIL\n");
-        digifiz_parameters.tauOil.value = value;
+        digifiz_parameters.tauOil = value;
         updateADCSettings();
         break;
       case PARAMETER_TAU_AIR:
         printLnCString("PARAMETER_TAU_AIR\n");
-        digifiz_parameters.tauAir.value = value;
+        digifiz_parameters.tauAir = value;
         updateADCSettings();
         break;
       case PARAMETER_TAU_TANK:
         printLnCString("PARAMETER_TAU_TANK\n");
-        digifiz_parameters.tauTank.value = value;
+        digifiz_parameters.tauTank = value;
         updateADCSettings();
         break;
       case PARAMETER_MILEAGE:
         printLnCString("PARAMETER_MILEAGE\n");
-        digifiz_status.mileage = (uint32_t)value*3600;
+        digifiz_parameters.mileage = (uint32_t)value*3600;
         break;
       case PARAMETER_DAILY_MILEAGE:
         printLnCString("PARAMETER_DAILY_MILEAGE\n");
-        digifiz_status.daily_mileage[digifiz_parameters.mfaBlock.value] = value;
+        digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock] = value;
         break;
       case PARAMETER_AUTO_BRIGHTNESS:
         printLnCString("PARAMETER_AUTO_BRIGHTNESS\n");
-        digifiz_parameters.autoBrightness.value = value;
+        digifiz_parameters.autoBrightness = value;
         break;
       case PARAMETER_BRIGHTNESS_LEVEL:
         printLnCString("PARAMETER_BRIGHTNESS_LEVEL\n");
-        digifiz_parameters.brightnessLevel.value = value;
+        digifiz_parameters.brightnessLevel = value;
         break;
       case PARAMETER_TANK_CAPACITY:
         printLnCString("PARAMETER_TANK_CAPACITY\n");
-        digifiz_parameters.tankCapacity.value = value;
+        digifiz_parameters.tankCapacity = value;
         updateADCSettings();
         break;
       case PARAMETER_MFA_STATE:
         printLnCString("PARAMETER_MFA_STATE\n");
-        digifiz_parameters.mfaState.value = value;
+        digifiz_parameters.mfaState = value;
         break;
       case PARAMETER_BUZZER_OFF:
         printLnCString("PARAMETER_BUZZER_OFF\n");
-        digifiz_parameters.buzzerOff.value = value;
+        digifiz_parameters.buzzerOff = value;
         break;
       case PARAMETER_MAX_RPM:
         printLnCString("PARAMETER_MAX_RPM\n");
-        digifiz_parameters.maxRPM.value = value;
+        digifiz_parameters.maxRPM = value;
         break;
       case PARAMETER_NORMAL_RESISTANCE_COOLANT:
         printLnCString("PARAMETER_NORMAL_RESISTANCE_COOLANT\n");
-        digifiz_parameters.coolantThermistorDefRes.value = value;
+        digifiz_parameters.coolantThermistorDefRes = value;
         updateADCSettings();
         break;
       case PARAMETER_NORMAL_RESISTANCE_OIL:
         printLnCString("PARAMETER_NORMAL_RESISTANCE_OIL\n");
-        digifiz_parameters.oilThermistorDefRes.value = value;
+        digifiz_parameters.oilThermistorDefRes = value;
         updateADCSettings();
         break;
       case PARAMETER_NORMAL_RESISTANCE_AMB:
         printLnCString("PARAMETER_NORMAL_RESISTANCE_AMB\n");
-        digifiz_parameters.ambThermistorDefRes.value = value;
+        digifiz_parameters.ambThermistorDefRes = value;
         updateADCSettings();
         break;
       case PARAMETER_DOT_OFF:
         printLnCString("PARAMETER_DOT_OFF\n");
-        digifiz_parameters.displayDot.value = value;
+        digifiz_parameters.displayDot = value;
         break;
       case PARAMETER_BACKLIGHT_ON:
         printLnCString("PARAMETER_BACKLIGHT_ON\n");
-        digifiz_parameters.backlight_on.value = value;
+        digifiz_parameters.backlight_on = value;
         break;
       case PARAMETER_M_D_FILTER:
         printLnCString("PARAMETER_M_D_FILTER\n");
-        digifiz_parameters.medianDispFilterThreshold.value = value;
+        digifiz_parameters.medianDispFilterThreshold = value;
         break;
       case PARAMETER_COOLANT_MAX_R:
         printLnCString("PARAMETER_COOLANT_MAX_R\n");
-        digifiz_parameters.coolantMax.value = value;
+        digifiz_parameters.coolantMax = value;
         updateADCSettings();
         break;
       case PARAMETER_COOLANT_MIN_R:
         printLnCString("PARAMETER_COOLANT_MIN_R\n");
-        digifiz_parameters.coolantMin.value = value;
+        digifiz_parameters.coolantMin = value;
         updateADCSettings();
         break;
       case PARAMETER_COMMAND_MFA_RESET:
@@ -442,63 +443,63 @@ void processData(int parameter,long value)
         break;
       case PARAMETER_MAINCOLOR_R:
         printLnCString("PARAMETER_MAINCOLOR_R\n");
-        digifiz_parameters.mainc_r.value = value;
+        digifiz_parameters.mainc_r = value;
         break;
       case PARAMETER_MAINCOLOR_G:
         printLnCString("PARAMETER_MAINCOLOR_G\n");
-        digifiz_parameters.mainc_g.value = value;
+        digifiz_parameters.mainc_g = value;
         break;
       case PARAMETER_MAINCOLOR_B:
         printLnCString("PARAMETER_MAINCOLOR_B\n");
-        digifiz_parameters.mainc_b.value = value;
+        digifiz_parameters.mainc_b = value;
         break;
       case PARAMETER_BACKCOLOR_R:
         printLnCString("PARAMETER_BACKCOLOR_R\n");
-        digifiz_parameters.backc_r.value = value;
+        digifiz_parameters.backc_r = value;
         break;
       case PARAMETER_BACKCOLOR_G:
         printLnCString("PARAMETER_BACKCOLOR_G\n");
-        digifiz_parameters.backc_g.value = value;
+        digifiz_parameters.backc_g = value;
         break;
       case PARAMETER_BACKCOLOR_B:
         printLnCString("PARAMETER_BACKCOLOR_B\n");
-        digifiz_parameters.backc_b.value = value;
+        digifiz_parameters.backc_b = value;
         break;
       case PARAMETER_RPM_FILTER:
         printLnCString("PARAMETER_RPM_FILTER\n");
-        digifiz_parameters.rpmFilterK.value = value;
+        digifiz_parameters.rpmFilterK = value;
         break;
       case PARAMETER_SET_FUEL_CALC_FUNCTION:
         printLnCString("PARAMETER_SET_FUEL_CALC_FUNCTION\n");
-        // digifiz_parameters.option_linear_fuel.value = value&1;
+        digifiz_parameters.digifiz_options.option_linear_fuel = value&1;
         break;
       case PARAMETER_SET_RPM_OPTIONS:
         printLnCString("PARAMETER_SET_RPM_OPTIONS\n");
-        // digifiz_parameters.rpm_options.packed_options.value = value;
+        digifiz_parameters.rpm_options.packed_options = value;
         break;
       case PARAMETER_SET_TEMP_OPTIONS:
         printLnCString("PARAMETER_SET_TEMP_OPTIONS\n");
-        // digifiz_parameters.temp_options.packed_options.value = value;
+        digifiz_parameters.temp_options.packed_options = value;
         break;
       case PARAMETER_SET_SIGNAL_OPTIONS:
         printLnCString("PARAMETER_SET_SIGNAL_OPTIONS\n");
-        // digifiz_parameters.sign_options.packed_options.value = value;
+        digifiz_parameters.sign_options.packed_options = value;
         break;
       case PARAMETER_PULLUP_RESISTANCE_COOLANT:
         printLnCString("PARAMETER_PULLUP_RESISTANCE_COOLANT\n");
-        digifiz_parameters.coolantThermistorPullUpRes.value = value;
+        digifiz_parameters.coolantThermistorPullUpRes = value;
         break;
       case PARAMETER_PULLUP_RESISTANCE_OIL:
         printLnCString("PARAMETER_PULLUP_RESISTANCE_OIL\n");
-        digifiz_parameters.oilThermistorPullUpRes.value = value;
+        digifiz_parameters.oilThermistorPullUpRes = value;
         break;
       case PARAMETER_PULLUP_RESISTANCE_AMB:
         printLnCString("PARAMETER_PULLUP_RESISTANCE_AMB\n");
-        digifiz_parameters.ambThermistorPullUpRes.value = value;
+        digifiz_parameters.ambThermistorPullUpRes = value;
         break;
       case PARAMETER_UPTIME:
         printLnCString("PARAMETER_UPTIME\n");
-        digifiz_status.uptime = value;
+        digifiz_parameters.uptime = value;
         break;  
       default:
         break;
@@ -515,34 +516,34 @@ void processData(int parameter,long value)
     else if (par==PARAMETER_TOGGLE_MILES)
     {
       printLnCString("PARAMETER_TOGGLE_MILES\n");
-      if (!(digifiz_parameters.option_miles.value))
-        digifiz_parameters.option_miles.value = 1;
+      if (!(digifiz_parameters.digifiz_options.option_miles))
+        digifiz_parameters.digifiz_options.option_miles = 1;
       else
-        digifiz_parameters.option_miles.value = 0;
+        digifiz_parameters.digifiz_options.option_miles = 0;
     }
     else if (par==PARAMETER_TOGGLE_GALLONS)
     {
       printLnCString("PARAMETER_TOGGLE_GALLONS\n");
-      if (!(digifiz_parameters.option_gallons.value))
-        digifiz_parameters.option_gallons.value = 1;
+      if (!(digifiz_parameters.digifiz_options.option_gallons))
+        digifiz_parameters.digifiz_options.option_gallons = 1;
       else
-        digifiz_parameters.option_gallons.value = 0;
+        digifiz_parameters.digifiz_options.option_gallons = 0;
     }
     else if (par==PARAMETER_TOGGLE_FAHRENHEIT)
     {
       printLnCString("PARAMETER_TOGGLE_FAHRENHEIT\n");
-      if (!(digifiz_parameters.option_fahrenheit.value))
-        digifiz_parameters.option_fahrenheit.value = 1;
+      if (!(digifiz_parameters.digifiz_options.option_fahrenheit))
+        digifiz_parameters.digifiz_options.option_fahrenheit = 1;
       else
-        digifiz_parameters.option_fahrenheit.value = 0;
+        digifiz_parameters.digifiz_options.option_fahrenheit = 0;
     }
     else if (par==PARAMETER_TOGGLE_TOUCH_SENSOR)
     {
       printLnCString("PARAMETER_TOGGLE_TOUCH_SENSOR\n");
-      if (!(digifiz_parameters.signalOptions_enable_touch_sensor.value))
-        digifiz_parameters.signalOptions_enable_touch_sensor.value = 1;
+      if (!(digifiz_parameters.sign_options.enable_touch_sensor))
+        digifiz_parameters.sign_options.enable_touch_sensor = 1;
       else
-        digifiz_parameters.signalOptions_enable_touch_sensor.value = 0;
+        digifiz_parameters.sign_options.enable_touch_sensor = 0;
     }
     else if (par==PARAMETER_SAVE_PARAMS)
     {
@@ -561,7 +562,7 @@ void processData(int parameter,long value)
         if (par==PARAMETER_RESET_DAILY_MILEAGE)
         {
           printLnCString("PARAMETER_RESET_DAILY_MILEAGE\n");
-          digifiz_status.daily_mileage[digifiz_parameters.mfaBlock.value] = 0;
+          digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock] = 0;
         }
       }
     }
@@ -584,7 +585,7 @@ void processData(int parameter,long value)
     switch(par)
     {
       case PARAMETER_GET_ACCUMULATED_UPTIME:
-        printLnFloat(digifiz_status.uptime);
+        printLnFloat(digifiz_parameters.uptime);
         break;
       case PARAMETER_GET_COOLANT_TEMPERATURE:
         printLnCString("PARAMETER_GET_COOLANT_TEMPERATURE\n");
@@ -643,167 +644,167 @@ void processData(int parameter,long value)
     {
       case PARAMETER_RPMCOEFFICIENT:
         printLnCString("PARAMETER_RPMCOEFFICIENT\n");
-        printLnFloat(digifiz_parameters.rpmCoefficient.value);
+        printLnFloat(digifiz_parameters.rpmCoefficient);
         break;
       case PARAMETER_SPEEDCOEEFICIENT:
         printLnCString("PARAMETER_SPEEDCOEEFICIENT\n");
-        printLnFloat(digifiz_parameters.speedCoefficient.value);
+        printLnFloat(digifiz_parameters.speedCoefficient);
         break;
       case PARAMETER_COOLANTTHERMISTORB:
         printLnCString("PARAMETER_COOLANTTHERMISTORB\n");
-        printLnFloat(digifiz_parameters.coolantThermistorB.value);
+        printLnFloat(digifiz_parameters.coolantThermistorB);
         break;  
       case PARAMETER_OILTHERMISTORB:
         printLnCString("PARAMETER_OILTHERMISTORB\n");
-        printLnFloat(digifiz_parameters.oilThermistorB.value);
+        printLnFloat(digifiz_parameters.oilThermistorB);
         break;  
       case PARAMETER_AIRTHERMISTORB:
         printLnCString("PARAMETER_AIRTHERMISTORB\n");
-        printLnFloat(digifiz_parameters.airThermistorB.value);
+        printLnFloat(digifiz_parameters.airThermistorB);
         break;  
       case PARAMETER_TANKMINRESISTANCE:
         printLnCString("PARAMETER_TANKMINRESISTANCE\n");
-        printLnFloat(digifiz_parameters.tankMinResistance.value);
+        printLnFloat(digifiz_parameters.tankMinResistance);
         break;  
       case PARAMETER_TANKMAXRESISTANCE:
         printLnCString("PARAMETER_TANKMAXRESISTANCE\n");
-        printLnFloat(digifiz_parameters.tankMaxResistance.value);
+        printLnFloat(digifiz_parameters.tankMaxResistance);
         break; 
       case PARAMETER_TAU_COOLANT:
         printLnCString("PARAMETER_TAU_COOLANT\n");
-        printLnFloat(digifiz_parameters.tauCoolant.value);
+        printLnFloat(digifiz_parameters.tauCoolant);
         break;
       case PARAMETER_TAU_OIL:
         printLnCString("PARAMETER_TAU_OIL\n");
-        printLnUINT32(digifiz_parameters.tauOil.value);
+        printLnUINT32(digifiz_parameters.tauOil);
         break;
       case PARAMETER_TAU_AIR:
         printLnCString("PARAMETER_TAU_AIR\n");
-        printLnUINT32(digifiz_parameters.tauAir.value);
+        printLnUINT32(digifiz_parameters.tauAir);
         break;
       case PARAMETER_TAU_TANK:
         printLnCString("PARAMETER_TAU_TANK\n");
-        printLnUINT32(digifiz_parameters.tauTank.value);
+        printLnUINT32(digifiz_parameters.tauTank);
         break;
       case PARAMETER_MILEAGE:
         printLnCString("PARAMETER_MILEAGE\n");
-        printLnUINT32(digifiz_status.mileage);
+        printLnUINT32(digifiz_parameters.mileage);
         break;
       case PARAMETER_DAILY_MILEAGE:
         printLnCString("PARAMETER_DAILY_MILEAGE\n");
-        printLnUINT32(digifiz_status.daily_mileage[digifiz_parameters.mfaBlock.value]);
+        printLnUINT32(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]);
         break;
       case PARAMETER_AUTO_BRIGHTNESS:
         printLnCString("PARAMETER_AUTO_BRIGHTNESS\n");
-        printLnUINT8(digifiz_parameters.autoBrightness.value);
+        printLnUINT8(digifiz_parameters.autoBrightness);
         break;
       case PARAMETER_BRIGHTNESS_LEVEL:
         printLnCString("PARAMETER_BRIGHTNESS_LEVEL\n");
-        printLnUINT8(digifiz_parameters.brightnessLevel.value);
+        printLnUINT8(digifiz_parameters.brightnessLevel);
         break;
       case PARAMETER_TANK_CAPACITY:
         printLnCString("PARAMETER_TANK_CAPACITY\n");
-        printLnUINT8(digifiz_parameters.tankCapacity.value);
+        printLnUINT8(digifiz_parameters.tankCapacity);
         break;
       case PARAMETER_MFA_STATE:
         printLnCString("PARAMETER_MFA_STATE\n");
-        printLnUINT8(digifiz_parameters.mfaState.value);
+        printLnUINT8(digifiz_parameters.mfaState);
         break;
       case PARAMETER_BUZZER_OFF:
         printLnCString("PARAMETER_BUZZER_OFF\n");
-        printLnUINT8(digifiz_parameters.buzzerOff.value);
+        printLnUINT8(digifiz_parameters.buzzerOff);
         break;
       case PARAMETER_MAX_RPM:
         printLnCString("PARAMETER_MAX_RPM\n");
-        printLnUINT32(digifiz_parameters.maxRPM.value);
+        printLnUINT32(digifiz_parameters.maxRPM);
         break;
       case PARAMETER_NORMAL_RESISTANCE_COOLANT:
         printLnCString("PARAMETER_NORMAL_RESISTANCE_COOLANT\n");
-        printLnUINT32(digifiz_parameters.coolantThermistorDefRes.value);
+        printLnUINT32(digifiz_parameters.coolantThermistorDefRes);
         break;
       case PARAMETER_NORMAL_RESISTANCE_OIL:
         printLnCString("PARAMETER_NORMAL_RESISTANCE_OIL\n");
-        printLnUINT32(digifiz_parameters.oilThermistorDefRes.value);
+        printLnUINT32(digifiz_parameters.oilThermistorDefRes);
         break;
       case PARAMETER_NORMAL_RESISTANCE_AMB:
         printLnCString("PARAMETER_NORMAL_RESISTANCE_AMB\n");
-        printLnUINT32(digifiz_parameters.ambThermistorDefRes.value);
+        printLnUINT32(digifiz_parameters.ambThermistorDefRes);
         break;
       case PARAMETER_DOT_OFF:
         printLnCString("PARAMETER_DOT_OFF\n");
-        printLnUINT32(digifiz_parameters.displayDot.value);
+        printLnUINT32(digifiz_parameters.displayDot);
         break;
       case PARAMETER_BACKLIGHT_ON:
         printLnCString("PARAMETER_BACKLIGHT_ON\n");
-        printLnUINT8(digifiz_parameters.backlight_on.value);
+        printLnUINT8(digifiz_parameters.backlight_on);
         break;
       case PARAMETER_M_D_FILTER:
         printLnCString("PARAMETER_M_D_FILTER\n");
-        printLnUINT8(digifiz_parameters.medianDispFilterThreshold.value);
+        printLnUINT8(digifiz_parameters.medianDispFilterThreshold);
         break;
       case PARAMETER_COOLANT_MAX_R:
         printLnCString("PARAMETER_COOLANT_MAX_R\n");
-        printLnUINT8(digifiz_parameters.coolantMax.value);
+        printLnUINT8(digifiz_parameters.coolantMax);
         break;
       case PARAMETER_COOLANT_MIN_R:
         printLnCString("PARAMETER_COOLANT_MIN_R\n");
-        printLnUINT8(digifiz_parameters.coolantMin.value);
+        printLnUINT8(digifiz_parameters.coolantMin);
         break;
       case PARAMETER_MAINCOLOR_R:
         printLnCString("PARAMETER_MAINCOLOR_R\n");
-        printLnUINT8(digifiz_parameters.mainc_r.value);
+        printLnUINT8(digifiz_parameters.mainc_r);
         break;
       case PARAMETER_MAINCOLOR_G:
         printLnCString("PARAMETER_MAINCOLOR_G\n");
-        printLnUINT8(digifiz_parameters.mainc_g.value);
+        printLnUINT8(digifiz_parameters.mainc_g);
         break;
       case PARAMETER_MAINCOLOR_B:
         printLnCString("PARAMETER_MAINCOLOR_B\n");
-        printLnUINT8(digifiz_parameters.mainc_b.value);
+        printLnUINT8(digifiz_parameters.mainc_b);
         break;
       case PARAMETER_BACKCOLOR_R:
         printLnCString("PARAMETER_BACKCOLOR_R\n");
-        printLnUINT8(digifiz_parameters.backc_r.value);
+        printLnUINT8(digifiz_parameters.backc_r);
         break;
       case PARAMETER_BACKCOLOR_G:
         printLnCString("PARAMETER_BACKCOLOR_G\n");
-        printLnUINT8(digifiz_parameters.backc_g.value);
+        printLnUINT8(digifiz_parameters.backc_g);
         break;
       case PARAMETER_BACKCOLOR_B:
         printLnCString("PARAMETER_BACKCOLOR_B\n");
-        printLnUINT8(digifiz_parameters.backc_b.value);
+        printLnUINT8(digifiz_parameters.backc_b);
         break;
       case PARAMETER_RPM_FILTER:
         printLnCString("PARAMETER_RPM_FILTER\n");
-        printLnUINT8(digifiz_parameters.rpmFilterK.value);
+        printLnUINT8(digifiz_parameters.rpmFilterK);
         break;
       case PARAMETER_SPEED_FILTER:
         printLnCString("PARAMETER_SPEED_FILTER\n");
-        printLnUINT8(digifiz_parameters.speedFilterK.value);
+        printLnUINT8(digifiz_parameters.speedFilterK);
         break;
-      case PARAMETER_SET_RPM_OPTIONS: //TODO: move to new params
+      case PARAMETER_SET_RPM_OPTIONS:
         printLnCString("PARAMETER_GET_RPM_OPTIONS\n");
-        // printLnUINT8(digifiz_parameters.rpmOptions_redline_segments.value);
+        printLnUINT8(digifiz_parameters.rpm_options.packed_options);
         break;
       case PARAMETER_SET_TEMP_OPTIONS:
         printLnCString("PARAMETER_GET_TEMP_OPTIONS\n");
-        // printLnUINT8(digifiz_parameters.tempOptions_alarm_function.value);
+        printLnUINT8(digifiz_parameters.temp_options.packed_options);
         break;
       case PARAMETER_SET_SIGNAL_OPTIONS:
         printLnCString("PARAMETER_GET_SIGNAL_OPTIONS\n");
-        // printLnUINT8(digifiz_parameters.signalOptions_use_blink_alt_in.value);
+        printLnUINT8(digifiz_parameters.sign_options.packed_options);
         break;
       case PARAMETER_PULLUP_RESISTANCE_COOLANT:
         printLnCString("PARAMETER_PULLUP_RESISTANCE_COOLANT\n");
-        printLnUINT32(digifiz_parameters.coolantThermistorPullUpRes.value);
+        printLnUINT32(digifiz_parameters.coolantThermistorPullUpRes);
         break;
       case PARAMETER_PULLUP_RESISTANCE_OIL:
         printLnCString("PARAMETER_PULLUP_RESISTANCE_OIL\n");
-        printLnUINT32(digifiz_parameters.oilThermistorPullUpRes.value);
+        printLnUINT32(digifiz_parameters.oilThermistorPullUpRes);
         break;
       case PARAMETER_PULLUP_RESISTANCE_AMB:
         printLnCString("PARAMETER_PULLUP_RESISTANCE_AMB\n");
-        printLnUINT32(digifiz_parameters.ambThermistorPullUpRes.value);
+        printLnUINT32(digifiz_parameters.ambThermistorPullUpRes);
         break;
       default:
         break;
@@ -864,7 +865,7 @@ void protocolParse(char* buf, uint8_t len)
                 }
                 else if (strcmp(cmd_buffer_par,"test_mode")==0)
                 {
-                    digifiz_parameters.option_testmode_on.value=!digifiz_parameters.option_testmode_on.value;
+                    digifiz_parameters.digifiz_options.testmode_on=!digifiz_parameters.digifiz_options.testmode_on;
                 }
                 else if (strcmp(cmd_buffer_par,"set_c_main")==0)
                 {
