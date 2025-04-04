@@ -37,14 +37,6 @@ typedef enum{
 	XPARAM_STRING,
 }xparam_vtype_t;
 
-typedef enum{
-	XPARAM_LOAD_OK,
-	XPARAM_LOAD_NO_MAGIC,
-	XPARAM_LOAD_MISSING_DATA,
-}xparam_load_status;
-
-
-
 #define _COMMON_PARAM_FIELDS() \
 		char*					p_name;		\
 		char*					p_info;		\
@@ -52,8 +44,8 @@ typedef enum{
 		float					min;		\
 		float					max;		\
 		float					step_size;  \
-		void 			(*print_cb)(struct xparam_s* param, char* buf); \
-		uint8_t 		(*change_cb)(struct xparam_s* param, int16_t steps); \
+		int 			(*print_cb)(struct xparam_s* param, char* buf);  /*return number of written chars*/ \
+		uint8_t 		(*change_cb)(struct xparam_s* param, int16_t steps);  /*return 1 if change was within limits*/ \
 		char*			field_name;			\
 
 typedef struct xparam_s{
@@ -67,31 +59,31 @@ typedef struct{
 	int32_t					value;
 	_COMMON_PARAM_FIELDS()
 }xparam_I32_t;
-// static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_I32_t),
-// 		"xparams module expects identical size of parameters");
+static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_I32_t),
+		"xparams module expects identical size of parameters");
 
 typedef struct{
 	bool					value;
 	_COMMON_PARAM_FIELDS()
 }xparam_BOOL_t;
-// static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_BOOL_t),
-// 		"xparams module expects identical size of parameters");
+static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_BOOL_t),
+		"xparams module expects identical size of parameters");
 
 typedef struct{
 	int16_t					value;
 	uint16_t				_zero;
 	_COMMON_PARAM_FIELDS()
 }xparam_I16_t;
-// static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_I16_t),
-// 		"xparams module expects identical size of parameters");
+static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_I16_t),
+		"xparams module expects identical size of parameters");
 
 typedef struct{
 	uint16_t				value;
 	uint16_t				_zero;
 	_COMMON_PARAM_FIELDS()
 }xparam_U16_t;
-// static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_U16_t),
-// 		"xparams module expects identical size of parameters");
+static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_U16_t),
+		"xparams module expects identical size of parameters");
 
 typedef struct{
 	int8_t					value;
@@ -99,8 +91,8 @@ typedef struct{
 	uint16_t				_zero2;
 	_COMMON_PARAM_FIELDS()
 }xparam_I8_t;
-// static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_I8_t),
-// 		"xparams module expects identical size of parameters");
+static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_I8_t),
+		"xparams module expects identical size of parameters");
 
 typedef struct{
 	uint8_t					value;
@@ -108,22 +100,22 @@ typedef struct{
 	uint16_t				_zero2;
 	_COMMON_PARAM_FIELDS()
 }xparam_U8_t;
-// static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_U8_t),
-// 		"xparams module expects identical size of parameters");
+static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_U8_t),
+		"xparams module expects identical size of parameters");
 
 typedef struct{
 	float					value;
 	_COMMON_PARAM_FIELDS()
 }xparam_FLOAT_t;
-// static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_FLOAT_t),
-// 		"xparams module expects identical size of parameters");
+static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_FLOAT_t),
+		"xparams module expects identical size of parameters");
 
 typedef struct{
 	char*					value;
 	_COMMON_PARAM_FIELDS()
 }xparam_STRING_t;
-// static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_STRING_t),
-// 		"xparams module expects identical size of parameters");
+static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_STRING_t),
+		"xparams module expects identical size of parameters");
 
 typedef struct{
     xparam_t* params;
@@ -197,19 +189,35 @@ static_assert(	sizeof(xparam_store_t)  == 16,
 
 
 /* Exported functions --------------------------------------------------------*/
-// get data blob from provided table, user needs to free returned pointer
+
+/*
+ * Get data blob from provided table, user needs to free returned pointer.
+ * Could return NULL if malloc fails.
+ */
 uint8_t* xparam_table_to_blob(xparam_table_t* table);
 
-// load table values from data blob, return 1 if table was found in blob
-uint8_t xparam_table_from_blob(xparam_table_t* table, uint8_t* buf);
+/*
+ * Load table values from data blob.
+ * Return 1 if table was found in blob, 0 if no table is found.
+ */
+uint8_t  xparam_table_from_blob(xparam_table_t* table, uint8_t* buf);
 
-// copy parameter value converted to string to provided buffer
-void 	xparam_stringify(xparam_t* param, char* buf);
+/*
+ * Copy parameter value converted to string to provided buffer.
+ */
+int 	 xparam_stringify(xparam_t* param, char* buf);
 
-// increment/decrement parameter by number of steps
-uint8_t xparam_step_value(xparam_t* param, int16_t n_steps);
+/*
+ * Increment/decrement parameter by number of steps.
+ * Returns 0 if change would violate parameter limits and parameter value didn't change.
+ */
+uint8_t  xparam_step_value(xparam_t* param, int16_t n_steps);
 
-char* xparam_table_to_json(xparam_table_t* table, char* buf);
+/*
+ * Convert parameter table to json string.
+ * User needs to free the returned pointer. Could return NULL if malloc fails.
+ */
+char*    xparam_table_to_json(xparam_table_t* table);
 
 #ifdef __cplusplus
 }

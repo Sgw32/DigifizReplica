@@ -61,41 +61,40 @@ uint32_t xparam_get_value_crc(uint32_t data){
     return xparam_crc32((uint8_t*)&data, sizeof(uint32_t));
 }
 
-char* xparam_value_type_str(xparam_vtype_t vtype, char* buf){
+int xparam_value_type_str(xparam_vtype_t vtype, char* buf){
 	switch (vtype) {
 		case XPARAM_NONE:
+			return 0;
 			break;
 		case XPARAM_U8:
-			buf += sprintf(buf, "uint8_t");
+			return sprintf(buf, "uint8_t");
 			break;
 		case XPARAM_BOOL:
-			buf += sprintf(buf, "bool");
+			return sprintf(buf, "bool");
 			break;
 		case XPARAM_I8:
-			buf += sprintf(buf, "int8_t");
+			return sprintf(buf, "int8_t");
 			break;
 		case XPARAM_U16:
-			buf += sprintf(buf, "uint16_t");
+			return sprintf(buf, "uint16_t");
 			break;
 		case XPARAM_I16:
-			buf += sprintf(buf, "int16_t");
+			return sprintf(buf, "int16_t");
 			break;
 		case XPARAM_U32:
-			buf += sprintf(buf, "uint32_t");
+			return sprintf(buf, "uint32_t");
 			break;
 		case XPARAM_I32:
-			buf += sprintf(buf, "int32_t");
+			return sprintf(buf, "int32_t");
 			break;
 		case XPARAM_FLOAT:
-			buf += sprintf(buf, "float");
+			return sprintf(buf, "float");
 			break;
 		case XPARAM_STRING:
-			buf += sprintf(buf, "str");
+			return sprintf(buf, "str");
 			break;
-
 	}
-
-	return buf;
+	return 0;
 }
 
 
@@ -124,14 +123,14 @@ uint8_t xparam_table_from_blob(xparam_table_t* table, uint8_t* buf)
 {
     xparam_img_t* img = (xparam_img_t*)buf;
 	if (img->header.magic == XPARAM_MAGIC){
-		for (uint32_t i = 0; i < table->n_params; i++){
+		for (int i = 0; i < table->n_params; i++){
 			xparam_t* param = &table->params[i];
             if (param->value_type == XPARAM_STRING){
                 continue;
             }
 			uint32_t key_calc = xparam_get_key(param);
             uint8_t found = 0;
-			for (uint32_t j = 0; j < img->header.n_params; j++){
+			for (int j = 0; j < img->header.n_params; j++){
 				// find parameter by crc
 				if (img->params[j].key == key_calc){
                     uint32_t crc_calc = xparam_get_value_crc(img->params[j].data);
@@ -141,7 +140,7 @@ uint8_t xparam_table_from_blob(xparam_table_t* table, uint8_t* buf)
                     }
                     else{
                         LOG("XPARAM load table:"
-                            "Value data corrupted for parameter #%lu %s."
+                            "Value data corrupted for parameter #%d %s."
                             "Default value keept.\n", i, param->p_name);
                     }
                     found = 1;
@@ -149,7 +148,7 @@ uint8_t xparam_table_from_blob(xparam_table_t* table, uint8_t* buf)
 			}
 			if(!found){
                 LOG("XPARAM load table:"
-                    "Missing data for parameter #%lu %s."
+                    "Missing data for parameter #%d %s."
                     "Default value keept.\n", i, param->p_name);
             }
 		}
@@ -162,54 +161,53 @@ uint8_t xparam_table_from_blob(xparam_table_t* table, uint8_t* buf)
 
 
 #define PRINTF_FLOAT_SUPPORT
-
-void xparam_stringify(xparam_t* param, char* buf)
+// returns size of written string
+int xparam_stringify(xparam_t* param, char* buf)
 {
 	if (param->print_cb){
-		param->print_cb(param, buf);
-		return;
+		return param->print_cb(param, buf);
 	}
 	if (XPARAM_U32 == param->value_type){
-		sprintf(buf,"%lu" , param->value);
+		return sprintf(buf,"%lu" , (unsigned long) param->value);
 	}
 	else if (XPARAM_I32 == param->value_type){
         xparam_I32_t* p_param = (xparam_I32_t*)param;
-		sprintf(buf,"%li" , p_param->value);
+		return sprintf(buf,"%li" , (long) p_param->value);
 	}
 	else if (XPARAM_BOOL == param->value_type){
 
 		xparam_BOOL_t* p_param = (xparam_BOOL_t*)param;
 		if (p_param->value){
-			sprintf(buf,"true");
+			return sprintf(buf,"true");
 		}
 		else{
-			sprintf(buf,"false");
+			return sprintf(buf,"false");
 		}
 	}
 	else if (XPARAM_U16 == param->value_type){
         xparam_U16_t* p_param = (xparam_U16_t*)param;
-		sprintf(buf,"%u" , p_param->value);
+		return sprintf(buf,"%u" , p_param->value);
 	}
 	else if (XPARAM_I16 == param->value_type){
         xparam_I16_t* p_param = (xparam_I16_t*)param;
-		sprintf(buf,"%i" , p_param->value);
+		return sprintf(buf,"%i" , p_param->value);
 	}
 	else if (XPARAM_U8 == param->value_type){
         xparam_U8_t* p_param = (xparam_U8_t*)param;
-		sprintf(buf,"%u" , p_param->value);
+		return sprintf(buf,"%u" , p_param->value);
 	}
 	else if (XPARAM_I8 == param->value_type){
         xparam_I8_t* p_param = (xparam_I8_t*)param;
-		sprintf(buf,"%i" , p_param->value);
+		return sprintf(buf,"%i" , p_param->value);
 	}
 	else if (XPARAM_STRING == param->value_type){
         xparam_STRING_t* p_param = (xparam_STRING_t*)param;
-		sprintf(buf, "%s", p_param->value);
+		return sprintf(buf, "%s", p_param->value);
 	}
 	else if (XPARAM_FLOAT == param->value_type){
         xparam_FLOAT_t* p_param = (xparam_FLOAT_t*)param;
 #ifdef PRINTF_FLOAT_SUPPORT
-		sprintf((char*)buf,"%.4f" , p_param->value);
+		return sprintf((char*)buf,"%.4f" , p_param->value);
 		// the line above should work but sometimes it doesn't even if printf float support is enabled
 		// here is an alternative method
 //		float d = param_p->value;
@@ -241,8 +239,11 @@ void xparam_stringify(xparam_t* param, char* buf)
 				rem = 0;
 			}
 		}
-		sprintf(&buf[offset],"%d.%02u", div, rem);
+		return sprintf(&buf[offset],"%d.%02u", div, rem);
 #endif
+	}
+	else {
+		return 0;
 	}
 }
 
@@ -313,6 +314,30 @@ uint8_t xparam_step_value(xparam_t* param, int16_t n_steps)
 	return 0;
 }
 
+// {"params":[
+// {"name":"","value":,"info":"","type":"","min":,"max":,"step":,"id":"966e826e"}
+// , ---
+//]}
+size_t xparam_get_json_buf_size(xparam_table_t* table){
+	size_t size = 11;
+	char val_buf[50];
+	for (int i = 0; i < table->n_params; i++){
+		xparam_t* param = &table->params[i];
+		if(i!=0){size+=1;} //comma for array members
+		size += 78; //json field names + constant size data
+		size += strlen(param->p_name);
+		size += strlen(param->p_info);
+		size += xparam_stringify(param, val_buf);
+		size += xparam_value_type_str(param->value_type, val_buf);
+		size += sprintf(val_buf, "%.4f", param->min);
+		size += sprintf(val_buf, "%.4f", param->max);
+		size += sprintf(val_buf, "%.4f", param->step_size);
+	}
+	size+=2; //closing brackets
+	size+=1; //zero termination
+	return size;
+}
+
 char* xparam_to_json(xparam_t* param, char* buf){
 	buf += sprintf(buf, "{\"name\":\"%s\",", param->p_name);
 	char str_buf[40];
@@ -330,17 +355,23 @@ char* xparam_to_json(xparam_t* param, char* buf){
 	buf += sprintf(buf, "\"max\":%.4f,", param->max);
 	buf += sprintf(buf, "\"step\":%.4f,", param->step_size);
 	// buf += sprintf(buf, "\"field_name\":\"%s\",", param->field_name);
-	buf += sprintf(buf, "\"id\":\"%08lx\"}", xparam_get_key(param));
+	buf += sprintf(buf, "\"id\":\"%08lx\"}", (unsigned long) xparam_get_key(param));
 	return buf;
 }
 
-char* xparam_table_to_json(xparam_table_t* table, char* buf){
+char* xparam_table_to_json(xparam_table_t* table){
+	char* ret = malloc(xparam_get_json_buf_size(table));
+	if (ret == NULL){
+		LOG("xparam_table_to_json: buffer malloc failed!");
+		return ret;
+	}
+	char* buf = ret;
 	buf += sprintf(buf, "{\"params\":[");
 	for (int i = 0; i< table->n_params; i++){
 		if(i!=0){ buf += sprintf(buf, ",");	}
 		buf = xparam_to_json(&table->params[i], buf);
 	}
 	buf += sprintf(buf, "]}");
-	return buf;
+	return ret;
 }
 
