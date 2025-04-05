@@ -21,7 +21,6 @@ xparam_table_t params_table = {
     .params = (xparam_t*)&digifiz_parameters,
     .n_params = XPARAM_COUNT(digifiz_parameters),
 };
-const char* memory_blocks[] = {"s1","s2","s3"};
 
 // bool checkInternalMagicBytes()
 // {
@@ -65,11 +64,11 @@ void saveParameters()
     if (err != ESP_OK) {
         printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
     } else {
-        // Write data to NVS
-        ESP_LOGI(TAG, "writing to NVS...");
+        // Write parameters data to NVS
+        ESP_LOGI(TAG, "writing parameters to NVS...");
         uint8_t* blob_data = xparam_table_to_blob(&params_table);
         if (blob_data){
-            nvs_set_blob(my_handle, memory_blocks[memory_block_selected], blob_data, XPARAM_IMAGE_SIZE(params_table.n_params));
+            nvs_set_blob(my_handle, "store", blob_data, XPARAM_IMAGE_SIZE(params_table.n_params));
             // Commit changes to NVS
             err = nvs_commit(my_handle);
             if (err != ESP_OK) {
@@ -81,108 +80,59 @@ void saveParameters()
         else{
             ESP_LOGE(TAG, "Data blob malloc failed during parameters store.");
         }
+        
+        // Write status data
+        ESP_LOGI(TAG, "writing status to NVS...");
+        nvs_set_blob(my_handle, "status", (uint8_t*)&digifiz_status, sizeof(digifiz_status));
+        // Commit changes to NVS
+        err = nvs_commit(my_handle);
+        if (err != ESP_OK) {
+            printf("Error (%s) committing data to NVS!\n", esp_err_to_name(err));
+        }
+        else{
+            ESP_LOGI(TAG, "write ok");
+        }
+
         // Close NVS
         nvs_close(my_handle);
     }
 }
 
-uint8_t getCurrentMemoryBlock()
-{
-  return memory_block_selected;
-}
-
-
 void load_defaults()
 {
-//     digifiz_parameters.header[0] = 'D';
-//     digifiz_parameters.header[1] = 'I';
-//     digifiz_parameters.header[2] = 'G';
-//     digifiz_parameters.header[3] = 'I';
-
-// #if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
-//     digifiz_parameters.rpmCoefficient = 3000;
-// #else
-//     digifiz_parameters.rpmCoefficient = 1500;
-// #endif
-//     digifiz_parameters.speedCoefficient = 100;
-//     digifiz_parameters.coolantThermistorB = COOLANT_THERMISTOR_B;
-//     digifiz_parameters.oilThermistorB = OIL_THERMISTOR_B;
-//     digifiz_parameters.airThermistorB = AIR_THERMISTOR_B;
-//     digifiz_parameters.tankMinResistance = 35;
-//     digifiz_parameters.tankMaxResistance = 265;
-//     digifiz_parameters.tauCoolant = 2;
-//     digifiz_parameters.tauOil = 2;
-//     digifiz_parameters.tauAir = 2;
-//     digifiz_parameters.tauTank = 2;
-//     digifiz_parameters.mileage = DEFAULT_MILEAGE*3600L;
-//     digifiz_parameters.daily_mileage[0] = 0;
-//     digifiz_parameters.daily_mileage[1] = 0;
-//     digifiz_parameters.autoBrightness = 1;
-//     digifiz_parameters.brightnessLevel = 25;
-// #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
-//     digifiz_parameters.tankCapacity = 70;
-// #else
-//     digifiz_parameters.tankCapacity = 63;//55;
-// #endif
-//     digifiz_parameters.mfaState = 0;
-//     digifiz_parameters.buzzerOff = 1;
-// #ifdef RPM_8000
-// #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
-//     digifiz_parameters.maxRPM = 7000; //Audi digifiz supports only 7000 RPM
-// #else
-//     digifiz_parameters.maxRPM = 8000;
-// #endif
-// #else
-//     digifiz_parameters.maxRPM = 7000;
-// #endif
-// #ifdef DIESEL_MODE
-//     digifiz_parameters.maxRPM = 6000;
-// #endif
-//     digifiz_parameters.mfaBlock = 0; //0 or 1
-//     digifiz_parameters.averageConsumption[0] = 0;
-//     digifiz_parameters.averageConsumption[1] = 0;
-//     digifiz_parameters.averageSpeed[0] = 0;
-//     digifiz_parameters.averageSpeed[1] = 0;
-//     digifiz_parameters.duration[0] = 0;
-//     digifiz_parameters.duration[1] = 0;
-//     digifiz_parameters.displayDot = 0;
-//     digifiz_parameters.backlight_on = 1; 
-//     digifiz_parameters.coolantMin = 60;
-//     digifiz_parameters.coolantMax = 120;
-//     digifiz_parameters.medianDispFilterThreshold = 65535; // value below will pass
-//     digifiz_parameters.coolantThermistorDefRes = COOLANT_R_AT_NORMAL_T;
-//     digifiz_parameters.oilThermistorDefRes = OIL_R_AT_NORMAL_T;
-//     digifiz_parameters.ambThermistorDefRes = AMBIENT_R_AT_NORMAL_T;
-//     digifiz_parameters.uptime = 0;
-//     digifiz_parameters.digifiz_options.packed_options = 0;
-//     digifiz_parameters.mainc_r = 180;
-//     digifiz_parameters.mainc_g = 240;
-//     digifiz_parameters.mainc_b = 6;
-//     digifiz_parameters.backc_r = 180;
-//     digifiz_parameters.backc_g = 240;
-//     digifiz_parameters.backc_b = 6;
-//     digifiz_parameters.rpmFilterK = 70;
-
-//     digifiz_parameters.oilThermistorPullUpRes = 3300;//3300*220/(3300+220); //3300 or 3300 || 220
-//     digifiz_parameters.ambThermistorPullUpRes = 3300;
-//     digifiz_parameters.coolantThermistorPullUpRes = 220;
-    
-// #ifdef GALLONS
-//     digifiz_parameters.digifiz_options.option_gallons = 1;
-// #endif
-
-// #ifdef MILES
-//     digifiz_parameters.digifiz_options.option_miles = 1;
-// #endif
-
-// #ifdef FAHRENHEIT 
-//     digifiz_parameters.digifiz_options.option_fahrenheit = 1;
-// #endif
-
-// #ifdef KELVIN 
-//     digifiz_parameters.digifiz_options.option_kelvin = 1;
-// #endif
-//     computeCRC();
+    ESP_LOGI(TAG, "Restoring default parameter values...");
+    nvs_handle_t my_handle;
+    esp_err_t err = nvs_open("digifiz", NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) {
+        printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
+    } 
+    else
+    {
+        size_t blob_len = 0;
+        err = nvs_get_blob(my_handle, "default", NULL, &blob_len);
+        if (err == ESP_OK){
+            // found nvs key
+            uint8_t* blob = malloc(blob_len);
+            if (blob){
+                ESP_LOGI(TAG, "Malloc %d bytes.", blob_len);
+                nvs_get_blob(my_handle, "default", blob, &blob_len);
+                xparam_table_from_blob(&params_table, blob);
+                ESP_LOGI(TAG, "Default parameter values loaded.");
+                nvs_close(my_handle);
+                free(blob);
+            }
+            else{
+                ESP_LOGE(TAG, "Blob malloc failed when reading parameters.");
+            }
+        }
+        else if (err == ESP_ERR_NVS_NOT_FOUND){
+            nvs_close(my_handle);
+            ESP_LOGW(TAG, "NVS key default not found.");
+        }
+        else{
+            printf("Error (%s) opening NVS key!\n", esp_err_to_name(err));
+        }
+    }
 }
 
 
@@ -207,41 +157,84 @@ void initEEPROM()
     return;
     #endif
 
-    esp_err_t err2 = nvs_open("digifiz", NVS_READWRITE, &my_handle);
-    if (err2 != ESP_OK) {
-        printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err2));
+    err = nvs_open("digifiz", NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) {
+        printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
     } 
     else
     {
-        size_t blob_len = 0;
-        // first get length of stored data
-        nvs_get_blob(my_handle, memory_blocks[memory_block_selected], NULL, &blob_len);
-        uint8_t* blob = malloc(blob_len);
-        if (blob){
-            ESP_LOGI(TAG, "Malloc %d bytes.", blob_len);
-            nvs_get_blob(my_handle, memory_blocks[memory_block_selected], blob, &blob_len);
-            if (xparam_table_from_blob(&params_table, blob)){
-                ESP_LOGI(TAG, "Parameters load done.");
-                nvs_close(my_handle);
+        // check if default data was stored
+        ESP_LOGI(TAG, "Checking for default data");
+        size_t default_len = 0;
+        err = nvs_get_blob(my_handle, "default", NULL, &default_len);
+        if ((err == ESP_ERR_NVS_NOT_FOUND) || (default_len != XPARAM_IMAGE_SIZE(params_table.n_params))){
+            // no default data or old data
+            ESP_LOGW(TAG, "No default data found. Storing...");
+            uint8_t* blob_data = xparam_table_to_blob(&params_table);
+            if (blob_data){
+                nvs_set_blob(my_handle, "default", blob_data, XPARAM_IMAGE_SIZE(params_table.n_params));
+                // Commit changes to NVS
+                err = nvs_commit(my_handle);
+                if (err != ESP_OK) {
+                    printf("Error (%s) committing data to NVS!\n", esp_err_to_name(err));
+                }
+                free(blob_data);
+                ESP_LOGI(TAG, "write ok");
             }
             else{
-                nvs_close(my_handle);
-                ESP_LOGW(TAG, "No parameters image found. Loading default.");
-                saveParameters();
+                ESP_LOGE(TAG, "Data blob malloc failed during parameters store.");
             }
-            free(blob);
+        }
+
+        // load parameters
+        // first get length of stored data
+        size_t blob_len = 0;
+        err = nvs_get_blob(my_handle, "store", NULL, &blob_len);
+        if (err == ESP_OK){
+            // found nvs key
+            uint8_t* blob = malloc(blob_len);
+            if (blob){
+                ESP_LOGI(TAG, "Malloc %d bytes.", blob_len);
+                nvs_get_blob(my_handle, "store", blob, &blob_len);
+                if (xparam_table_from_blob(&params_table, blob)){
+                    ESP_LOGI(TAG, "Parameters load done.");
+                }
+                else{
+                    ESP_LOGW(TAG, "No parameters image found. Loading default.");
+                    saveParameters();
+                }
+                free(blob);
+            }
+            else{
+                ESP_LOGE(TAG, "Blob malloc failed when reading parameters.");
+            }
+        }
+        else if (err == ESP_ERR_NVS_NOT_FOUND){
+            ESP_LOGW(TAG, "NVS key not found. Loading default.");
+            saveParameters();
         }
         else{
-            ESP_LOGE(TAG, "Blob malloc failed when reading parameters.");
+            printf("Error (%s) opening NVS key!\n", esp_err_to_name(err));
+        }
+        
+        
+        // load status 
+        size_t status_len = 0;
+        err = nvs_get_blob(my_handle, "status", NULL, &status_len);
+        if (err == ESP_OK){
+            if (status_len == sizeof(digifiz_status)){
+                nvs_get_blob(my_handle, "status", (uint8_t*)&digifiz_status, &status_len);
+                ESP_LOGI(TAG, "Status load done.");
+            }
+            else{
+                ESP_LOGE(TAG, "Digifiz status size changed. Not loaded.");
+            }
+        }
+        else{
+            ESP_LOGE(TAG, "Digifiz status load failed.");
         }
     }
-
-    // for (int i = 0; i < params_table.n_params; i++){
-    //     char valbuf[30];
-    //     xparam_stringify(&params_table.params[i], valbuf);
-    //     ESP_LOGI(TAG, "%s : %s", params_table.params[i].field_name, valbuf);
-    // }
+    nvs_close(my_handle);
 
     ESP_LOGI(TAG, "initEEPROM ended");
-
 }
