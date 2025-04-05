@@ -6,11 +6,6 @@
 #define TAG "EEPROM module"
 const char LOG_TAG[] = "Digifiz Replica Next";
 
-// digifiz_pars digifiz_parameters;
-// digifiz_pars r_d_pars;
-uint8_t memory_block_selected = 0;
-
-
 digifiz_pars_t digifiz_parameters = {
     PARAM_LIST(DEFINE_PARAM)
 };
@@ -21,37 +16,6 @@ xparam_table_t params_table = {
     .params = (xparam_t*)&digifiz_parameters,
     .n_params = XPARAM_COUNT(digifiz_parameters),
 };
-
-// bool checkInternalMagicBytes()
-// {
-//     uint8_t cnt = 0;
-//     nvs_handle_t my_handle;
-//     esp_err_t err = nvs_open("digifiz", NVS_READWRITE, &my_handle);
-//     if (err != ESP_OK) {
-//         printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
-//     } 
-//     else 
-//     {
-//         for (int j=0;j!=EEPROM_DOUBLING;j++)
-//         {
-//             for (cnt=0;cnt!=3;cnt++) //What if we have a wrong negative results???
-//             {
-//                 //Give it 10 chances
-//                 size_t size = sizeof(digifiz_pars);
-//                 nvs_get_blob(my_handle, memory_blocks[cnt], &r_d_pars, &size);
-//                 if ((r_d_pars.header[0]=='D')&&
-//                     (r_d_pars.header[1]=='I')&&
-//                     (r_d_pars.header[2]=='G')&&
-//                     (r_d_pars.header[3]=='I'))
-//                 {
-//                     memory_block_selected = 0;
-//                     return true;
-//                 }
-//             }
-//         }
-//     }
-//     return false;
-// }
 
 void saveParameters()
 {
