@@ -6,6 +6,7 @@
 #include <string.h>
 #include "digifiz_time.h"
 #include "vehicle_data.h"
+#include "display_next.h"
 #include <stdlib.h>
 #include <ctype.h>
 
@@ -125,6 +126,7 @@ static void setMainTemplateColor(char* color_values)
       printLnCString(color_values);
       printf("Invalid color format: %s\n", color_values);
   }
+  compileColorScheme();
 }
 
 static void setBacklightTemplateColor(char* color_values)
@@ -144,6 +146,7 @@ static void setBacklightTemplateColor(char* color_values)
       printLnCString(color_values);
       printf("Invalid color format: %s\n", color_values);
   }
+  compileColorScheme();
 }
 
 static void printADC()
@@ -471,18 +474,26 @@ void processData(int parameter,long value)
       case PARAMETER_SET_FUEL_CALC_FUNCTION:
         printLnCString("PARAMETER_SET_FUEL_CALC_FUNCTION\n");
         // digifiz_parameters.option_linear_fuel.value = value&1;
+        digifiz_parameters.option_linear_fuel.value = value&1;
         break;
       case PARAMETER_SET_RPM_OPTIONS:
         printLnCString("PARAMETER_SET_RPM_OPTIONS\n");
-        // digifiz_parameters.rpm_options.packed_options.value = value;
+        digifiz_parameters.rpmOptions_redline_segments.value = value&31;
+        digifiz_parameters.rpmOptions_diesel_line.value = value&32;
         break;
       case PARAMETER_SET_TEMP_OPTIONS:
         printLnCString("PARAMETER_SET_TEMP_OPTIONS\n");
-        // digifiz_parameters.temp_options.packed_options.value = value;
+        digifiz_parameters.tempOptions_red_segments.value = value&3;
+        digifiz_parameters.tempOptions_sensor_connected_ind.value = value&4;
+        digifiz_parameters.tempOptions_alarm_function.value = value&8;
+        
         break;
       case PARAMETER_SET_SIGNAL_OPTIONS:
         printLnCString("PARAMETER_SET_SIGNAL_OPTIONS\n");
-        // digifiz_parameters.sign_options.packed_options.value = value;
+        digifiz_parameters.signalOptions_use_blink_alt_in.value = value&1;
+        digifiz_parameters.signalOptions_enable_touch_sensor.value = value&2;
+        digifiz_parameters.signalOptions_invert_light_input.value = value&4;
+        digifiz_parameters.signalOptions_enable_consumption_sensor.value = value&8;
         break;
       case PARAMETER_PULLUP_RESISTANCE_COOLANT:
         printLnCString("PARAMETER_PULLUP_RESISTANCE_COOLANT\n");
@@ -752,14 +763,17 @@ void processData(int parameter,long value)
       case PARAMETER_MAINCOLOR_R:
         printLnCString("PARAMETER_MAINCOLOR_R\n");
         printLnUINT8(digifiz_parameters.mainc_r.value);
+        compileColorScheme();
         break;
       case PARAMETER_MAINCOLOR_G:
         printLnCString("PARAMETER_MAINCOLOR_G\n");
         printLnUINT8(digifiz_parameters.mainc_g.value);
+        compileColorScheme();
         break;
       case PARAMETER_MAINCOLOR_B:
         printLnCString("PARAMETER_MAINCOLOR_B\n");
         printLnUINT8(digifiz_parameters.mainc_b.value);
+        compileColorScheme();
         break;
       case PARAMETER_BACKCOLOR_R:
         printLnCString("PARAMETER_BACKCOLOR_R\n");

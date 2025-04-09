@@ -126,8 +126,16 @@ extern "C" {
         rpmOptions_redline_segments, \
         .p_name = "", \
         .p_info = "Redline segments number",\
-        .value = 0, \
+        .value = 8, \
         .max = 31, \
+    ) \
+    PARAM(  \
+        U8, \
+        rpmOptions_diesel_line, \
+        .p_name = "", \
+        .p_info = "Diesel-style RPM gauge",\
+        .value = 0, \
+        .max = 1, \
     ) \
     PARAM(  \
         U8, \

@@ -228,7 +228,7 @@ static ColoringScheme digifizStandard = {
             .g = 20,
             .b = 2,
             .end_segment = 95,
-            .type = COLOR_SCHEME_BACKLIGHT,
+            .type = COLOR_SCHEME_BACKLIGHT_RPM,
             .basecolor_enabled = 2
         },
         { 
@@ -397,6 +397,7 @@ void initDisplay() {
     ESP_LOGI(LOG_TAG, "Digifiz WS2812 LED init OK.");
     //Compile colors from mJS backend
     run_mjs_script(default_mjs_script);
+    compileColorScheme();
     ESP_LOGI(LOG_TAG, "initDisplay ended");
 }
 
@@ -980,14 +981,31 @@ void getColorBySegmentNumber(uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* 
                 (*g) = digifizStandard.scheme[i].g;
                 (*b) = digifizStandard.scheme[i].b;
             }
+
+            //TODO refactor this code to some js script executed on boot 
+            //or load data completely from memory (calculate on computer side)
+            if (digifiz_parameters.rpmOptions_diesel_line.value)
+            {
+                if ((segment>76)&&(segment<=80))
+                {
+                    (*r) = 0;
+                    (*g) = 0;
+                    (*b) = 0;
+                }
+            }
         }
         startSegment = endSegment;
     }
 }
 
 uint16_t led_num = 0;
-// Fire up the Digifiz system
-void fireDigifiz() {
+
+static uint8_t r_colors[DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS];
+static uint8_t g_colors[DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS];
+static uint8_t b_colors[DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS];
+
+void compileColorScheme(void)
+{
     led_num = 0;
     digifizStandard.scheme[redline_scheme_id-1].end_segment = COLORING_SCHEME_REDLINING_LIMIT-
                                                 digifiz_parameters.rpmOptions_redline_segments.value;
@@ -1012,12 +1030,38 @@ void fireDigifiz() {
     {
         for (uint16_t j = 0; j != 8; j++)
         {
-            uint8_t bit = (ptr[i] >> j) & 1;
             uint8_t r = 0;
             uint8_t g = 0;
             uint8_t b = 0;
 
             getColorBySegmentNumber(led_num,&r,&g,&b);
+            r_colors[led_num] =  (uint32_t)r;
+            g_colors[led_num] =  (uint32_t)g;
+            b_colors[led_num] =  (uint32_t)b;
+            led_num+=1;
+            if (led_num>(DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1))
+            {
+                led_num=DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1;
+                break;
+            }
+        }
+    }
+}
+
+// Fire up the Digifiz system
+void fireDigifiz() {
+    led_num = 0;
+
+    uint8_t *ptr = (uint8_t*)&display;
+    for (uint16_t i = 0; i != sizeof(DigifizNextDisplay); i++)
+    {
+        for (uint16_t j = 0; j != 8; j++)
+        {
+            uint8_t bit = (ptr[i] >> j) & 1;
+            uint8_t r = r_colors[led_num];
+            uint8_t g = g_colors[led_num];
+            uint8_t b = b_colors[led_num];
+
             if (get_update_in_progress())
                 bit=0;
             //led_strip_set_pixel(led_strip, led_num, 10,10,10);

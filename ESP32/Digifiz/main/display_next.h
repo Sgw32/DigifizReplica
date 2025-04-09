@@ -61,6 +61,7 @@ enum
     COLOR_SCHEME_FUEL,
     COLOR_SCHEME_REFUEL,
     COLOR_SCHEME_MILEAGE,
+    COLOR_SCHEME_BACKLIGHT_RPM,
     COLOR_SCHEME_BACKLIGHT,
     COLOR_SCHEME_SIGNALS,
     COLOR_SCHEME_SIGNAL_LIGHTS,
@@ -179,6 +180,9 @@ void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
 void setServiceDisplayData(uint8_t data);
 void getColorBySegmentNumber(uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* b);
+
+void compileColorScheme(void);
+
 void fireDigifiz();
 
 void setOilIndicator(bool onoff);
