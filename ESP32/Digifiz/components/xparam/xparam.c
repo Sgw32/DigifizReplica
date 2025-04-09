@@ -47,7 +47,6 @@ uint32_t xparam_crc32(uint8_t *buf, size_t size)
          mask = -(crc & 1);
          crc = (crc >> 1) ^ (0xEDB88320 & mask);
       }
-      i = i + 1;
    }
    return ~crc;
 }
