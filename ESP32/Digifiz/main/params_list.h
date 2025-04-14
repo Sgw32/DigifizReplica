@@ -62,7 +62,7 @@ extern "C" {
         option_mfa_manufacturer, \
         .p_name = "", \
         .p_info = "Enable MFA steering columns switch",\
-        .value = 0, \
+        .value = 1, \
         .max = 1, \
     ) \
     PARAM(  \
