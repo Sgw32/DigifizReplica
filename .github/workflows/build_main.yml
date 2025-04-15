@@ -16,8 +16,7 @@ jobs:
         echo "Using build version: $VERSION"
     - name: Replace BUILD_VERSION with version
       run: |
-        sed -i "s/BUILD_VERSION/${VERSION}/g" Digifiz/main/data/digifiz_ws_connect.html
-        sed -i "s/BUILD_VERSION/${VERSION}/g" A2560_BoardR2/Digifiz/protocol.cpp
+        sed -i "s/BUILD_VERSION/${VERSION}/g" ESP32/Digifiz/main/data/digifiz_ws_connect.html
     - name: esp-idf build
       uses: espressif/esp-idf-ci-action@v1.1.0
       with:
