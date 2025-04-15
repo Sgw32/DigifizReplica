@@ -1006,6 +1006,7 @@ void printHelp()
   
   BTserial.print(digifiz_parameters.maxRPM);
   BTserial.println(" RPM");
+  BTserial.println("BUILD_VERSION");
   #endif
 }
 
