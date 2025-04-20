@@ -486,7 +486,7 @@ void processData(int parameter,long value)
         digifiz_parameters.tempOptions_red_segments.value = value&3;
         digifiz_parameters.tempOptions_sensor_connected_ind.value = value&4;
         digifiz_parameters.tempOptions_alarm_function.value = value&8;
-        
+        digifiz_parameters.tempOptions_oil_atten.value = value&16;
         break;
       case PARAMETER_SET_SIGNAL_OPTIONS:
         printLnCString("PARAMETER_SET_SIGNAL_OPTIONS\n");

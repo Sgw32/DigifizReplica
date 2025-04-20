@@ -64,6 +64,13 @@ adc_oneshot_chan_cfg_t config = {
         .bitwidth = ADC_BITWIDTH_DEFAULT,
         .atten = ADC_ATTEN_DB_12,
 };
+
+#define OIL_CHANNEL_ATTEN ADC_ATTEN_DB_2_5 
+
+adc_oneshot_chan_cfg_t config_oil_temp_channel = {
+    .bitwidth = ADC_BITWIDTH_DEFAULT,
+    .atten = OIL_CHANNEL_ATTEN,
+};
 adc_cali_handle_t adc1_cali_chan0_handle = NULL;
 adc_cali_handle_t adc1_cali_chan1_handle = NULL;
 adc_cali_handle_t adc1_cali_chan2_handle = NULL;
@@ -214,7 +221,15 @@ void initADC() {
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, lightSensorChannel, &config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, coolantChannel, &config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, gasolineChannel, &config));
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, oilChannel, &config));
+    if (digifiz_parameters.tempOptions_oil_atten.value)
+    {
+        ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, oilChannel, &config_oil_temp_channel));
+    }
+    else
+    {
+        ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, oilChannel, &config));
+    }
+    
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, airChannel, &config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, intakePressureChannel, &config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, fuelPressureChannel, &config));
@@ -223,7 +238,14 @@ void initADC() {
     adc_calibration_init(ADC_UNIT_1, lightSensorChannel, ADC_ATTEN_DB_12,    &adc1_cali_chan0_handle);
     adc_calibration_init(ADC_UNIT_1, coolantChannel, ADC_ATTEN_DB_12,        &adc1_cali_chan1_handle);
     adc_calibration_init(ADC_UNIT_1, gasolineChannel, ADC_ATTEN_DB_12,       &adc1_cali_chan2_handle);
-    adc_calibration_init(ADC_UNIT_1, oilChannel, ADC_ATTEN_DB_12,            &adc1_cali_chan3_handle);
+    if (digifiz_parameters.tempOptions_oil_atten.value)
+    {
+        adc_calibration_init(ADC_UNIT_1, oilChannel, OIL_CHANNEL_ATTEN,            &adc1_cali_chan3_handle);
+    }
+    else
+    {
+        adc_calibration_init(ADC_UNIT_1, oilChannel, ADC_ATTEN_DB_12,            &adc1_cali_chan3_handle);
+    }
     adc_calibration_init(ADC_UNIT_1, airChannel, ADC_ATTEN_DB_12,            &adc1_cali_chan4_handle);
     adc_calibration_init(ADC_UNIT_1, intakePressureChannel, ADC_ATTEN_DB_12, &adc1_cali_chan5_handle);
     adc_calibration_init(ADC_UNIT_1, fuelPressureChannel, ADC_ATTEN_DB_12,   &adc1_cali_chan6_handle);
