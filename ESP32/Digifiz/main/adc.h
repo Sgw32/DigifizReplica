@@ -10,7 +10,17 @@ extern "C" {
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
 #include "params.h"
+
+
 #define TAU 0.01
+
+#define KELVIN_TO_CELSIUM 273.15f
+#define BASE_TEMPERATURE 25.0f
+#define ADC_UPPER_BOUND 4095.0f
+#define ADC_NTC_INCORRECT_UPPER_BOUND 4092.0f
+#define LIGHT_SENSOR_TAU 0.03f
+#define AMB_TEMP_INTAKE_MODEL_LOWER_VAL -20.0f
+#define AMB_TEMP_INTAKE_MODEL_UPPER_VAL 30.0f
 
 typedef struct {
     int coolantRawADCVal;
@@ -21,6 +31,23 @@ typedef struct {
     int intakePressRawADCVal;
     int fuelPressRawADCVal;
 } DigifizSensorData;
+
+
+// Define struct with union inside
+typedef struct DeviceSensorsFaulty{
+    union {
+        struct {
+            uint32_t fault_status;  // 8-bit variable
+        };
+        struct {
+            uint32_t fuel_faulty : 1;  // 1-bit variable
+            uint32_t oil_faulty : 1;  // 1-bit variable
+            uint32_t coolant_faulty : 1; // 1-bit variable
+            uint32_t air_faulty : 1;    // 1-bit variable
+            uint32_t : 28;            // Padding to ensure uin32_t alignment
+        };
+    };
+} DeviceSensorsFaulty;
 
 float constrain(float input, float min, float max);
 
@@ -70,6 +97,9 @@ void processFirstOilTemperature();
 void processFirstGasLevel();
 void processFirstAmbientTemperature();
 
+//Errata for PCBs
+void reconfigOilChannel();
+
 // Function declarations
 int getCoolantRawADCVal(void);
 int getFuelRawADCVal(void);
@@ -81,6 +111,8 @@ int getFuelPressRawADCVal(void);
 
 void read_initial_adc_values();
 void log_sensor_data();
+
+DeviceSensorsFaulty getFaultyMask();
 
 #ifdef __cplusplus
 }

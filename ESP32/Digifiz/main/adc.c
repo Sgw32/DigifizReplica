@@ -49,6 +49,8 @@ float gasolineLevel,gasolineLevelFiltered,gasolineLevelFiltered05hour;
 float tauCoolant, tauGasoline, tauAir, tauOil,tauGasolineConsumption;
 float consumptionLevel;
 
+static DeviceSensorsFaulty faulty_status = {.fault_status = 0};
+
 uint8_t tankCapacity = 55;
 float lightLevel = 0;
 uint32_t consumptionCounter;
@@ -174,7 +176,6 @@ static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_att
     return calibrated;
 }
 
-
 float constrain(float input, float min, float max)
 {
     if (input>max)
@@ -182,6 +183,23 @@ float constrain(float input, float min, float max)
     if (input<min)
         return min;
     return input;
+}
+
+void reconfigOilChannel()
+{
+    if (digifiz_parameters.tempOptions_oil_atten.value)
+    {
+        ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, oilChannel, &config_oil_temp_channel));
+    }
+    else
+    {
+        ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, oilChannel, &config));
+    }
+}
+
+DeviceSensorsFaulty getFaultyMask()
+{
+    return faulty_status;
 }
 
 void updateADCSettings()
@@ -221,15 +239,7 @@ void initADC() {
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, lightSensorChannel, &config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, coolantChannel, &config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, gasolineChannel, &config));
-    if (digifiz_parameters.tempOptions_oil_atten.value)
-    {
-        ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, oilChannel, &config_oil_temp_channel));
-    }
-    else
-    {
-        ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, oilChannel, &config));
-    }
-    
+    reconfigOilChannel();
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, airChannel, &config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, intakePressureChannel, &config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, fuelPressureChannel, &config));
@@ -432,7 +442,7 @@ float getIntakePressure() {
    intp = 512;
 #endif
    
-    return 84749.0f-20152.0f*intp/4095.0f*5.0f;
+    return 84749.0f-20152.0f*intp/ADC_UPPER_BOUND*5.0f;
 }
 
 // Get the current intake fuel consumption
@@ -443,8 +453,8 @@ float getCurrentIntakeFuelConsumption() {
     float lp100km = 0.0f;
     if (kP>0)
     {
-      float intakeT = constrain(getAmbientTemperature(),-20.0f,30.0f)+273.0f; //intakeT in K
-      //float intakeT = 273.0f;
+      float intakeT = constrain(getAmbientTemperature(),AMB_TEMP_INTAKE_MODEL_LOWER_VAL,
+                                                        AMB_TEMP_INTAKE_MODEL_UPPER_VAL)+KELVIN_TO_CELSIUM; //intakeT in K
       const float Rtd = 8.314f; //thermodynamic constant
       const float MM = 28.97f; //air molecular mass
       const float engineV = 1.6f; //engine displacement
@@ -460,14 +470,13 @@ float getCurrentIntakeFuelConsumption() {
       else
           lp100km = lph;
     }
-    return constrain(lp100km,0,100.0f);
-    //return constrain(kP,0,100.0f);
+    return constrain(lp100km,0,100.0f);    
 }
 
 // Get the intake voltage
 float getIntakeVoltage() {
     float intp = 2048.0f;//(float)analogRead(pressurePin);
-    return intp/4095.0f*5.0f;
+    return intp/ADC_UPPER_BOUND*5.0f;
 }
 
 // Get the oil temperature in Fahrenheit
@@ -484,7 +493,7 @@ float getAmbientTemperatureFahrenheit() {
 
 // Get the brightness level
 uint8_t getBrightnessLevel() {
-    lightLevel += (getRawBrightnessLevel()-lightLevel)*0.03f;
+    lightLevel += (getRawBrightnessLevel()-lightLevel)*LIGHT_SENSOR_TAU;
     float m_lightLevel = lightLevel;
     if (digifiz_parameters.signalOptions_invert_light_input.value)
     {
@@ -503,26 +512,72 @@ uint16_t getRawBrightnessLevel() {
 // Process coolant temperature data
 void processCoolantTemperature() {
     V0 = adc_raw.coolantRawADCVal;
-    R2 = R2_Coolant * V0 / (4095.0f - V0); //
-    float temp1 = (log(R2/R1_Coolant)/coolantB);
-    temp1 += 1/(25.0f+273.15f);
-    coolantT += tauCoolant*(1.0f/temp1 - 273.15f - coolantT);
+    if (V0<ADC_NTC_INCORRECT_UPPER_BOUND)
+    {
+        R2 = R2_Coolant * V0 / (ADC_UPPER_BOUND - V0); //
+        if (R2>0)
+        {
+            faulty_status.coolant_faulty = 0;
+            float temp1 = (log(R2/R1_Coolant)/coolantB);
+            temp1 += 1/(BASE_TEMPERATURE+KELVIN_TO_CELSIUM);
+            coolantT += tauCoolant*(1.0f/temp1 - KELVIN_TO_CELSIUM - coolantT);
+        }
+        else
+        {
+            faulty_status.coolant_faulty = 1;
+        }
+    }
+    else
+    {
+        faulty_status.coolant_faulty = 1;
+    }
 }
 
 // Process oil temperature data
 void processOilTemperature() {
     V0 = adc_raw.oilTempRawADCVal;
-    R2 = R2_Oil * V0 / (4095.0f - V0); //
-    float temp1 = (log(R2/R1_Oil)/oilB);
-    temp1 += 1/(25.0f+273.15f);
-    oilT += tauOil*(1.0f/temp1 - 273.15f - oilT);
+    if (V0<ADC_NTC_INCORRECT_UPPER_BOUND)
+    {
+        R2 = R2_Oil * V0 / (ADC_UPPER_BOUND - V0); //
+        if (R2>0)
+        {
+            float temp1 = (log(R2/R1_Oil)/oilB);
+            temp1 += 1/(BASE_TEMPERATURE+KELVIN_TO_CELSIUM);
+            oilT += tauOil*(1.0f/temp1 - KELVIN_TO_CELSIUM - oilT);
+            faulty_status.oil_faulty = 0;
+        }
+        else
+        {
+            faulty_status.oil_faulty = 1;
+        }
+    }
+    else
+    {
+        faulty_status.oil_faulty = 1;
+    }
 }
 
 // Process gas level data
 void processGasLevel() {
     //TODO add values
     V0 = adc_raw.fuelRawADCVal;
-    R2 = constrain(220 * V0 / (4095.0f - V0),digifiz_parameters.tankMinResistance.value,digifiz_parameters.tankMaxResistance.value); // 220 Ohm in series with fuel sensor
+    //R2 = constrain(220 * V0 / (ADC_UPPER_BOUND - V0),digifiz_parameters.tankMinResistance.value,digifiz_parameters.tankMaxResistance.value); // 220 Ohm in series with fuel sensor
+    R2 = 220.0f * V0 / (ADC_UPPER_BOUND - V0);
+
+    if (R2>digifiz_parameters.tankMaxResistance.value)
+    {
+        faulty_status.fuel_faulty = 1;
+        return;
+    }
+
+    if (R2<digifiz_parameters.tankMinResistance.value)
+    {
+        faulty_status.fuel_faulty = 1;
+        return;
+    }
+    
+    faulty_status.fuel_faulty = 0;
+
     float R2scaled = 0.0f;
     if (digifiz_parameters.option_linear_fuel.value)
     {
@@ -549,12 +604,27 @@ void processGasLevel() {
 // Process ambient temperature data
 void processAmbientTemperature() {
     V0 = adc_raw.ambTempRawADCVal;
-    R2 = R2_Ambient * V0 / (4095.0f - V0); 
-    float temp1 = (log(R2/R1_Ambient)/airB);
-    temp1 += 1/(25.0f+273.15f);
-    if (temp1>0)
+    if (V0<ADC_NTC_INCORRECT_UPPER_BOUND)
     {
-        airT += tauAir*(1.0f/temp1 - 273.15f - airT);
+        R2 = R2_Ambient * V0 / (ADC_UPPER_BOUND - V0); 
+        if (R2>0)
+        {
+            float temp1 = (log(R2/R1_Ambient)/airB);
+            temp1 += 1/(BASE_TEMPERATURE+KELVIN_TO_CELSIUM);
+            if (temp1>0)
+            {
+                airT += tauAir*(1.0f/temp1 - KELVIN_TO_CELSIUM - airT);
+            }
+            faulty_status.air_faulty = 0;
+        }
+        else
+        {
+            faulty_status.air_faulty = 1;
+        }
+    }
+    else
+    {
+        faulty_status.air_faulty = 1;
     }
     //printf("ADC AMBT: %f %f\n",V0, temp1);
 }
@@ -567,26 +637,56 @@ void processBrightnessLevel() {
 // Process the first coolant temperature data
 void processFirstCoolantTemperature() {
     V0 = adc_raw.coolantRawADCVal;
-    R2 = 220.0f * V0 / (4095.0f - V0); //
-    float temp1 = (log(R2/R1_Coolant)/coolantB);
-    temp1 += 1/(25.0f+273.15f);
-    coolantT = (1.0f/temp1 - 273.15f);
+    if (V0<ADC_NTC_INCORRECT_UPPER_BOUND)
+    {
+        R2 = 220.0f * V0 / (ADC_UPPER_BOUND - V0); //
+        if (R2>0)
+        {
+            float temp1 = (log(R2/R1_Coolant)/coolantB);
+            temp1 += 1/(BASE_TEMPERATURE+KELVIN_TO_CELSIUM);
+            coolantT = (1.0f/temp1 - KELVIN_TO_CELSIUM);
+            faulty_status.coolant_faulty = 0;
+        }
+        else
+        {
+            faulty_status.coolant_faulty = 1;
+        }
+    }
+    else
+    {
+        faulty_status.coolant_faulty = 1;
+    }
 }
 
 // Process the first oil temperature data
 void processFirstOilTemperature() {
     V0 = adc_raw.oilTempRawADCVal;
-    R2 = R2_Oil * V0 / (4095.0f - V0); //
-    float temp1 = (log(R2/R1_Oil)/oilB);
-    temp1 += 1/(25.0f+273.15f);
-    oilT = (1.0f/temp1 - 273.15f );
+    if (V0<ADC_NTC_INCORRECT_UPPER_BOUND)
+    {
+        R2 = R2_Oil * V0 / (ADC_UPPER_BOUND - V0); //
+        if (R2>0)
+        {
+            float temp1 = (log(R2/R1_Oil)/oilB);
+            temp1 += 1/(BASE_TEMPERATURE+KELVIN_TO_CELSIUM);
+            oilT = (1.0f/temp1 - KELVIN_TO_CELSIUM );
+            faulty_status.oil_faulty = 0;
+        }
+        else
+        {
+            faulty_status.oil_faulty = 1;
+        }
+    }
+    else
+    {
+        faulty_status.oil_faulty = 1;
+    }
 }
 
 // Process the first gas level data
 void processFirstGasLevel() {
     V0 = adc_raw.fuelRawADCVal;
     float R2scaled = 0.0f;
-    R2 = constrain(220 * V0 / (4095.0f - V0),digifiz_parameters.tankMinResistance.value,digifiz_parameters.tankMaxResistance.value); // 330 Ohm in series with fuel sensor
+    R2 = constrain(220 * V0 / (ADC_UPPER_BOUND - V0),digifiz_parameters.tankMinResistance.value,digifiz_parameters.tankMaxResistance.value); // 330 Ohm in series with fuel sensor
     if (digifiz_parameters.option_linear_fuel.value)
     {
         R2scaled = (((float)R2-
@@ -608,11 +708,26 @@ void processFirstGasLevel() {
 void processFirstAmbientTemperature() {
     printf("First AMBT:%f", airT);
     V0 = adc_raw.ambTempRawADCVal;
-    R2 = R2_Ambient * V0 / (4095.0f - V0); 
-    float temp1 = (log(R2/R1_Ambient)/airB);
-    temp1 += 1/(25.0f+273.15f);
-    airT = temp1;
-    printf("First after AMBT:%f", airT);
+    if (V0<ADC_NTC_INCORRECT_UPPER_BOUND)
+    {
+        R2 = R2_Ambient * V0 / (ADC_UPPER_BOUND - V0); 
+        if (R2>0)
+        {
+            float temp1 = (log(R2/R1_Ambient)/airB);
+            temp1 += 1/(BASE_TEMPERATURE+KELVIN_TO_CELSIUM);
+            airT = temp1;
+            printf("First after AMBT:%f", airT);
+            faulty_status.air_faulty = 0;
+        }
+        else
+        {
+            faulty_status.air_faulty = 1;
+        }
+    }
+    else
+    {
+        faulty_status.air_faulty = 1;
+    }
 }
 
 // Function definitions

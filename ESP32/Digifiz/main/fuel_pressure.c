@@ -1,6 +1,7 @@
 #include "fuel_pressure.h"
 #include "params.h"
 #include "esp_log.h"
+#include "adc.h"
 
 #define MAX_BARS 10.0f
 #define TAU_FUEL_PRESSURE 0.5f
@@ -29,7 +30,7 @@ void processFuelPressure()
         adcData+=2048.0f;//analogRead(fuel_pressurePin);
     }
     adcData = constrain(adcData>>4,103,818+103)-103; // div by 16 and transpose
-    fuelPressure+=TAU_FUEL_PRESSURE*((adcData/4095.0f*5.0f)*MAX_BARS/4.0f-fuelPressure); //convert to bars and filter
+    fuelPressure+=TAU_FUEL_PRESSURE*((adcData/ADC_UPPER_BOUND*5.0f)*MAX_BARS/4.0f-fuelPressure); //convert to bars and filter
 }
 
 float getFuelPressure()
@@ -41,5 +42,5 @@ float getFuelPressure()
 float getFuelPressureVoltage()
 {
     float intp = 2048.0f;//(float)analogRead(fuel_pressurePin);
-    return intp/4095.0f*5.0f;
+    return intp/ADC_UPPER_BOUND*5.0f;
 }

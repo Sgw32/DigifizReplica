@@ -238,13 +238,14 @@ void displayUpdate(void *pvParameters) {
             spd_m /= 100;
         }
 
-#ifndef TESTMODE
-        spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
-#endif
+        if (!digifiz_parameters.option_testmode_on.value)
+        {
+            spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
+            rpm = readLastRPM(); 
+        }
         //For test fuel intake
         //spd_m_speedometer = 60.0f;
 
-        rpm = readLastRPM(); 
         if (rpm>0)
         {
             if((getRPMDispertion()<digifiz_parameters.medianDispFilterThreshold.value)) //30 or LESS!!!
@@ -274,11 +275,16 @@ void displayUpdate(void *pvParameters) {
         {
             setSpeedometerData((uint16_t)spd_m_speedometer);
             current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;
-#ifdef TESTMODE
-            spd_m_speedometer+=1;
-            if (spd_m_speedometer==25)
-                spd_m_speedometer=0;
-#endif
+            if (digifiz_parameters.option_testmode_on.value)
+            {
+                spd_m_speedometer+=1;
+                if (spd_m_speedometer>499)
+                    spd_m_speedometer=0;
+                rpm+=100;
+                if (rpm>8000)
+                    rpm=0;
+            }
+            
             displaySpeedCnt = 0;
             printf("Status T RPM:%d %f %f %f %f\n",getDisplayedCoolantTemp(),getCoolantTemperature(),(float)((getCoolantTemperature()-digifiz_parameters.coolantMin.value)/
                  (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*14.0f), averageRPM, spd_m_speedometer);

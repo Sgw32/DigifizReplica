@@ -270,6 +270,20 @@ int xparam_stringify(xparam_t* param, char* buf)
 	return 1
 
 
+#define PARAM_SET(param, new_val) \
+	typeof(param->value) _result = new_val; \
+	if (param->max!=param->min){\
+		if (_result > param->max){ \
+			return 0; \
+		} \
+		else if (_result < param->min){ \
+			return 0; \
+		} \
+	} \
+	param->value = _result; \
+	return 1
+
+
 // returns 1 if change was successful according to limits
 uint8_t xparam_step_value(xparam_t* param, int16_t n_steps)
 {
@@ -310,7 +324,72 @@ uint8_t xparam_step_value(xparam_t* param, int16_t n_steps)
 	else if (XPARAM_STRING == param->value_type){
 	    return 1;
     }
-	return 0;
+	return 0; //0 == fail
+}
+
+xparam_t* xparam_find_by_name(xparam_table_t* table, const char* name) {
+    for (int i = 0; i < table->n_params; i++) {
+        if (strcmp(table->params[i].p_name, name) == 0) {
+            return &table->params[i];
+        }
+    }
+    return NULL;
+}
+
+uint8_t xparam_set_value(xparam_t* param, uint32_t value)
+{
+    if (param->change_cb){
+        return param->change_cb(param, value);
+    }
+    else if (XPARAM_U32 == param->value_type){
+        PARAM_SET(param, value);
+    }
+    else if (XPARAM_BOOL == param->value_type){
+        xparam_BOOL_t* p_param = (xparam_BOOL_t*)param;
+        p_param->value = (value > 0);
+    }
+    else if (XPARAM_I32 == param->value_type){
+        xparam_I32_t* p_param = (xparam_I32_t*)param;
+        // Convert uint32_t to int32_t using union
+        union {
+            uint32_t u32;
+            int32_t i32;
+        } u;
+        u.u32 = value;
+        PARAM_SET(p_param, u.i32);
+    }
+    else if (XPARAM_U16 == param->value_type){
+        xparam_U16_t* p_param = (xparam_U16_t*)param;
+        PARAM_SET(p_param, (uint16_t)value);
+    }
+    else if (XPARAM_I16 == param->value_type){
+        xparam_I16_t* p_param = (xparam_I16_t*)param;
+        PARAM_SET(p_param, (int16_t)value);
+    }
+    else if (XPARAM_U8 == param->value_type){
+        xparam_U8_t* p_param = (xparam_U8_t*)param;
+		// Log parameter info before setting
+		printf("xparam_set_value(call) Setting param '%s' to value (u8): 0x%02X", p_param->p_name, (uint8_t)value);
+        PARAM_SET(p_param, (uint8_t)value);
+    }
+    else if (XPARAM_I8 == param->value_type){
+        xparam_I8_t* p_param = (xparam_I8_t*)param;
+        PARAM_SET(p_param, (int8_t)value);
+    }
+    else if (XPARAM_FLOAT == param->value_type){
+        xparam_FLOAT_t* p_param = (xparam_FLOAT_t*)param;
+        // Convert uint32_t to float using union
+        union {
+            uint32_t u32;
+            float f;
+        } u;
+        u.u32 = value;
+        PARAM_SET(p_param, u.f);
+    }
+    else if (XPARAM_STRING == param->value_type){
+        return 1;
+    }
+    return 0; //0 == fail
 }
 
 // {"params":[

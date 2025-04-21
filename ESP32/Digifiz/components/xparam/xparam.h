@@ -214,10 +214,21 @@ int 	 xparam_stringify(xparam_t* param, char* buf);
 uint8_t  xparam_step_value(xparam_t* param, int16_t n_steps);
 
 /*
+ * Set numeric value
+ * Returns 0 if change would violate parameter limits and parameter value didn't change.
+ */
+uint8_t  xparam_set_value(xparam_t* param, uint32_t value);
+
+/*
  * Convert parameter table to json string.
  * User needs to free the returned pointer. Could return NULL if malloc fails.
  */
 char*    xparam_table_to_json(xparam_table_t* table);
+
+/*
+ * Find xparam_t from table by name
+ */
+xparam_t* xparam_find_by_name(xparam_table_t* table, const char* name);
 
 #ifdef __cplusplus
 }

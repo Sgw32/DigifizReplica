@@ -521,26 +521,34 @@ void setMFADisplayedNumber(int16_t data) {
 // Set the fuel level
 void setFuel(uint8_t litres) {
     uint8_t number_fuel[10]={DIGIT_NUMBER_0,
-                            DIGIT_NUMBER_1,
-                            DIGIT_NUMBER_2,
-                            DIGIT_NUMBER_3,
-                            DIGIT_NUMBER_4,
-                            DIGIT_NUMBER_5,
-                            DIGIT_NUMBER_6,
-                            DIGIT_NUMBER_7,
-                            DIGIT_NUMBER_8,
-                            DIGIT_NUMBER_9};
+        DIGIT_NUMBER_1,
+        DIGIT_NUMBER_2,
+        DIGIT_NUMBER_3,
+        DIGIT_NUMBER_4,
+        DIGIT_NUMBER_5,
+        DIGIT_NUMBER_6,
+        DIGIT_NUMBER_7,
+        DIGIT_NUMBER_8,
+        DIGIT_NUMBER_9};
     uint8_t data = litres;
-    if (((data / 10) % 10)!=0)
+    if (getFaultyMask().fuel_faulty)
     {
-        display.fuel_digit_1 = number_fuel[(data / 10) % 10];
-        display.fuel_digit_2 = number_fuel[(data / 1) % 10];
+        display.fuel_digit_1 = DIGIT_NUMBER_MINUS;
+        display.fuel_digit_2 = DIGIT_NUMBER_MINUS;
     }
     else
     {
-        display.fuel_digit_1 = DIGIT_NUMBER_EMPTY;
-        display.fuel_digit_2 = number_fuel[(data / 1) % 10];
-    }    
+        if (((data / 10) % 10)!=0)
+        {
+            display.fuel_digit_1 = number_fuel[(data / 10) % 10];
+            display.fuel_digit_2 = number_fuel[(data / 1) % 10];
+        }
+        else
+        {
+            display.fuel_digit_1 = DIGIT_NUMBER_EMPTY;
+            display.fuel_digit_2 = number_fuel[(data / 1) % 10];
+        }  
+    } 
 }
 
 // Set the RPM data
@@ -789,38 +797,56 @@ void displayMFAType(uint8_t mfaType) {
             break;
         case MFA_STATE_OIL_TEMP:
             display.mfa_dots&=0b00;
-            if (digifiz_parameters.option_fahrenheit.value)
+            if (getFaultyMask().oil_faulty)
             {
-              setMFADisplayedNumber((int16_t)getOilTemperatureFahrenheit());
-              setFloatDot(false);
-            }
-            else if (digifiz_parameters.option_kelvin.value)
-            {
-              setMFADisplayedNumber((int16_t)(getOilTemperature()+273.15f));
-              setFloatDot(false);
+                setFloatDot(false);
+                display.mfa_digit_1 = DIGIT_NUMBER_MINUS;
+                display.mfa_digit_2 = DIGIT_NUMBER_MINUS;
             }
             else
             {
-              setMFADisplayedNumber((int16_t)(getOilTemperature()));
-              setFloatDot(false);
+                if (digifiz_parameters.option_fahrenheit.value)
+                {
+                  setMFADisplayedNumber((int16_t)getOilTemperatureFahrenheit());
+                  setFloatDot(false);
+                }
+                else if (digifiz_parameters.option_kelvin.value)
+                {
+                  setMFADisplayedNumber((int16_t)(getOilTemperature()+KELVIN_TO_CELSIUM));
+                  setFloatDot(false);
+                }
+                else
+                {
+                  setMFADisplayedNumber((int16_t)(getOilTemperature()));
+                  setFloatDot(false);
+                }
             }
             break;
         case MFA_STATE_AIR_TEMP:
             display.mfa_dots&=0b00;
-            if (digifiz_parameters.option_fahrenheit.value)
+            if (getFaultyMask().air_faulty)
             {
-              setMFADisplayedNumber((int16_t)getAmbientTemperatureFahrenheit());
-              setFloatDot(false);
-            }
-            else if (digifiz_parameters.option_kelvin.value)
-            { 
-              setMFADisplayedNumber((int16_t)(getAmbientTemperature()+273.15f));
-              setFloatDot(false);
+                setFloatDot(false);
+                display.mfa_digit_1 = DIGIT_NUMBER_MINUS;
+                display.mfa_digit_2 = DIGIT_NUMBER_MINUS;
             }
             else
             {
-              setMFADisplayedNumber((int16_t)getAmbientTemperature());
-              setFloatDot(false);
+                if (digifiz_parameters.option_fahrenheit.value)
+                {
+                setMFADisplayedNumber((int16_t)getAmbientTemperatureFahrenheit());
+                setFloatDot(false);
+                }
+                else if (digifiz_parameters.option_kelvin.value)
+                { 
+                setMFADisplayedNumber((int16_t)(getAmbientTemperature()+KELVIN_TO_CELSIUM));
+                setFloatDot(false);
+                }
+                else
+                {
+                setMFADisplayedNumber((int16_t)getAmbientTemperature());
+                setFloatDot(false);
+                }
             }
             break;
         case MFA_STATE_FUEL_PRESSURE:
@@ -835,19 +861,27 @@ void displayMFAType(uint8_t mfaType) {
 
 // Set the MFA block
 void setMFABlock(uint8_t block) {
-  if (block&0x1)
-  {
-    display.mfa1_ind = 1;
-    display.mfa2_ind = 0;
-    digifiz_reg_out.led_mfa1 = 1;
-    digifiz_reg_out.led_mfa2 = 0;
+  if (digifiz_parameters.option_testmode_on.value)
+  {  
+    digifiz_reg_out.byte+=1;
+    digifiz_reg_out.byte = digifiz_reg_out.byte%8;
   }
   else
   {
-    display.mfa1_ind = 0;
-    display.mfa2_ind = 1;
-    digifiz_reg_out.led_mfa1 = 0;
-    digifiz_reg_out.led_mfa2 = 1;
+    if (block&0x1)
+    {
+      display.mfa1_ind = 1;
+      display.mfa2_ind = 0;
+      digifiz_reg_out.led_mfa1 = 1;
+      digifiz_reg_out.led_mfa2 = 0;
+    }
+    else
+    {
+      display.mfa1_ind = 0;
+      display.mfa2_ind = 1;
+      digifiz_reg_out.led_mfa1 = 0;
+      digifiz_reg_out.led_mfa2 = 1;
+    }
   }
 }
 

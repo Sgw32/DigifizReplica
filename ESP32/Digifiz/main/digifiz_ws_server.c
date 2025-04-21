@@ -28,6 +28,7 @@ static const char *WS_TAG = "ws_echo_server";
 esp_err_t digifiz_register_uri_handler(httpd_handle_t server);
 esp_err_t update_post_handler(httpd_req_t *req);
 static esp_err_t echo_handler(httpd_req_t *req);
+static esp_err_t params_get_handler(httpd_req_t *req);
 /*
  * This handler echos back the received ws data
  * and triggers an async send if certain message received
@@ -110,6 +111,114 @@ static esp_err_t echo_handler(httpd_req_t *req)
     return ret;
 }
 
+static esp_err_t set_param_post_handler(httpd_req_t *req)
+{
+    char buf[256];
+    int ret, remaining = req->content_len;
+
+    if (remaining >= sizeof(buf)) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Request body too large");
+        return ESP_FAIL;
+    }
+
+    ret = httpd_req_recv(req, buf, remaining);
+    if (ret <= 0) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Failed to receive data");
+        return ESP_FAIL;
+    }
+    buf[ret] = '\0'; // Null-terminate
+
+    cJSON *json = cJSON_Parse(buf);
+    if (!json) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid JSON");
+        return ESP_FAIL;
+    }
+
+    cJSON *name_item = cJSON_GetObjectItemCaseSensitive(json, "name");
+    cJSON *value_item = cJSON_GetObjectItemCaseSensitive(json, "value");
+
+    if (!cJSON_IsString(name_item) || name_item->valuestring == NULL || value_item == NULL) {
+        cJSON_Delete(json);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Missing or invalid 'name' or 'value'");
+        return ESP_FAIL;
+    }
+
+    extern xparam_table_t params_table;
+    xparam_t* param = xparam_find_by_name(&params_table, name_item->valuestring);
+    if (!param) {
+        cJSON_Delete(json);
+        httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "Parameter not found");
+        return ESP_FAIL;
+    }
+
+    // Ignore string parameters
+    if (param->value_type == XPARAM_STRING) {
+        cJSON_Delete(json);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Setting string parameters is not supported");
+        return ESP_FAIL;
+    }
+
+    // Convert value -> uint32_t for passing into xparam_set_value
+    uint32_t uval = 0;
+
+    if (cJSON_IsNumber(value_item)) {
+        // float value must be bit-cast if type is float
+        if (param->value_type == XPARAM_FLOAT) {
+            union {
+                float f;
+                uint32_t u32;
+            } u;
+            u.f = (float)value_item->valuedouble;
+            uval = u.u32;
+        } else {
+            uval = (uint32_t)value_item->valuedouble;
+        }
+    } else if (cJSON_IsString(value_item)) {
+        // Try to parse string as a number
+        char *endptr;
+        double f = strtod(value_item->valuestring, &endptr);
+        if (*endptr != '\0') {
+            cJSON_Delete(json);
+            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid number string");
+            return ESP_FAIL;
+        }
+
+        if (param->value_type == XPARAM_FLOAT) {
+            union {
+                float f;
+                uint32_t u32;
+            } u;
+            u.f = (float)f;
+            uval = u.u32;
+        } else {
+            uval = (uint32_t)f;
+        }
+    } else {
+        cJSON_Delete(json);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Unsupported value type");
+        return ESP_FAIL;
+    }
+
+    uint8_t result = xparam_set_value(param, uval);
+    cJSON_Delete(json);
+
+    if (result == 1) {
+        httpd_resp_sendstr(req, "{\"status\":\"ok\"}");
+        return ESP_OK;
+    } else {
+        //result = 0
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to set parameter");
+        return ESP_FAIL;
+    }
+}
+
+httpd_uri_t set_param_post = {
+    .uri      = "/set_param",
+    .method   = HTTP_POST,
+    .handler  = set_param_post_handler,
+    .user_ctx = NULL
+};
+
 static const httpd_uri_t example_ws = {
         .uri        = "/ws",
         .method     = HTTP_GET,
@@ -117,6 +226,30 @@ static const httpd_uri_t example_ws = {
         .user_ctx   = NULL,
         .is_websocket = true
 };
+
+static esp_err_t params_get_handler(httpd_req_t *req)
+{
+    extern xparam_table_t params_table;
+    char *json_str = xparam_table_to_json(&params_table);
+    if (!json_str) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to create JSON");
+        return ESP_FAIL;
+    }
+
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_sendstr(req, json_str);
+
+    free(json_str); // Assuming xparam_table_to_json uses malloc
+    return ESP_OK;
+}
+
+static const httpd_uri_t params_get = {
+    .uri      = "/params",
+    .method   = HTTP_GET,
+    .handler  = params_get_handler,
+    .user_ctx = NULL
+};
+
 
 static esp_err_t get_handler(httpd_req_t *req)
 {
@@ -274,6 +407,13 @@ esp_err_t digifiz_register_uri_handler(httpd_handle_t server)
     if (ret)
         goto _ret;
     ret = httpd_register_uri_handler(server, &update_post);
+
+    ret = httpd_register_uri_handler(server, &params_get); 
+    if (ret)
+        goto _ret;
+    ret = httpd_register_uri_handler(server, &set_param_post);
+    if (ret)
+        goto _ret;
 _ret:
     return ret;
 }

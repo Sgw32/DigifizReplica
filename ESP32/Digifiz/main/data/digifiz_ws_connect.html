@@ -142,9 +142,17 @@
 	  margin: 0;
 	  display: block;
 	}
+	
+	#Settings table {
+	  width: 100%;
+	}
 
 	#map {
 		height: 100%;
+	}
+	
+	#table-container {
+	  margin-top: 10px; /* or any value you like */
 	}
 
 	.leaflet-popup-content table, .leaflet-popup-content table td {
@@ -449,6 +457,200 @@
             width: 100%;
             float: left;
         }
+		
+		/* --- MODERN UI UPGRADE --- */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f7fa;
+  color: #333;
+  transition: background-color 0.3s ease;
+}
+
+h2 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 10px;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+}
+
+/* Tab content cards */
+.tabcontent {
+  background: #ffffff;
+  border-radius: 10px;
+  margin: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+/* Buttons */
+button,
+input[type="file"],
+input[type="color"] {
+  transition: all 0.3s ease;
+  border-radius: 6px;
+  border: none;
+  padding: 10px 18px;
+  background-color: #3498db;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+button:hover {
+  background-color: #2980b9;
+  transform: scale(1.03);
+}
+
+/* Control inputs */
+input[type="text"],
+textarea {
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  font-size: 14px;
+  transition: box-shadow 0.3s ease;
+  width: 100%;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52,152,219,0.2);
+}
+
+/* Tables */
+table {
+  border: none;
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+  background-color: #ecf0f1;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Header Bar */
+.topnav {
+  background-color: #2c3e50;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  padding: 0 10px;
+  border-radius: 0 0 6px 6px;
+}
+
+.topnav a {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.topnav a:hover {
+  background-color: #1abc9c;
+  color: #fff;
+}
+
+/* Progress text */
+#progress {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+/* Mobile tweaks */
+@media screen and (max-width: 600px) {
+  .tabcontent {
+    margin: 8px;
+    padding: 12px;
+  }
+
+  button {
+    font-size: 12px;
+    padding: 8px 14px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+}
+/* --- Color Picker UI --- */
+.color-picker-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #999;
+  box-shadow: 0 0 3px rgba(0,0,0,0.2);
+}
+
+/* --- Settings Table Styling --- */
+#Settings table {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  border-collapse: collapse;
+  border: 1px solid #ccc;
+}
+
+#Settings th, #Settings td {
+  border: 1px solid #bbb;
+  padding: 10px;
+  font-size: 14px;
+}
+
+#Settings tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+#Settings tbody tr:hover {
+  background-color: #eef2f5;
+}
+
+input[type="color"] {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  width: 60px;
+  height: 40px;
+  padding: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: transparent;
+  box-shadow: 0 0 0 2px #888;
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+  flex-shrink: 0; /* prevent shrinking inside flex */
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 6px;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+input[type="color"]:hover {
+  box-shadow: 0 0 0 3px #3498db;
+  transform: scale(1.05);
+}
     </style>
 </head>
 
@@ -458,6 +660,7 @@
 <div class="topnav" id="myTopnav">
 	<a href="#" onclick="selTab(event,'WiFi')" class="tablinks" id="defaultTab">WiFi</a>
 	<a href="#" onclick="selTab(event,'Control')" class="tablinks">Control</a>
+	<a href="#" onclick="selTab(event,'Settings')" class="tablinks">Settings</a>
 	<a href="#" onclick="selTab(event,'About')" class="tablinks">About</a>
 	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
 		<span class="hamburger"></span>
@@ -497,9 +700,9 @@
         </div>
 		<div class="cl1">
             <div class="mfa-buttons">
-				<input type="color" id="colorPicker" name="colorPicker" value="#ff0000">
+				<input type="color" id="colorPicker" value="#b4f006">
                 <button class="cl01" type="button" id="setMainColor">Set main color</button>
-				<input type="color" id="colorPickerBack" name="colorPickerBack" value="#ff0000">
+				<input type="color" id="colorPickerBack" value="#b4f006">
                 <button class="cl01" type="button" id="setBackColor">Set back color</button>
                 <button class="cl01" type="button" id="mfaModeButton">MFA Mode</button>
                 <button class="cl01" type="button" id="mfaResetButton">MFA Reset</button>
@@ -511,6 +714,16 @@
 		<div class="cl1">
 			<button class="cl01" type="button" id="fResetButton">Factory reset</button>
 		</div>
+	</div>
+</div>
+
+<div id="Settings" class="tabcontent">
+	<div class="tci">
+		<div class="cl1">
+			<button onclick="loadParams()">Load Parameters</button>
+			<p>Page works in experimental mode. Ask manufacturer before interacting!</p>
+			<div id="table-container"></div>	  
+		</div>	
 	</div>
 </div>
 
@@ -532,6 +745,93 @@
 </div>
 
 </div>
+
+<script>
+function loadParams() {
+	fetch('/params')
+	.then(res => res.json())
+	.then(data => {
+		const params = data.params;
+		const tableContainer = document.getElementById("table-container");
+
+		const table = document.createElement("table");
+		const thead = document.createElement("thead");
+		thead.innerHTML = `
+		<tr>
+			<th>Name</th>
+			<th>Value</th>
+			<th>Info</th>
+			<th>Type</th>
+			<th>Min</th>
+			<th>Max</th>
+			<th>New Value</th>
+			<th>Set</th>
+		</tr>
+		`;
+		table.appendChild(thead);
+
+		const tbody = document.createElement("tbody");
+		params.forEach(param => {
+		const tr = document.createElement("tr");
+
+		let inputCellHTML = "";
+		if (param.min === 0 && param.max === 1) {
+			const checked = param.value === 1 || param.value === "1" ? "checked" : "";
+			inputCellHTML = `<input type="checkbox" id="input-${param.name}" ${checked}>`;
+		} else {
+			const inputType = param.type === "string" ? "text" : "number";
+			const step = inputType === "number" ? `step="${param.step}"` : "";
+			inputCellHTML = `<input type="${inputType}" id="input-${param.name}" value="${param.value}" ${step}>`;
+		}
+
+		tr.innerHTML = `
+			<td>${param.name}</td>
+			<td>${param.value}</td>
+			<td>${param.info}</td>
+			<td>${param.type}</td>
+			<td>${param.min}</td>
+			<td>${param.max}</td>
+			<td>${inputCellHTML}</td>
+			<td><button onclick="setParam('${param.name}')">Set</button></td>
+		`;
+
+		tbody.appendChild(tr);
+		});
+
+		table.appendChild(tbody);
+		tableContainer.innerHTML = ""; // Clear old table
+		tableContainer.appendChild(table);
+	})
+	.catch(err => {
+		console.error("Failed to load parameters:", err);
+		alert("Failed to load parameters");
+	});
+}
+
+function setParam(name) {
+	const input = document.getElementById(`input-${name}`);
+	const value = input.type === "checkbox" ? (input.checked ? 1 : 0) : input.value;
+
+	fetch('/set_param', {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({ name, value })
+	})
+	.then(res => {
+	if (!res.ok) throw new Error("Failed to set parameter");
+	return res.json();
+	})
+	.then(data => {
+	alert(`Parameter "${name}" updated successfully!`);
+	loadParams(); // Refresh values
+	})
+	.catch(err => {
+	console.error("Set failed:", err);
+	alert(`Failed to set parameter "${name}"`);
+	});
+}
+</script>
+
 <script>
 function selTab(evt, id) {
 	var i, tabcontent, tablinks;
@@ -627,77 +927,8 @@ document.getElementById("defaultTab").click();
 	};
 </script>
 
-    <script>  // Прием, обработка и отправка данных в WS
-		let params = [
-            { name: "PARAMETER_RPMCOEFFICIENT", value: "" },
-            { name: "PARAMETER_SPEEDCOEEFICIENT", value: "" },
-            { name: "PARAMETER_COOLANTTHERMISTORB", value: "" },
-            { name: "PARAMETER_AIRTHERMISTORB", value: "" },
-            { name: "PARAMETER_TANKMINRESISTANCE", value: "" },
-            { name: "PARAMETER_TANKMAXRESISTANCE", value: "" },
-            { name: "PARAMETER_TAU_COOLANT", value: "" },
-            { name: "PARAMETER_TAU_OIL", value: "" },
-            { name: "PARAMETER_TAU_AIR", value: "" },
-            { name: "PARAMETER_TAU_TANK", value: "" },
-			{ name: "PARAMETER_MILEAGE", value: "" },
-            { name: "PARAMETER_DAILY_MILEAGE", value: "" },
-            { name: "PARAMETER_AUTO_BRIGHTNESS", value: "" },
-            { name: "PARAMETER_BRIGHTNESS_LEVEL", value: "" },
-            { name: "PARAMETER_TANK_CAPACITY", value: "" },
-            { name: "PARAMETER_MFA_STATE", value: "" },
-            { name: "PARAMETER_BUZZER_OFF", value: "" },
-			{ name: "PARAMETER_MAX_RPM", value: "" },
-            { name: "PARAMETER_NORMAL_RESISTANCE_COOLANT", value: "" },
-            { name: "PARAMETER_NORMAL_RESISTANCE_OIL", value: "" },
-            { name: "PARAMETER_NORMAL_RESISTANCE_AMB", value: "" },
-            { name: "PARAMETER_DOT_OFF", value: "" },
-            { name: "PARAMETER_BACKLIGHT_ON", value: "" },
-            { name: "PARAMETER_M_D_FILTER", value: "" },
-			{ name: "PARAMETER_COOLANT_MAX_R", value: "" },
-            { name: "PARAMETER_COOLANT_MIN_R", value: "" },
-            { name: "PARAMETER_COMMAND_MFA_RESET", value: "" },
-            { name: "PARAMETER_COMMAND_MFA_MODE", value: "" },
-            { name: "PARAMETER_COMMAND_MFA_BLOCK", value: "" },
-            { name: "PARAMETER_MAINCOLOR_R", value: "" },
-            { name: "PARAMETER_MAINCOLOR_G", value: "" },
-			{ name: "PARAMETER_MAINCOLOR_B", value: "" },
-			{ name: "PARAMETER_BACKCOLOR_R", value: "" },
-            { name: "PARAMETER_BACKCOLOR_G", value: "" },
-			{ name: "PARAMETER_BACKCOLOR_B", value: "" },
-			{ name: "PARAMETER_SET_HOUR", value: "" },
-			{ name: "PARAMETER_SET_MINUTE", value: "" }
-        ];
-
-        function populateTable() {
-            let table = document.getElementById("paramsTable");
-            table.innerHTML = "";
-            params.forEach((param, index) => {
-                let row = table.insertRow();
-                let cell1 = row.insertCell(0);
-                let cell2 = row.insertCell(1);
-
-                cell1.innerHTML = param.name;
-                cell2.innerHTML = `<input type='text' id='param${index}' value='${param.value}' />`;
-            });
-        }
-
-        function setParameters() {
-            params.forEach((param, index) => {
-                param.value = document.getElementById(`param${index}`).value;
-				let dSend = { id: param.id, value: param.value };
-				socket.send(JSON.stringify({ name: dSend.id, msg: dSend.value + '\n' }));
-            });
-            console.log("Parameters set:", params);
-        }
-
-        function loadParameters() {
-            params.forEach((param, index) => {
-                document.getElementById(`param${index}`).value = param.value;
-            });
-            console.log("Parameters loaded:", params);
-        }
-
-        populateTable();
+    <script>  
+		
 
     </script>
 

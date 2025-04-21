@@ -64,9 +64,13 @@ uint8_t processOilPressure(int mRPM)
 
 void checkEmergency(int mRPM)
 {
-  #ifdef TESTMODE
-    //digitalWrite(OIL_LED_PIN,HIGH); //emergency, pressure system
-  #else
+  if (digifiz_parameters.option_testmode_on.value)
+  {  
+    // digifiz_reg_out.byte+=1;
+    // digifiz_reg_out.byte = digifiz_reg_out.byte%8;
+  }
+  else
+  {
     emergency_state = processOilPressure(mRPM);
     processCHECKEngine();
     if (emergency_state==0)
@@ -108,6 +112,5 @@ void checkEmergency(int mRPM)
       #endif
         buzzerOn();
     }
-  #endif
-    
+  }
 }
