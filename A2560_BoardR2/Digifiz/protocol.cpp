@@ -485,7 +485,7 @@ void processData(int parameter,long value)
       if (par==PARAMETER_SET_MINUTE)
       {
           #ifdef USE_BTSERIAL
-          BTserial.println("PARAMETER_UPTIME");
+          BTserial.println("PARAMETER_SET_MINUTE");
           #endif
           DateTime newTime2 = DateTime(tme.year(), tme.month(), tme.day(), tme.hour() ,constrain(value,0,60),0);
           myRTC.adjust(newTime2);

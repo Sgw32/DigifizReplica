@@ -2,6 +2,7 @@
 #include "reg_inout.h"
 #include "esp_log.h"
 #include "mjs.h"
+#include <cJSON.h>
 //If updating, do not display anything
 #include "digifiz_ws_server.h"
 
@@ -36,56 +37,9 @@ const char *default_mjs_script =
     "  return arr;"
     "}";
 
-static CompiledColoringScheme digifizCustom = {};
+ColoringScheme digifizCustom = {};
 
-// Function to run the mJS script
-void run_mjs_script(const char *script) {
-    struct mjs *mjs = mjs_create();
-
-    mjs_val_t func = 0;
-    mjs_val_t res = 0;
-
-    //mjs_own(mjs, &func);
-
-    // Load the script into mJS
-    enum mjs_err err = mjs_exec(mjs, script, NULL);
-    if (err != MJS_OK) {
-        ESP_LOGE(TAG, "mJS execution error: %s", mjs_strerror(mjs, err));
-        mjs_destroy(mjs);
-        return;
-    }
-
-    // Call the setColors() function
-    func = mjs_get(mjs, mjs_get_global(mjs), "setColors", 0);
-    if (!mjs_is_function(func)) {
-        ESP_LOGE(TAG, "Function setColors not found");
-        mjs_destroy(mjs);
-        return;
-    }
-
-    mjs_val_t result = mjs_call(mjs, &res, func, 0, 0);
-    if (!mjs_is_array(result)) {
-        ESP_LOGE(TAG, "setColors() did not return an array");
-        mjs_destroy(mjs);
-        return;
-    }
-
-    // Parse the result into the RGB array
-    for (int i = 0; i < (DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS); i++) {
-        mjs_val_t item = mjs_array_get(mjs, result, i);
-        uint8_t r = mjs_get_int(mjs, mjs_get(mjs, item, "r", 0));
-        uint8_t g = mjs_get_int(mjs, mjs_get(mjs, item, "g", 0));
-        uint8_t b = mjs_get_int(mjs, mjs_get(mjs, item, "b", 0));
-        digifizCustom.scheme[i].r = r;
-        digifizCustom.scheme[i].g = g;
-        digifizCustom.scheme[i].b = b;
-    }
-
-    ESP_LOGI(TAG, "RGB array initialized from mJS script");
-    mjs_destroy(mjs);
-}    
-
-static ColoringScheme digifizStandard = {
+ColoringScheme digifizStandard = {
     .scheme = {
         { 
             .r = 20,
@@ -396,7 +350,7 @@ void initDisplay() {
     setRPMData(5);
     ESP_LOGI(LOG_TAG, "Digifiz WS2812 LED init OK.");
     //Compile colors from mJS backend
-    run_mjs_script(default_mjs_script);
+    //run_mjs_script(default_mjs_script);
     compileColorScheme();
     ESP_LOGI(LOG_TAG, "initDisplay ended");
 }
@@ -982,28 +936,28 @@ void processIndicators()
     display.foglight_ind2 = digifiz_reg_in.lightsHeatInd ? 0 : 1;
 }
 
-void getColorBySegmentNumber(uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* b)
+static void getColorBySegmentNumber(ColoringScheme* c_ptr, uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* b)
 {
     uint16_t startSegment = 0;
     uint16_t endSegment = 0;
     for (uint16_t i=0;i!=49;i++)
     {
-        endSegment = digifizStandard.scheme[i].end_segment;
+        endSegment = c_ptr->scheme[i].end_segment;
         if ((segment>=startSegment)&&(segment<endSegment))
         {
-            if (digifizStandard.scheme[i].basecolor_enabled==1)
+            if (c_ptr->scheme[i].basecolor_enabled==1)
             {
                 (*r) = maincolor_r;
                 (*g) = maincolor_g;
                 (*b) = maincolor_b;
             }
-            else if (digifizStandard.scheme[i].basecolor_enabled==2)
+            else if (c_ptr->scheme[i].basecolor_enabled==2)
             {
                 (*r) = maincolor_r/3;
                 (*g) = maincolor_g/3;
                 (*b) = maincolor_b/3;
             }
-            else if (digifizStandard.scheme[i].basecolor_enabled==3)
+            else if (c_ptr->scheme[i].basecolor_enabled==3)
             {
                 (*r) = backcolor_r;
                 (*g) = backcolor_g;
@@ -1011,20 +965,23 @@ void getColorBySegmentNumber(uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* 
             }
             else
             {
-                (*r) = digifizStandard.scheme[i].r;
-                (*g) = digifizStandard.scheme[i].g;
-                (*b) = digifizStandard.scheme[i].b;
+                (*r) = c_ptr->scheme[i].r;
+                (*g) = c_ptr->scheme[i].g;
+                (*b) = c_ptr->scheme[i].b;
             }
-
-            //TODO refactor this code to some js script executed on boot 
-            //or load data completely from memory (calculate on computer side)
-            if (digifiz_parameters.rpmOptions_diesel_line.value)
+            //TODO move this logic elsewhere
+            if (digifiz_parameters.useCustomScheme.value==0)
             {
-                if ((segment>76)&&(segment<=80))
+                //TODO refactor this code to some js script executed on boot 
+                //or load data completely from memory (calculate on computer side)
+                if (digifiz_parameters.rpmOptions_diesel_line.value)
                 {
-                    (*r) = 0;
-                    (*g) = 0;
-                    (*b) = 0;
+                    if ((segment>76)&&(segment<=80))
+                    {
+                        (*r) = 0;
+                        (*g) = 0;
+                        (*b) = 0;
+                    }
                 }
             }
         }
@@ -1059,6 +1016,23 @@ void compileColorScheme(void)
     backcolor_g = digifiz_parameters.backc_g.value;
     backcolor_b = digifiz_parameters.backc_b.value;
 
+    // Check if custom scheme is enabled
+    if (digifiz_parameters.useCustomScheme.value) {
+        nvs_handle_t nvs_handle;
+        esp_err_t err = nvs_open("digifiz", NVS_READWRITE, &nvs_handle);
+        if (err == ESP_OK) {
+            size_t required_size = 0;
+            // First get the size of the stored JSON
+            err = nvs_get_blob(nvs_handle, "color_scheme", NULL, &required_size);
+            if (err == ESP_OK) {
+                nvs_get_blob(nvs_handle, "color_scheme", (uint8_t*)&digifizCustom, &required_size);
+                ESP_LOGI(LOG_TAG, "Custom colors scheme load ok.");
+            }
+            nvs_close(nvs_handle);
+        }
+    }
+
+    // If custom scheme is not enabled or failed to load, use standard scheme
     uint8_t *ptr = (uint8_t*)&display;
     for (uint16_t i = 0; i != sizeof(DigifizNextDisplay); i++)
     {
@@ -1067,8 +1041,10 @@ void compileColorScheme(void)
             uint8_t r = 0;
             uint8_t g = 0;
             uint8_t b = 0;
-
-            getColorBySegmentNumber(led_num,&r,&g,&b);
+            if (digifiz_parameters.useCustomScheme.value)
+                getColorBySegmentNumber(&digifizCustom, led_num,&r,&g,&b);
+            else
+                getColorBySegmentNumber(&digifizStandard, led_num,&r,&g,&b);
             r_colors[led_num] =  (uint32_t)r;
             g_colors[led_num] =  (uint32_t)g;
             b_colors[led_num] =  (uint32_t)b;

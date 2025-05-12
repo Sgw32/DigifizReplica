@@ -456,6 +456,14 @@ extern "C" {
         .p_info = "Pull-up resistance for ambient temperature sensor",\
         .value = 3300, \
     ) \
+    PARAM(  \
+        U8, \
+        useCustomScheme, \
+        .p_name = "Custom scheme", \
+        .p_info = "Enable custom display scheme",\
+        .value = 0, \
+        .max = 1, \
+    ) \
 
 
 #ifdef __cplusplus

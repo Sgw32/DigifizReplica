@@ -179,7 +179,6 @@ void setRefuelSign(bool onoff);
 void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
 void setServiceDisplayData(uint8_t data);
-void getColorBySegmentNumber(uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* b);
 
 void compileColorScheme(void);
 
@@ -193,6 +192,9 @@ void setBackWindowHeatIndicator(bool onoff);
 void processIndicators();
 
 void deinit_leds(void);
+
+extern ColoringScheme digifizCustom;
+extern ColoringScheme digifizStandard;
 
 #ifdef __cplusplus
 }

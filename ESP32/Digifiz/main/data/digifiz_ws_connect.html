@@ -661,6 +661,7 @@ input[type="color"]:hover {
 	<a href="#" onclick="selTab(event,'WiFi')" class="tablinks" id="defaultTab">WiFi</a>
 	<a href="#" onclick="selTab(event,'Control')" class="tablinks">Control</a>
 	<a href="#" onclick="selTab(event,'Settings')" class="tablinks">Settings</a>
+	<a href="#" onclick="selTab(event,'Colors')" class="tablinks">Colors</a>
 	<a href="#" onclick="selTab(event,'About')" class="tablinks">About</a>
 	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
 		<span class="hamburger"></span>
@@ -727,6 +728,35 @@ input[type="color"]:hover {
 	</div>
 </div>
 
+<div id="Colors" class="tabcontent">
+	<div class="tci">
+		<div class="hdr">Color Scheme Editor</div>
+		<div class="cl1">
+			<table id="colorSchemeTable" style="width: 100%;">
+				<thead>
+					<tr>
+						<th>End Segment</th>
+						<th>Type</th>
+						<th>Base Color</th>
+						<th>Color</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					<!-- Table rows will be added dynamically -->
+				</tbody>
+			</table>
+			<button class="cl01" type="button" id="addColorSegment" style="margin-top: 10px;">Add Segment</button>
+		</div>
+		<div class="cl1">
+			<div class="mfa-buttons">
+				<button class="cl01" type="button" id="loadColorScheme">Load Scheme</button>
+				<button class="cl01" type="button" id="setColorScheme">Set Scheme</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <div id="About" class="tabcontent">
 <div class="tci">
    Copyright &copy; 2021-2025 by Fedor Zagumennov (Sgw32)<br>
@@ -748,7 +778,7 @@ input[type="color"]:hover {
 
 <script>
 function loadParams() {
-	fetch('/params')
+	fetch('/params?type=params')
 	.then(res => res.json())
 	.then(data => {
 		const params = data.params;
@@ -990,6 +1020,183 @@ document.getElementById("defaultTab").click();
 			}
 		}
 	</script>
+
+<script>
+// Color scheme table management
+function addColorSegmentRow(data = null) {
+    const tbody = document.querySelector('#colorSchemeTable tbody');
+    const row = document.createElement('tr');
+    
+    // Create cells
+    const endSegmentCell = document.createElement('td');
+    const typeCell = document.createElement('td');
+    const baseColorCell = document.createElement('td');
+    const colorCell = document.createElement('td');
+    const actionsCell = document.createElement('td');
+
+    // Create inputs
+    const endSegmentInput = document.createElement('input');
+    endSegmentInput.type = 'number';
+    endSegmentInput.min = '0';
+    endSegmentInput.max = '282';
+    endSegmentInput.value = data ? data.end_segment : '';
+
+    const typeInput = document.createElement('select');
+    typeInput.innerHTML = `
+		<option value="0">Invalid</option>
+		<option value="1">Speedometer</option>
+		<option value="2">Time</option>
+		<option value="3">RPM</option>
+		<option value="4">RPM Redline</option>
+		<option value="5">Temperature</option>
+		<option value="6">Fuel</option>
+		<option value="7">Refuel</option>
+		<option value="8">Mileage</option>
+		<option value="9">Backlight RPM</option>
+		<option value="10">Backlight</option>
+		<option value="11">Signals</option>
+		<option value="12">Signal Lights</option>
+		<option value="13">Signal Foglights1</option>
+		<option value="14">Signal Foglights2</option>
+		<option value="15">Signal Glass Heat</option>
+		<option value="16">Signal Farlight</option>
+		<option value="17">Signal Left Turn</option>
+		<option value="18">Signal Right Turn</option>
+		<option value="19">Signal Brakes</option>
+		<option value="20">Signal Oil</option>
+		<option value="21">Signal Battery</option>
+		<option value="22">Signal MFA1</option>
+		<option value="23">Signal MFA2</option>
+		<option value="24">Signal MFA Indicators</option>
+		<option value="25">MFA</option>
+		<option value="26">Upper Backlight</option>
+	`;
+    if (data) typeInput.value = data.type;
+
+    const baseColorInput = document.createElement('select');
+    baseColorInput.innerHTML = `
+        <option value="0">Custom</option>
+        <option value="1">Main Color</option>
+        <option value="2">Main Color/3</option>
+        <option value="3">Back Color</option>
+    `;
+    if (data) baseColorInput.value = data.basecolor_enabled;
+
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    if (data) {
+        // Convert RGB to hex
+        const r = data.r.toString(16).padStart(2, '0');
+        const g = data.g.toString(16).padStart(2, '0');
+        const b = data.b.toString(16).padStart(2, '0');
+        colorInput.value = `#${r}${g}${b}`;
+    } else {
+        colorInput.value = '#000000';
+    }
+
+    // Add delete button
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Delete';
+    deleteButton.onclick = function() {
+        row.remove();
+    };
+
+    // Append inputs to cells
+    endSegmentCell.appendChild(endSegmentInput);
+    typeCell.appendChild(typeInput);
+    baseColorCell.appendChild(baseColorInput);
+    colorCell.appendChild(colorInput);
+    actionsCell.appendChild(deleteButton);
+
+    // Append cells to row
+    row.appendChild(endSegmentCell);
+    row.appendChild(typeCell);
+    row.appendChild(baseColorCell);
+    row.appendChild(colorCell);
+    row.appendChild(actionsCell);
+
+    // Append row to table
+    tbody.appendChild(row);
+}
+
+document.getElementById('addColorSegment').addEventListener('click', function() {
+    addColorSegmentRow();
+});
+
+document.getElementById("setColorScheme").addEventListener("click", async function () {
+    const rows = document.querySelectorAll('#colorSchemeTable tbody tr');
+	
+    let iter = 0;
+
+    for (const row of rows) {
+		const cells = row.cells;
+		console.log("Processing row:" + iter)
+		if (parseInt(cells[0].querySelector('input').value)!=0)
+		{
+			const scheme = [];
+			
+			const colorValue = cells[3].querySelector('input[type="color"]').value;
+			const r = parseInt(colorValue.slice(1, 3), 16);
+			const g = parseInt(colorValue.slice(3, 5), 16);
+			const b = parseInt(colorValue.slice(5, 7), 16);
+
+			const segment = {
+				end_segment: parseInt(cells[0].querySelector('input').value),
+				type: parseInt(cells[1].querySelector('select').value),
+				basecolor_enabled: parseInt(cells[2].querySelector('select').value),
+				r: r,
+				g: g,
+				b: b,
+				i: iter
+			};
+			scheme.push(segment);
+
+			try {
+				const response = await fetch('/set_color_scheme', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ scheme: scheme })
+				});
+
+				if (!response.ok) {
+					throw new Error(`Failed to set color scheme for row ${iter}`);
+				}
+
+				const data = await response.json();
+				console.log(`Row ${iter} updated:`, data);
+			} catch (err) {
+				console.error(`Set failed for row ${iter}:`, err);
+				alert(`Failed to set color scheme for row ${iter}: ${err.message}`);
+				return; // Stop on error
+			}
+		}
+		iter += 1;
+    }
+    alert("All color schemes updated successfully!");
+});
+
+// Add function to load color scheme via API
+function loadColorScheme() {
+    fetch('/params?type=color')
+        .then(res => {
+            if (!res.ok) throw new Error("Failed to load color scheme");
+            return res.json();
+        })
+        .then(data => {
+            const tbody = document.querySelector('#colorSchemeTable tbody');
+            tbody.innerHTML = '';
+            data.scheme.forEach(segment => {
+                addColorSegmentRow(segment);
+            });
+        })
+        .catch(err => {
+            console.error("Load failed:", err);
+            alert("Failed to load color scheme: " + err.message);
+        });
+}
+
+document.getElementById("loadColorScheme").addEventListener("click", loadColorScheme);
+</script>
 
 </body>
 

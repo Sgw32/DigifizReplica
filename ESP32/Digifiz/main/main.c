@@ -367,7 +367,7 @@ void digifizWebserver(void *pvParameters)
 
 void on_cpu_0(void *pvParameters)
 {
-    xTaskCreatePinnedToCore(digifizWebserver, "digifizWebserver", 4096, NULL, 3, NULL, 0);
+    xTaskCreatePinnedToCore(digifizWebserver, "digifizWebserver", 8192, NULL, 3, NULL, 0);
     while (1) 
     {
         vTaskDelay(MAIN_TASK_DELAY_MS / portTICK_PERIOD_MS);

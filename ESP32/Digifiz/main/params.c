@@ -1,6 +1,8 @@
 #include "params.h"
 #include "esp_log.h"
 #include <string.h>
+#include "display_next.h"  // Add this include for ColoringScheme type
+#include "cJSON.h"  // Add JSON library
 
 
 #define TAG "EEPROM module"
@@ -99,7 +101,6 @@ void load_defaults()
     }
 }
 
-
 void initEEPROM()
 {
     nvs_handle_t my_handle;
@@ -197,8 +198,32 @@ void initEEPROM()
         else{
             ESP_LOGE(TAG, "Digifiz status load failed.");
         }
+
+        // Check for color scheme
+        size_t scheme_len = 0;
+        err = nvs_get_blob(my_handle, "color_scheme", NULL, &scheme_len);
+        if (err == ESP_ERR_NVS_NOT_FOUND) {
+            // If custom scheme is enabled but not found in NVS, write the default scheme
+            ESP_LOGW(TAG, "Color scheme not found in NVS. Writing default scheme...");
+            memcpy((uint8_t*)&digifizCustom,(uint8_t*)&digifizStandard,sizeof(digifizStandard));
+            nvs_set_blob(my_handle, "color_scheme", (uint8_t*)&digifizCustom, sizeof(digifizCustom));
+            // Commit changes to NVS
+            err = nvs_commit(my_handle);
+            if (err != ESP_OK) {
+                printf("Error (%s) committing data to NVS!\n", esp_err_to_name(err));
+            }
+            ESP_LOGI(TAG, "write ok");
+        } else if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Error checking color scheme in NVS: %s", esp_err_to_name(err));
+        }
+        else if (err==ESP_OK)
+        {
+            nvs_get_blob(my_handle, "color_scheme", (uint8_t*)&digifizCustom, &scheme_len);
+            ESP_LOGI(TAG, "Status load done.");
+        }
+
+        nvs_close(my_handle);
     }
-    nvs_close(my_handle);
 
     ESP_LOGI(TAG, "initEEPROM ended");
 }
