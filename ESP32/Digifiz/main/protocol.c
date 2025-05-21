@@ -880,6 +880,12 @@ void protocolParse(char* buf, uint8_t len)
                 {
                     printADC();
                 }
+                else if (strcmp(cmd_buffer_par,"reset_colors")==0)
+                {
+                    reinit_load_default_color_scheme();
+                    compileColorScheme();
+                    printLnCString("RESET COLORS OK\n");
+                }
                 else if (strcmp(cmd_buffer_par,"test_mode")==0)
                 {
                     digifiz_parameters.option_testmode_on.value=!digifiz_parameters.option_testmode_on.value;

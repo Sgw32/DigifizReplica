@@ -101,6 +101,35 @@ void load_defaults()
     }
 }
 
+void reinit_load_default_color_scheme()
+{
+    ESP_LOGI(TAG, "Restoring default parameter values...");
+    nvs_handle_t my_handle;
+    esp_err_t err = nvs_open("digifiz", NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) {
+        printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
+    } 
+    else
+    {
+        load_default_color_scheme(&my_handle);
+        nvs_close(my_handle);
+    }
+}
+
+void load_default_color_scheme(nvs_handle_t* my_handle)
+{
+    // If custom scheme is enabled but not found in NVS, write the default scheme
+    ESP_LOGW(TAG, "Writing default scheme...");
+    memcpy((uint8_t*)&digifizCustom,(uint8_t*)&digifizStandard,sizeof(digifizStandard));
+    nvs_set_blob(*my_handle, "color_scheme", (uint8_t*)&digifizCustom, sizeof(digifizCustom));
+    // Commit changes to NVS
+    esp_err_t err = nvs_commit(*my_handle);
+    if (err != ESP_OK) {
+        printf("Error (%s) committing data to NVS!\n", esp_err_to_name(err));
+    }
+    ESP_LOGI(TAG, "write ok");
+}
+
 void initEEPROM()
 {
     nvs_handle_t my_handle;
@@ -203,16 +232,7 @@ void initEEPROM()
         size_t scheme_len = 0;
         err = nvs_get_blob(my_handle, "color_scheme", NULL, &scheme_len);
         if (err == ESP_ERR_NVS_NOT_FOUND) {
-            // If custom scheme is enabled but not found in NVS, write the default scheme
-            ESP_LOGW(TAG, "Color scheme not found in NVS. Writing default scheme...");
-            memcpy((uint8_t*)&digifizCustom,(uint8_t*)&digifizStandard,sizeof(digifizStandard));
-            nvs_set_blob(my_handle, "color_scheme", (uint8_t*)&digifizCustom, sizeof(digifizCustom));
-            // Commit changes to NVS
-            err = nvs_commit(my_handle);
-            if (err != ESP_OK) {
-                printf("Error (%s) committing data to NVS!\n", esp_err_to_name(err));
-            }
-            ESP_LOGI(TAG, "write ok");
+            load_default_color_scheme(&my_handle);
         } else if (err != ESP_OK) {
             ESP_LOGE(TAG, "Error checking color scheme in NVS: %s", esp_err_to_name(err));
         }

@@ -34,6 +34,19 @@ typedef struct {
 void load_defaults();
 
 /**
+ * @brief Loads default color scheme from standard one
+ * Should be called on boot
+ * 
+ */
+void load_default_color_scheme(nvs_handle_t* my_handle);
+
+/**
+ * @brief Loads default color scheme from standard one
+ * To be used from protocol
+ */
+void reinit_load_default_color_scheme();
+
+/**
  * @brief Inits EEPROM (internal or external)
  * 
  */
