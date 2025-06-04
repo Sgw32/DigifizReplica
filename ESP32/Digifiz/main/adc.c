@@ -326,48 +326,70 @@ uint8_t getDisplayedCoolantTemp() {
     static uint32_t lastMillis = 0;
     uint8_t minSegments = digifiz_parameters.tempOptions_sensor_connected_ind.value ? 1 : 0;
     //if minSegments was set to 1 (connected int) - and sensor not connected, reset it anyway. 
-    
-    if ((coolantT>120.0f)&&digifiz_parameters.tempOptions_alarm_function.value)
+    if (getFaultyMask().coolant_faulty==255)
     {
-        if ((millis()-lastMillis)>TEMPERATURE_ALARM_PERIOD)
+        if ((millis()-lastMillis)>TEMPERATURE_FAULTY_PERIOD)
         {
             if (alarm)
                 alarm = 0;
             else
                 alarm = 1;
+            lastMillis = millis();
         }
-        lastMillis = millis();
+        //If sensor not connected - return 14 segments
+        if (alarm)
+        {
+            return 0;
+        }
+        else
+        {
+            return 14;
+        }
     }
     else
     {
-        //If alarm conditions not active, reset alarm
-        alarm = 0;
+        if ((coolantT>120.0f)&&digifiz_parameters.tempOptions_alarm_function.value)
+        {
+            if ((millis()-lastMillis)>TEMPERATURE_ALARM_PERIOD)
+            {
+                if (alarm)
+                    alarm = 0;
+                else
+                    alarm = 1;
+            }
+            lastMillis = millis();
+        }
+        else
+        {
+            //If alarm conditions not active, reset alarm
+            alarm = 0;
+        }
+        //If sensor not connected
+        if (coolantT<-60.0f)
+            minSegments = 0;
+        //If alarm active - return 0 segments(it is switched in TEMPERATURE_ALARM_PERIOD freq)
+        if (alarm)
+            return 0;
+        
+        #ifdef AUDI_DISPLAY
+        //16 LEDs
+        return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin.value)/
+                (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*16.0f),0,16.0f);
+        #endif
+        #ifdef AUDI_RED_DISPLAY
+            //17 LEDs
+            return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin.value)/
+                    (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*17.0f),0,17.0f);
+
+        #endif
+
+        #if !defined(AUDI_RED_DISPLAY) && !defined(AUDI_DISPLAY)
+            //14 LEDs
+            return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin.value)/
+                    (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*14.0f),minSegments,14.0f); 
+        
+        #endif   
     }
-    //If sensor not connected
-    if (coolantT<-60.0f)
-        minSegments = 0;
-    //If alarm active - return 0 segments(it is switched in TEMPERATURE_ALARM_PERIOD freq)
-    if (alarm)
-        return 0;
-    
-    #ifdef AUDI_DISPLAY
-    //16 LEDs
-    return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin.value)/
-            (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*16.0f),0,16.0f);
-    #endif
-    #ifdef AUDI_RED_DISPLAY
-        //17 LEDs
-        return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin.value)/
-                (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*17.0f),0,17.0f);
-
-    #endif
-
-    #if !defined(AUDI_RED_DISPLAY) && !defined(AUDI_DISPLAY)
-        //14 LEDs
-        return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin.value)/
-                (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*14.0f),minSegments,14.0f); 
-    
-    #endif   
 }
 
 // Get the original displayed coolant temperature
@@ -524,12 +546,14 @@ void processCoolantTemperature() {
         }
         else
         {
-            faulty_status.coolant_faulty = 1;
+            if (faulty_status.coolant_faulty < 255)
+                faulty_status.coolant_faulty += 1;
         }
     }
     else
     {
-        faulty_status.coolant_faulty = 1;
+        if (faulty_status.coolant_faulty < 255)
+            faulty_status.coolant_faulty += 1;
     }
 }
 
@@ -548,12 +572,14 @@ void processOilTemperature() {
         }
         else
         {
-            faulty_status.oil_faulty = 1;
+            if (faulty_status.oil_faulty < 255)
+                faulty_status.oil_faulty += 1;
         }
     }
     else
     {
-        faulty_status.oil_faulty = 1;
+        if (faulty_status.oil_faulty < 255)
+            faulty_status.oil_faulty += 1;
     }
 }
 
@@ -564,15 +590,19 @@ void processGasLevel() {
     //R2 = constrain(220 * V0 / (ADC_UPPER_BOUND - V0),digifiz_parameters.tankMinResistance.value,digifiz_parameters.tankMaxResistance.value); // 220 Ohm in series with fuel sensor
     R2 = 220.0f * V0 / (ADC_UPPER_BOUND - V0);
 
+    //TODO do not set faulty immediately
     if (R2>digifiz_parameters.tankMaxResistance.value)
     {
-        faulty_status.fuel_faulty = 1;
+        if (faulty_status.fuel_faulty < 255)
+            faulty_status.fuel_faulty += 1;
         return;
     }
 
+    //TODO do not set faulty immediately
     if (R2<digifiz_parameters.tankMinResistance.value)
     {
-        faulty_status.fuel_faulty = 1;
+        if (faulty_status.fuel_faulty < 255)
+            faulty_status.fuel_faulty += 1;
         return;
     }
     
@@ -619,12 +649,14 @@ void processAmbientTemperature() {
         }
         else
         {
-            faulty_status.air_faulty = 1;
+            if (faulty_status.air_faulty < 255)
+                faulty_status.air_faulty += 1;
         }
     }
     else
     {
-        faulty_status.air_faulty = 1;
+        if (faulty_status.air_faulty < 255)
+            faulty_status.air_faulty += 1;
     }
     //printf("ADC AMBT: %f %f\n",V0, temp1);
 }
@@ -649,12 +681,14 @@ void processFirstCoolantTemperature() {
         }
         else
         {
-            faulty_status.coolant_faulty = 1;
+            if (faulty_status.coolant_faulty < 255)
+                faulty_status.coolant_faulty += 1;
         }
     }
     else
     {
-        faulty_status.coolant_faulty = 1;
+        if (faulty_status.coolant_faulty < 255)
+            faulty_status.coolant_faulty += 1;
     }
 }
 
@@ -673,12 +707,14 @@ void processFirstOilTemperature() {
         }
         else
         {
-            faulty_status.oil_faulty = 1;
+            if (faulty_status.oil_faulty < 255)
+                faulty_status.oil_faulty += 1;
         }
     }
     else
     {
-        faulty_status.oil_faulty = 1;
+        if (faulty_status.oil_faulty < 255)
+            faulty_status.oil_faulty += 1;
     }
 }
 
@@ -721,12 +757,14 @@ void processFirstAmbientTemperature() {
         }
         else
         {
-            faulty_status.air_faulty = 1;
+            if (faulty_status.air_faulty < 255)
+                faulty_status.air_faulty += 1;
         }
     }
     else
     {
-        faulty_status.air_faulty = 1;
+        if (faulty_status.air_faulty < 255)
+            faulty_status.air_faulty += 1;
     }
 }
 

@@ -40,11 +40,10 @@ typedef struct DeviceSensorsFaulty{
             uint32_t fault_status;  // 8-bit variable
         };
         struct {
-            uint32_t fuel_faulty : 1;  // 1-bit variable
-            uint32_t oil_faulty : 1;  // 1-bit variable
-            uint32_t coolant_faulty : 1; // 1-bit variable
-            uint32_t air_faulty : 1;    // 1-bit variable
-            uint32_t : 28;            // Padding to ensure uin32_t alignment
+            uint32_t fuel_faulty : 8;  // 1-bit variable
+            uint32_t oil_faulty : 8;  // 1-bit variable
+            uint32_t coolant_faulty : 8; // 1-bit variable
+            uint32_t air_faulty : 8;    // 1-bit variable
         };
     };
 } DeviceSensorsFaulty;

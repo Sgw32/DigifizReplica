@@ -464,6 +464,22 @@ extern "C" {
         .value = 0, \
         .max = 1, \
     ) \
+    PARAM(  \
+        U8, \
+        wifi_auto_off, \
+        .p_name = "WiFi Auto Off", \
+        .p_info = "Turn off WiFi after 1 minute of ignition ON", \
+        .value = 0, \
+        .max = 1, \
+    ) \
+    PARAM(  \
+        U8, \
+        stable_rpm_input, \
+        .p_name = "Stable RPM input", \
+        .p_info = "Enable for modern ECUs with stable RPM signal", \
+        .value = 0, \
+        .max = 1, \
+    ) \
 
 
 #ifdef __cplusplus

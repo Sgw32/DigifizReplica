@@ -20,6 +20,9 @@ static EventGroupHandle_t s_wifi_event_group;
 static const char *TAG = "nvs_wifi_connect";
 
 static int short_retry_num = 0;
+static bool s_auto_shutdown_enabled = false;
+static TimerHandle_t s_wifi_shutdown_timer = NULL;
+#define WIFI_SHUTDOWN_TIMEOUT_MS (60000) // 1 minute timeout
 
 static void event_handler_sta(void *arg, esp_event_base_t event_base,
                               int32_t event_id, void *event_data)
@@ -101,6 +104,11 @@ static void init_softap(char *ap_ssid, char *ap_pass)
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
+    
+    if (s_auto_shutdown_enabled) {
+        nvs_wifi_reset_timer();
+    }
+    
     ESP_ERROR_CHECK(esp_wifi_start());
 
     ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s password:%s",
@@ -146,6 +154,11 @@ static esp_err_t init_sta(char *sta_ssid, char *sta_pass)
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+    
+    if (s_auto_shutdown_enabled) {
+        nvs_wifi_reset_timer();
+    }
+    
     ESP_ERROR_CHECK(esp_wifi_start());
 
     ESP_LOGI(TAG, "wifi_init_sta finished.");
@@ -277,4 +290,61 @@ void nvs_wifi_connect_init_softap(char *sta_ssid, char *sta_pass)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     init_softap(sta_ssid, sta_pass);
+}
+
+static void wifi_shutdown_timer_callback(TimerHandle_t xTimer)
+{
+    if (!s_auto_shutdown_enabled) {
+        return;
+    }
+
+    wifi_sta_list_t sta_list;
+    esp_wifi_ap_get_sta_list(&sta_list);
+    
+    if (sta_list.num > 0) {
+        // If we have clients, just restart the timer directly
+        ESP_LOGI(TAG, "Connected clients: %d, extending WiFi timeout", sta_list.num);
+        xTimerReset(s_wifi_shutdown_timer, 0);
+    } else {
+        ESP_LOGI(TAG, "No connected clients, auto-shutdown timer expired, stopping WiFi");
+        esp_wifi_stop();
+    }
+}
+
+void nvs_wifi_set_auto_shutdown(bool enable)
+{
+    s_auto_shutdown_enabled = enable;
+    ESP_LOGI(TAG, "WiFi auto-shutdown %s", enable ? "enabled" : "disabled");
+    
+    if (!enable && s_wifi_shutdown_timer != NULL) {
+        xTimerStop(s_wifi_shutdown_timer, 0);
+    }
+}
+
+bool nvs_wifi_get_auto_shutdown(void)
+{
+    return s_auto_shutdown_enabled;
+}
+
+void nvs_wifi_reset_timer(void)
+{
+    if (!s_auto_shutdown_enabled) {
+        return;
+    }
+
+    if (s_wifi_shutdown_timer == NULL) {
+        s_wifi_shutdown_timer = xTimerCreate(
+            "WiFiShutdown",
+            pdMS_TO_TICKS(WIFI_SHUTDOWN_TIMEOUT_MS),
+            pdFALSE,  // Don't auto reload
+            0,
+            wifi_shutdown_timer_callback
+        );
+    }
+
+    if (s_wifi_shutdown_timer != NULL) {
+        esp_wifi_start();
+        xTimerReset(s_wifi_shutdown_timer, 0);
+        ESP_LOGI(TAG, "WiFi enabled - will auto-shutdown in 60 seconds");
+    }
 }

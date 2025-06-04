@@ -485,7 +485,7 @@ void setFuel(uint8_t litres) {
         DIGIT_NUMBER_8,
         DIGIT_NUMBER_9};
     uint8_t data = litres;
-    if (getFaultyMask().fuel_faulty)
+    if (getFaultyMask().fuel_faulty==255)
     {
         display.fuel_digit_1 = DIGIT_NUMBER_MINUS;
         display.fuel_digit_2 = DIGIT_NUMBER_MINUS;
@@ -970,7 +970,7 @@ static void getColorBySegmentNumber(ColoringScheme* c_ptr, uint16_t segment, uin
                 (*b) = c_ptr->scheme[i].b;
             }
             //TODO move this logic elsewhere
-            if (digifiz_parameters.useCustomScheme.value==0)
+            // if (digifiz_parameters.useCustomScheme.value==0)
             {
                 //TODO refactor this code to some js script executed on boot 
                 //or load data completely from memory (calculate on computer side)

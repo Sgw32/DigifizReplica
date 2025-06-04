@@ -72,6 +72,24 @@ typedef esp_err_t (*nvs_wifi_connect_register_uri_handler_t)(httpd_handle_t serv
 */
 httpd_handle_t nvs_wifi_connect_start_http_server(int restart_mode , nvs_wifi_connect_register_uri_handler_t register_uri_handler);
 
+/*
+*   @brief  Enable/disable WiFi auto-shutdown feature
+*   @param  bool enable - true to enable auto-shutdown, false to disable
+*/
+void nvs_wifi_set_auto_shutdown(bool enable);
+
+/*
+*   @brief  Get current state of WiFi auto-shutdown feature
+*   @return bool - true if auto-shutdown is enabled, false if disabled
+*/
+bool nvs_wifi_get_auto_shutdown(void);
+
+/*
+*   @brief  Reset the WiFi auto-shutdown timer
+*           If auto-shutdown is enabled, this will restart WiFi and the shutdown timer
+*/
+void nvs_wifi_reset_timer(void);
+
 #ifdef __cplusplus
 }
 #endif

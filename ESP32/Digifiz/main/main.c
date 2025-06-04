@@ -38,6 +38,8 @@
 
 #include "millis.h"
 
+#include "nvs_wifi_connect.h"
+
 int i = 0;
 int saveParametersCounter = 0;
 uint16_t displaySpeedCnt = 0;
@@ -358,9 +360,31 @@ void initDigifiz(void)
 
 void digifizWebserver(void *pvParameters)
 {
+    // If we just woke up from sleep, enable WiFi
+    if (esp_reset_reason() == ESP_RST_DEEPSLEEP) {
+        nvs_wifi_set_auto_shutdown(digifiz_parameters.wifi_auto_off.value);  // Enable auto-shutdown by default after sleep
+        ESP_LOGI("WiFi", "Waking from deep sleep, enabling WiFi");
+    }
+
     digifiz_wifi_connect();
+
+    // Previous state to detect changes
+    bool previous_auto_off_state = false;
+
     while (1)
     {
+        // Check if auto-off parameter changed
+        if (digifiz_parameters.wifi_auto_off.value != previous_auto_off_state) {
+            previous_auto_off_state = digifiz_parameters.wifi_auto_off.value;
+            nvs_wifi_set_auto_shutdown(previous_auto_off_state);
+            ESP_LOGI("WiFi", "Auto-shutdown %s", previous_auto_off_state ? "enabled" : "disabled");
+            
+            if (previous_auto_off_state) {
+                // If enabling auto-off, start the timer immediately
+                nvs_wifi_reset_timer();
+            }
+        }
+
         vTaskDelay(MAIN_TASK_DELAY_MS / portTICK_PERIOD_MS);
     }
 }

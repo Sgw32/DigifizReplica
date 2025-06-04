@@ -2,6 +2,7 @@
 #include "setup.h"
 #include "esp_log.h"
 #include "millis.h"
+#include "params.h"
 
 uint32_t mRPMSenseData;
 
@@ -70,21 +71,37 @@ static void IRAM_ATTR gpio_isr_handler(void* arg) {
     uint32_t current_gpio_level = gpio_get_level(RPM_PIN);
     if (current_gpio_level==1)
     {
-      //Rising
-      if ((last_time_falling-current_time)>DEBOUNCE_TICKS)
+      if (digifiz_parameters.stable_rpm_input.value)
       {
-        interval = current_time - last_time_rising;
+        //Rising
+        if ((last_time_falling-current_time)>DEBOUNCE_TICKS)
+        {
+          interval = current_time - last_time_rising;
+        }
+        last_time_rising = current_time;
+        uint32_t intv_q = (uint32_t) interval;
+        rpm_cnt++;
+        if (rpm_cnt%10)
+        {
+          xQueueSendFromISR(gpio_evt_queue, &intv_q, NULL);
+        }
       }
-
-      last_time_rising = current_time;
-      intv_q = (uint32_t) interval;
-      average_intv_q += intv_q;
-      rpm_cnt++;
-      if ((rpm_cnt%8)==0)
+      else
       {
-        buf_intv_q = average_intv_q>>3;//median_filter(&rpm_buffer, average_intv_q>>4);
-        average_intv_q = 0;
-        xQueueSendFromISR(gpio_evt_queue, &buf_intv_q, NULL);
+        if ((last_time_falling-current_time)>DEBOUNCE_TICKS)
+        {
+          interval = current_time - last_time_rising;
+        }
+        last_time_rising = current_time;
+        intv_q = (uint32_t) interval;
+        average_intv_q += intv_q;
+        rpm_cnt++;
+        if ((rpm_cnt%8)==0)
+        {
+          buf_intv_q = average_intv_q>>3;//median_filter(&rpm_buffer, average_intv_q>>4);
+          average_intv_q = 0;
+          xQueueSendFromISR(gpio_evt_queue, &buf_intv_q, NULL);
+        }
       }
     }
     else
@@ -126,12 +143,21 @@ static void frequency_task(void* arg) {
     uint32_t rpm_sense = 0;
     while (1) {
        if (xQueueReceive(gpio_evt_queue, &intv, portMAX_DELAY)) {
-            //mRPMSenseData += (1000000/intv-mRPMSenseData)>>2; //Filter data
-            rpm_sense = median_filter(&rpm_buffer, 1000000/intv);
-            if (rpm_sense<1200)
-            {
-              mRPMSenseData = rpm_sense;
-              last_rpm_value_millis = millis();
+            if (digifiz_parameters.stable_rpm_input.value) {
+                // Direct processing for stable signals
+                uint32_t rpm = 1000000/intv;
+                if (rpm < 12000) { // Basic sanity check
+                    mRPMSenseData = rpm;
+                    last_rpm_value_millis = millis();
+                }
+            } else {
+                // Original processing for unstable signals
+                rpm_sense = median_filter(&rpm_buffer, 1000000/intv);
+                if (rpm_sense < 1200)
+                {
+                    mRPMSenseData = rpm_sense;
+                    last_rpm_value_millis = millis();
+                }
             }
        }
     }
