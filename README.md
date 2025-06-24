@@ -22,6 +22,21 @@ MedianFilterLib2
 
 Ctl+Shift+U for firmware upload using USBasp
 
+## Building Arduino firmware on Ubuntu
+
+This repository includes a helper script for compiling the Atmega2560
+firmware using the [Arduino CLI](https://arduino.github.io/arduino-cli/).
+The script will download the CLI tool if it is missing and build all
+available configuration variants.
+
+```bash
+sudo apt-get update && sudo apt-get install -y curl
+./scripts/build_arduino.sh
+```
+
+Build artifacts for each variant will be placed inside the `build/`
+directory.
+
 ![Digifiz Replica](/images/digifiz_next_photo.jpg)
 
 Requirements for ESP32 version:
