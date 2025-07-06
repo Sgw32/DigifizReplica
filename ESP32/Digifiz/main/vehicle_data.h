@@ -69,6 +69,13 @@ double get_ambient_temp_c();
 double get_speed_kmh();
 
 /**
+ * @brief Retrieves the current speed in raw values.
+ * 
+ * @return Current speed.
+ */
+double get_speed_raw();
+
+/**
  * @brief Retrieves the current RPM (Revolutions Per Minute).
  * 
  * @return Current RPM.
@@ -158,6 +165,17 @@ int set_ambient_temp_c(double temp);
  * @return 0 on success, -1 on failure.
  */
 int set_speed_kmh(double speed);
+
+
+/**
+ * @brief Sets the speed in raw values.
+ *        Updates the JSON string accordingly.
+ * 
+ * @param speed The new speed.
+ * 
+ * @return 0 on success, -1 on failure.
+ */
+int set_speed_raw(double speed);
 
 /**
  * @brief Sets the RPM (Revolutions Per Minute).

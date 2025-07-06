@@ -13,7 +13,7 @@ digifiz_pars_t digifiz_parameters = {
 };
 
 digifiz_stats_t digifiz_status;
-
+ 
 xparam_table_t params_table = {
     .params = (xparam_t*)&digifiz_parameters,
     .n_params = XPARAM_COUNT(digifiz_parameters),
@@ -161,7 +161,7 @@ void initEEPROM()
         ESP_LOGI(TAG, "Checking for default data");
         size_t default_len = 0;
         err = nvs_get_blob(my_handle, "default", NULL, &default_len);
-        if ((err == ESP_ERR_NVS_NOT_FOUND) || (default_len != XPARAM_IMAGE_SIZE(params_table.n_params))){
+        if (1) {//((err == ESP_ERR_NVS_NOT_FOUND) || (default_len != XPARAM_IMAGE_SIZE(params_table.n_params))){
             // no default data or old data
             ESP_LOGW(TAG, "No default data found. Storing...");
             uint8_t* blob_data = xparam_table_to_blob(&params_table);

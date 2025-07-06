@@ -74,7 +74,7 @@ static void IRAM_ATTR gpio_isr_handler(void* arg) {
       if (digifiz_parameters.stable_rpm_input.value)
       {
         //Rising
-        if ((last_time_falling-current_time)>DEBOUNCE_TICKS)
+        if ((current_time - last_time_falling)>DEBOUNCE_TICKS)
         {
           interval = current_time - last_time_rising;
         }
@@ -172,7 +172,7 @@ static void tacho_gpio_init() {
     io_conf.pull_up_en = 1;
     gpio_config(&io_conf);
 
-    gpio_install_isr_service(ESP_INTR_FLAG_EDGE);
+    //gpio_install_isr_service(ESP_INTR_FLAG_EDGE);
     gpio_isr_handler_add(RPM_PIN, gpio_isr_handler, (void*) RPM_PIN);
 }
 

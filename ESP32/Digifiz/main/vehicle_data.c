@@ -21,6 +21,7 @@ typedef struct {
     double fuelConsumptionL100;
     double intakeVoltageV;
     double fuelPressureBar;
+    double speedRaw;
 } vehicle_data_t;
 
 // Static instance of vehicle_data
@@ -102,6 +103,7 @@ int update_json_string() {
         !cJSON_AddNumberToObject(root, "OilTemperature_C", vehicle_data.oilTempC) ||
         !cJSON_AddNumberToObject(root, "AmbientTemperature_C", vehicle_data.ambientTempC) ||
         !cJSON_AddNumberToObject(root, "Speed_KMH", vehicle_data.speedKMH) ||
+        !cJSON_AddNumberToObject(root, "Speed_Raw", vehicle_data.speedRaw) ||
         !cJSON_AddNumberToObject(root, "RPM", vehicle_data.rpm) ||
         !cJSON_AddNumberToObject(root, "FuelLevel_L", vehicle_data.fuelLevelL) ||
         !cJSON_AddNumberToObject(root, "Uptime_h", vehicle_data.uptimeH) ||
@@ -283,6 +285,25 @@ double get_speed_kmh() {
     return speed;
 }
 
+double get_speed_raw() {
+    double speed;
+
+    if (json_mutex == NULL) {
+        return vehicle_data.speedRaw;
+    }
+
+    if (xSemaphoreTake(json_mutex, (TickType_t)10) != pdTRUE) {
+        // Failed to take the mutex, return current value without synchronization
+        return vehicle_data.speedRaw;
+    }
+
+    speed = vehicle_data.speedRaw;
+
+    xSemaphoreGive(json_mutex);
+
+    return speed;
+}
+
 double get_rpm() {
     double rpm;
 
@@ -435,6 +456,11 @@ int set_ambient_temp_c(double temp) {
 
 int set_speed_kmh(double speed) {
     vehicle_data.speedKMH = speed;
+    return 0;
+}
+
+int set_speed_raw(double speed) {
+    vehicle_data.speedRaw = speed;
     return 0;
 }
 

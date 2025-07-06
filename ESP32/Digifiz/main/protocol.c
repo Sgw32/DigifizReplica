@@ -260,7 +260,7 @@ void printLnCString(char* data)
         // Handle the case where data does not fit
         printf("Error: Not enough space to append data\n");
     }
-    printf("%s\n",data);
+    //printf("%s\n",data);
 }
 
 void printLnUINT8(uint8_t val)
@@ -862,8 +862,8 @@ void protocolParse(char* buf, uint8_t len)
                 long value_p = 0;
                 memcpy(cmd_buffer_par, cmd_buffer, separator_offset);
                 memcpy(cmd_buffer_val, cmd_buffer+separator_offset+1, strlen(cmd_buffer)-separator_offset-1);
-                printf("cmd_buffer_par:%s\n",cmd_buffer_par);
-                printf("cmd_buffer_val:%s\n",cmd_buffer_val);
+                //printf("cmd_buffer_par:%s\n",cmd_buffer_par);
+                //printf("cmd_buffer_val:%s\n",cmd_buffer_val);
                 if (strcmp(cmd_buffer_par,"help")==0)
                 {
                     printHelp();

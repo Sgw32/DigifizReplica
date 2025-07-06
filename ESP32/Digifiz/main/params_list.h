@@ -480,6 +480,89 @@ extern "C" {
         .value = 0, \
         .max = 1, \
     ) \
+    PARAM(  \
+        U32, \
+        r_gear_coefficient, \
+        .p_name = "Rear gear coefficient", \
+        .p_info = "Proportion between speed and gear. Def. NA",\
+        .value = 9999999, \
+    ) \
+    PARAM(  \
+        U32, \
+        gear1_coefficient, \
+        .p_name = "1-st gear coefficient", \
+        .p_info = "Proportion between speed and gear. Def. 020",\
+        .value = 1000, \
+    ) \
+    PARAM(  \
+        U32, \
+        gear2_coefficient, \
+        .p_name = "2-nd gear coefficient", \
+        .p_info = "Proportion between speed and gear. Def. 020",\
+        .value = 2000, \
+    ) \
+    PARAM(  \
+        U32, \
+        gear3_coefficient, \
+        .p_name = "3-rd gear coefficient", \
+        .p_info = "Proportion between speed and gear. Def. 020",\
+        .value = 3000, \
+    ) \
+    PARAM(  \
+        U32, \
+        gear4_coefficient, \
+        .p_name = "4-th gear coefficient", \
+        .p_info = "Proportion between speed and gear. Def. 020",\
+        .value = 4000, \
+    ) \
+    PARAM(  \
+        U32, \
+        gear5_coefficient, \
+        .p_name = "5-th gear coefficient", \
+        .p_info = "Proportion between speed and gear. Def. 020",\
+        .value = 5000, \
+    ) \
+    PARAM(  \
+        U32, \
+        gear6_coefficient, \
+        .p_name = "6-th gear coefficient", \
+        .p_info = "Proportion between speed and gear. Def. no gear",\
+        .value = 10000, \
+    ) \
+    PARAM(  \
+        U32, \
+        speed_meas_period, \
+        .p_name = "Speedometer measurement period in ms", \
+        .p_info = "Measurement period for PCNT. Updates after reboot.",\
+        .min = 250, \
+        .max = 2000, \
+        .value = 1000, \
+    ) \
+    PARAM(  \
+        U32, \
+        speed_meas_window, \
+        .p_name = "Speedometer measurement window in ms", \
+        .p_info = "Measurement period for PCNT. Updates after reboot.",\
+        .min = 250, \
+        .max = 2000, \
+        .value = 1000, \
+    ) \
+    PARAM(  \
+        U8, \
+        stable_speed_input, \
+        .p_name = "Stable Speed input", \
+        .p_info = "Enable for electronic speed signal", \
+        .value = 0, \
+        .max = 1, \
+    ) \
+    PARAM(  \
+        U8, \
+        filtered_speed_input, \
+        .p_name = "Filtered Speed input", \
+        .p_info = "Enable for speed signal filtering(disable stable)", \
+        .value = 1, \
+        .max = 1, \
+    ) \
 
 
 #ifdef __cplusplus

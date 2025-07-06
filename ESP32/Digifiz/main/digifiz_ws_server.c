@@ -81,11 +81,11 @@ static esp_err_t echo_handler(httpd_req_t *req)
             // access the JSON data 
             cJSON *name = cJSON_GetObjectItemCaseSensitive(json, "name"); 
             if (cJSON_IsString(name) && (name->valuestring != NULL)) { 
-                printf("Name: %s\n", name->valuestring); 
+                //printf("Name: %s\n", name->valuestring); 
             } 
             cJSON *msg = cJSON_GetObjectItemCaseSensitive(json, "msg"); 
             if (cJSON_IsString(msg) && (msg->valuestring != NULL)) { 
-                printf("Msg: %s\n", msg->valuestring); 
+                //printf("Msg: %s\n", msg->valuestring); 
                 protocolParse(msg->valuestring,strlen(msg->valuestring)); 
             } 
             
@@ -93,7 +93,7 @@ static esp_err_t echo_handler(httpd_req_t *req)
             cJSON_AddStringToObject(json_send, "msg", ws_data_send); 
 
             json_str = cJSON_Print(json_send); 
-            printf("json_str:%s\n",json_str);
+            //printf("json_str:%s\n",json_str);
             ws_pkt.payload = (uint8_t*)json_str;
             ws_pkt.len = strlen(json_str);
         }

@@ -14,7 +14,7 @@
 #include "freertos/queue.h"
 
 #define RPM_PIN 35
-#define DEBOUNCE_TICKS 500 //0.5ms
+#define DEBOUNCE_TICKS 50 //0.5ms
 #define RPM_WINDOW_SIZE 8  // Adjust as needed for your application
 
 // Circular buffer to hold the most recent data points

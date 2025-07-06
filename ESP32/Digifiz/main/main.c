@@ -7,6 +7,7 @@
 #include "freertos/semphr.h" // Include semaphore/mutex header
 
 #include "digifiz_ws_server.h"
+#include "ble_module.h"
 
 #include "driver/gpio.h"
 #include "driver/rtc_io.h"
@@ -35,6 +36,8 @@
 #include "emergency.h"
 #include "digifiz_watchdog.h"
 #include "vehicle_data.h"
+#include "kline.c"
+#include "gear_estimator.h"
 
 #include "millis.h"
 
@@ -157,6 +160,7 @@ void adcLoop(void *pvParameters) {
         set_oil_temp_c(getOilTemperature());
         set_ambient_temp_c(getAmbientTemperature());
         set_speed_kmh(spd_m_speedometer);
+        set_speed_raw(spd_m);
         set_rpm(rpm);
         set_fuel_level_l(getLitresInTank());
         set_uptime_h(digifiz_status.uptime);
@@ -264,7 +268,7 @@ void displayUpdate(void *pvParameters) {
         {
             averageRPM += (0-averageRPM)*0.5;
         }
-
+        gear_estimator_set_input(rpm, spd_m);
         
 
         //For test fuel intake
@@ -276,6 +280,7 @@ void displayUpdate(void *pvParameters) {
         if (displaySpeedCnt==16) // 2 Hz loop(as on original Digifiz)  
         {
             setSpeedometerData((uint16_t)spd_m_speedometer);
+            //setSpeedometerData(gear_estimator_get_current_gear()); // Convert to integer km/h);
             current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;
             if (digifiz_parameters.option_testmode_on.value)
             {
@@ -288,9 +293,11 @@ void displayUpdate(void *pvParameters) {
             }
             
             displaySpeedCnt = 0;
-            printf("Status T RPM:%d %f %f %f %f\n",getDisplayedCoolantTemp(),getCoolantTemperature(),(float)((getCoolantTemperature()-digifiz_parameters.coolantMin.value)/
-                 (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*14.0f), averageRPM, spd_m_speedometer);
+            //printf("Status T RPM:%d %f %f %f %f\n",getDisplayedCoolantTemp(),getCoolantTemperature(),(float)((getCoolantTemperature()-digifiz_parameters.coolantMin.value)/
+            //     (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*14.0f), averageRPM, spd_m_speedometer);
         }
+
+        
 
         if (digifiz_parameters.option_gallons.value)
         {
@@ -398,18 +405,44 @@ void on_cpu_0(void *pvParameters)
     }
 }
 
+void initGearEstimator(void) {
+    float coefficients[MAX_GEARS];
+    
+    // Convert integer coefficients from parameters to float
+    // Reverse gear
+    //coefficients[0] = digifiz_parameters.r_gear_coefficient.value / 10000.0f;
+    // Forward gears 1-6
+    coefficients[0] = digifiz_parameters.gear1_coefficient.value / 100000.0f;
+    coefficients[1] = digifiz_parameters.gear2_coefficient.value / 100000.0f;
+    coefficients[2] = digifiz_parameters.gear3_coefficient.value / 100000.0f;
+    coefficients[3] = digifiz_parameters.gear4_coefficient.value / 100000.0f;
+    coefficients[4] = digifiz_parameters.gear5_coefficient.value / 100000.0f;
+    coefficients[5] = digifiz_parameters.gear6_coefficient.value / 100000.0f;
+    
+
+    // Initialize gear estimator
+    gear_estimator_init();
+    
+    // Set coefficients
+    gear_estimator_set_coefficients(coefficients, MAX_GEARS);
+}
+
 void on_cpu_1(void *pvParameters)
 {
     displayMutex = xSemaphoreCreateMutex(); // Create the mutex
     initEEPROM(); //Start memory container
+    initGearEstimator();
     initADC();
     initDisplay();
     initDigifiz();
+    gpio_install_isr_service(0);
     initSpeedometer();
     initTacho();
     initDeviceSleep();
     initRegInOut();
     initVehicleJSON();
+    ble_module_init();
+    //initKline();
 
     xTaskCreatePinnedToCore(digifizLoop, "digifizLoop", 4096, NULL, 1, NULL, 1);
     xTaskCreatePinnedToCore(displayUpdate, "displayUpdate", 4096, NULL, 10, NULL, 1);
