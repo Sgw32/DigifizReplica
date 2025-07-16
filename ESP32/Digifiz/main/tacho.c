@@ -19,49 +19,6 @@ static uint32_t buf_intv_q = 0;
 
 CircularBuffer rpm_buffer;
 
-// Initialize the circular buffer
-void init_buffer(CircularBuffer *buffer) {
-    for (int i = 0; i < RPM_WINDOW_SIZE; i++) {
-        buffer->data[i] = 0;
-    }
-    buffer->index = 0;
-}
-
-// Insert a new value into the circular buffer
-void insert_buffer(CircularBuffer *buffer, int value) {
-    buffer->data[buffer->index] = value;
-    buffer->index = (buffer->index + 1) % RPM_WINDOW_SIZE;
-}
-
-// Function to find the median of the buffer's data
-int find_median(CircularBuffer *buffer) {
-    int sorted[RPM_WINDOW_SIZE];
-    for (int i = 0; i < RPM_WINDOW_SIZE; i++) {
-        sorted[i] = buffer->data[i];
-    }
-    
-    // Sort the window (Insertion sort)
-    for (int i = 1; i < RPM_WINDOW_SIZE; i++) {
-        int key = sorted[i];
-        int j = i - 1;
-
-        while (j >= 0 && sorted[j] > key) {
-            sorted[j + 1] = sorted[j];
-            j = j - 1;
-        }
-        sorted[j + 1] = key;
-    }
-    
-    // Return the median element
-    return sorted[RPM_WINDOW_SIZE / 2];
-}
-
-// Median filter function
-int median_filter(CircularBuffer *buffer, int new_value) {
-    insert_buffer(buffer, new_value);
-    return find_median(buffer);
-}
-
 
 static void IRAM_ATTR gpio_isr_handler(void* arg) {    
     uint64_t current_time;

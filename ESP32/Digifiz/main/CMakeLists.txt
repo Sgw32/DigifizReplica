@@ -7,7 +7,7 @@ idf_component_register(SRCS "mjs.c" "vehicle_data.c" "digifiz_time.c" "digifiz_w
 "adc.c" 
 "display_next.c" 
 "main.c" 
-"tacho.c" 
+"rpm_filter.c" "tacho.c" 
 "speedometer.c"
 INCLUDE_DIRS "."
 REQUIRES  
