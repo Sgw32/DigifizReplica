@@ -244,10 +244,17 @@ void displayUpdate(void *pvParameters) {
             spd_m /= 100;
         }
 
-        if (!digifiz_parameters.option_testmode_on.value)
+        uint8_t tmode = digifiz_parameters.test_mode.value;
+        if (!digifiz_parameters.option_testmode_on.value || tmode == TEST_MODE_CYCLE)
         {
             spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
-            rpm = readLastRPM(); 
+            rpm = readLastRPM();
+        }
+        if (digifiz_parameters.option_testmode_on.value && tmode == TEST_MODE_STATIC)
+        {
+            spd_m_speedometer = digifiz_parameters.test_static_speed.value;
+            rpm = digifiz_parameters.test_static_rpm.value;
+            averageRPM = (float)rpm;
         }
         //For test fuel intake
         //spd_m_speedometer = 60.0f;
@@ -269,6 +276,16 @@ void displayUpdate(void *pvParameters) {
             averageRPM += (0-averageRPM)*0.5;
         }
         gear_estimator_set_input(rpm, spd_m);
+
+        if (digifiz_parameters.option_testmode_on.value && tmode == TEST_MODE_COLOR)
+        {
+            fillAllSegmentsWithColor(digifiz_parameters.test_color_r.value,
+                                    digifiz_parameters.test_color_g.value,
+                                    digifiz_parameters.test_color_b.value);
+            xSemaphoreGive(displayMutex); // Give back the mutex
+            vTaskDelayUntil(&lastWakeTime, rateCalculationPeriod);
+            continue;
+        }
         
 
         //For test fuel intake
@@ -282,7 +299,7 @@ void displayUpdate(void *pvParameters) {
             setSpeedometerData((uint16_t)spd_m_speedometer);
             //setSpeedometerData(gear_estimator_get_current_gear()); // Convert to integer km/h);
             current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;
-            if (digifiz_parameters.option_testmode_on.value)
+            if (digifiz_parameters.option_testmode_on.value && tmode == TEST_MODE_CYCLE)
             {
                 spd_m_speedometer+=1;
                 if (spd_m_speedometer>499)

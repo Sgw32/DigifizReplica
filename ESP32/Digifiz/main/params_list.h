@@ -123,6 +123,49 @@ extern "C" {
     ) \
     PARAM(  \
         U8, \
+        test_mode, \
+        .p_name = "Test mode type", \
+        .p_info = "1-cycle, 2-static, 3-color",\
+        .value = 1, \
+        .max = 3, \
+    ) \
+    PARAM(  \
+        U16, \
+        test_static_speed, \
+        .p_name = "Static speed", \
+        .p_info = "Speed for static test",\
+        .value = 100, \
+    ) \
+    PARAM(  \
+        U16, \
+        test_static_rpm, \
+        .p_name = "Static RPM", \
+        .p_info = "RPM for static test",\
+        .value = 3000, \
+    ) \
+    PARAM(  \
+        U8, \
+        test_color_r, \
+        .p_name = "Test color R", \
+        .p_info = "Red component for color test",\
+        .value = 255, \
+    ) \
+    PARAM(  \
+        U8, \
+        test_color_g, \
+        .p_name = "Test color G", \
+        .p_info = "Green component for color test",\
+        .value = 0, \
+    ) \
+    PARAM(  \
+        U8, \
+        test_color_b, \
+        .p_name = "Test color B", \
+        .p_info = "Blue component for color test",\
+        .value = 0, \
+    ) \
+    PARAM(  \
+        U8, \
         rpmOptions_redline_segments, \
         .p_name = "Redline segments", \
         .p_info = "Redline segments number",\
