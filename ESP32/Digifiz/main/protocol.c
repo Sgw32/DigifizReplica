@@ -69,6 +69,11 @@ static const ParameterMap parameter_map[] = {
     {"PARAMETER_PULLUP_RESISTANCE_COOLANT", PARAMETER_PULLUP_RESISTANCE_COOLANT},
     {"PARAMETER_PULLUP_RESISTANCE_OIL", PARAMETER_PULLUP_RESISTANCE_OIL},
     {"PARAMETER_PULLUP_RESISTANCE_AMB", PARAMETER_PULLUP_RESISTANCE_AMB},
+    {"PARAMETER_BRIGHTNESS_SIGNAL_MIN", PARAMETER_BRIGHTNESS_SIGNAL_MIN},
+    {"PARAMETER_BRIGHTNESS_SIGNAL_MAX", PARAMETER_BRIGHTNESS_SIGNAL_MAX},
+    {"PARAMETER_BRIGHTNESS_MIN", PARAMETER_BRIGHTNESS_MIN},
+    {"PARAMETER_BRIGHTNESS_MAX", PARAMETER_BRIGHTNESS_MAX},
+    {"PARAMETER_BRIGHTNESS_SPEED", PARAMETER_BRIGHTNESS_SPEED},
     {"PARAMETER_UPTIME", PARAMETER_UPTIME},
     {"PARAMETER_READ_ADDITION", PARAMETER_READ_ADDITION},
     {"PARAMETER_SET_HOUR", PARAMETER_SET_HOUR},
@@ -511,10 +516,30 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_PULLUP_RESISTANCE_AMB\n");
         digifiz_parameters.ambThermistorPullUpRes.value = value;
         break;
+      case PARAMETER_BRIGHTNESS_SIGNAL_MIN:
+        printLnCString("PARAMETER_BRIGHTNESS_SIGNAL_MIN\n");
+        digifiz_parameters.brightnessSignalMin.value = value;
+        break;
+      case PARAMETER_BRIGHTNESS_SIGNAL_MAX:
+        printLnCString("PARAMETER_BRIGHTNESS_SIGNAL_MAX\n");
+        digifiz_parameters.brightnessSignalMax.value = value;
+        break;
+      case PARAMETER_BRIGHTNESS_MIN:
+        printLnCString("PARAMETER_BRIGHTNESS_MIN\n");
+        digifiz_parameters.brightnessMin.value = value;
+        break;
+      case PARAMETER_BRIGHTNESS_MAX:
+        printLnCString("PARAMETER_BRIGHTNESS_MAX\n");
+        digifiz_parameters.brightnessMax.value = value;
+        break;
+      case PARAMETER_BRIGHTNESS_SPEED:
+        printLnCString("PARAMETER_BRIGHTNESS_SPEED\n");
+        digifiz_parameters.brightnessSpeed.value = value;
+        break;
       case PARAMETER_UPTIME:
         printLnCString("PARAMETER_UPTIME\n");
         digifiz_status.uptime = value;
-        break;  
+        break;
       default:
         break;
     }
@@ -822,6 +847,26 @@ void processData(int parameter,long value)
       case PARAMETER_PULLUP_RESISTANCE_AMB:
         printLnCString("PARAMETER_PULLUP_RESISTANCE_AMB\n");
         printLnUINT32(digifiz_parameters.ambThermistorPullUpRes.value);
+        break;
+      case PARAMETER_BRIGHTNESS_SIGNAL_MIN:
+        printLnCString("PARAMETER_BRIGHTNESS_SIGNAL_MIN\n");
+        printLnUINT32(digifiz_parameters.brightnessSignalMin.value);
+        break;
+      case PARAMETER_BRIGHTNESS_SIGNAL_MAX:
+        printLnCString("PARAMETER_BRIGHTNESS_SIGNAL_MAX\n");
+        printLnUINT32(digifiz_parameters.brightnessSignalMax.value);
+        break;
+      case PARAMETER_BRIGHTNESS_MIN:
+        printLnCString("PARAMETER_BRIGHTNESS_MIN\n");
+        printLnUINT8(digifiz_parameters.brightnessMin.value);
+        break;
+      case PARAMETER_BRIGHTNESS_MAX:
+        printLnCString("PARAMETER_BRIGHTNESS_MAX\n");
+        printLnUINT8(digifiz_parameters.brightnessMax.value);
+        break;
+      case PARAMETER_BRIGHTNESS_SPEED:
+        printLnCString("PARAMETER_BRIGHTNESS_SPEED\n");
+        printLnUINT8(digifiz_parameters.brightnessSpeed.value);
         break;
       default:
         break;
