@@ -139,6 +139,14 @@ extern "C" {
     ) \
     PARAM(  \
         U8, \
+        rpmOptions_7k_line, \
+        .p_name = "7k option", \
+        .p_info = "7k-style RPM gauge",\
+        .value = 0, \
+        .max = 1, \
+    ) \
+    PARAM(  \
+        U8, \
         tempOptions_red_segments, \
         .p_name = "Red segments count", \
         .p_info = "Temperature red segments count",\

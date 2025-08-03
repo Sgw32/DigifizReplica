@@ -480,6 +480,7 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_SET_RPM_OPTIONS\n");
         digifiz_parameters.rpmOptions_redline_segments.value = value&31;
         digifiz_parameters.rpmOptions_diesel_line.value = value&32;
+        digifiz_parameters.rpmOptions_7k_line.value = value&64;
         break;
       case PARAMETER_SET_TEMP_OPTIONS:
         printLnCString("PARAMETER_SET_TEMP_OPTIONS\n");

@@ -974,6 +974,15 @@ static void getColorBySegmentNumber(ColoringScheme* c_ptr, uint16_t segment, uin
             {
                 //TODO refactor this code to some js script executed on boot 
                 //or load data completely from memory (calculate on computer side)
+                if (digifiz_parameters.rpmOptions_7k_line.value)
+                {
+                    if ((segment>76)&&(segment<=78))
+                    {
+                        (*r) = 0;
+                        (*g) = 0;
+                        (*b) = 0;
+                    }
+                }
                 if (digifiz_parameters.rpmOptions_diesel_line.value)
                 {
                     if ((segment>76)&&(segment<=80))
