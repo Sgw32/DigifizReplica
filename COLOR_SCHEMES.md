@@ -49,3 +49,13 @@
    - Añade o modifica filas en la tabla **Color Scheme Editor** para cada tramo de LED.
 5. Presiona **Set Scheme** para guardar la configuración en la NVS y mantenerla tras reinicios.
 6. El botón **Reset Scheme** o el comando `reset_colors` restaura los colores de fábrica.
+
+## Slovenščina
+1. Vklopite Digifiz Replico in se povežite z njenim dostopnim mestom Wi‑Fi. Privzeti naslov je `http://192.168.4.1`.
+2. V spletnem nadzornem pultu odprite zavihek **Settings**, pritisnite **Load Parameters**, omogočite **Custom scheme** (privzeto onemogočeno) in shranite parametre.
+3. Preklopite na zavihek **Colors** in pritisnite **Load Scheme**, da naložite trenutno shemo iz naprave.
+4. Spremenite shemo:
+   - Z izbirnikoma za glavno in osvetlitev ozadja izberite osnovne barve.
+   - V tabeli **Color Scheme Editor** dodajte ali prilagodite vrstice za vsak LED-segment.
+5. Kliknite **Set Scheme**, da shemo shranite v NVS, kjer bo ostala tudi po ponovnem zagonu.
+6. Z **Reset Scheme** ali ukazom `reset_colors` obnovite tovarniško shemo.
