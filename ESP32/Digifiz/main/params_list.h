@@ -329,6 +329,42 @@ extern "C" {
         .value = 25, \
     ) \
     PARAM(  \
+        U16, \
+        brightnessSignalMin, \
+        .p_name = "Light signal min", \
+        .p_info = "ADC value for minimum brightness",\
+        .value = 300, \
+    ) \
+    PARAM(  \
+        U16, \
+        brightnessSignalMax, \
+        .p_name = "Light signal max", \
+        .p_info = "ADC value for maximum brightness",\
+        .value = 800, \
+    ) \
+    PARAM(  \
+        U8, \
+        brightnessMin, \
+        .p_name = "Brightness min", \
+        .p_info = "Minimum auto brightness level",\
+        .value = 6, \
+    ) \
+    PARAM(  \
+        U8, \
+        brightnessMax, \
+        .p_name = "Brightness max", \
+        .p_info = "Maximum auto brightness level",\
+        .value = 25, \
+    ) \
+    PARAM(  \
+        U8, \
+        brightnessSpeed, \
+        .p_name = "Brightness speed", \
+        .p_info = "Regulation speed (percent)",\
+        .value = 10, \
+        .max = 100, \
+    ) \
+    PARAM(  \
         U8, \
         tankCapacity, \
         .p_name = "Fuel tank capacity", \
