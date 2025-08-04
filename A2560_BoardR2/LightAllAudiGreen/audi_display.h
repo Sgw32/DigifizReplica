@@ -1,6 +1,6 @@
 #ifndef AUDI_DISPLAY_H
 #define AUDI_DISPLAY_H
-#include <MD_MAX72xx.h>
+#include "MD_MAX72xx.h"
 #include "STLED316S.h"
 
 // Turn on debug statements to the serial output
