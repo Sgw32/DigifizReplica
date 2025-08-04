@@ -5,6 +5,7 @@
 #include <cJSON.h>
 //If updating, do not display anything
 #include "digifiz_ws_server.h"
+#include "params.h"
 
 #define TAG "display_next"
 #define SCRIPT_KEY "display_next_script"
@@ -841,8 +842,8 @@ void setMFABlock(uint8_t block) {
 
 // Set the brightness level
 void setBrightness(uint8_t levels) {
-    //printf("Br: %u\n", levels);
-    brightnessFiltered += 0.1f*((float)levels-brightnessFiltered);
+    float coef = ((float)digifiz_parameters.brightnessSpeed.value)/100.0f;
+    brightnessFiltered += coef*((float)levels-brightnessFiltered);
     backlightLevel = (uint8_t)brightnessFiltered;
 }
 

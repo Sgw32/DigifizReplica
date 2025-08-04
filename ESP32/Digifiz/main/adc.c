@@ -519,11 +519,28 @@ uint8_t getBrightnessLevel() {
     float m_lightLevel = lightLevel;
     if (digifiz_parameters.signalOptions_invert_light_input.value)
     {
-        //~2200 - darkness
-        //~10-50 - lightness
-        m_lightLevel = constrain(800.0f-m_lightLevel,0, 800.0f);
+        m_lightLevel = constrain((float)digifiz_parameters.brightnessSignalMax.value - m_lightLevel,
+                                 0,
+                                 (float)digifiz_parameters.brightnessSignalMax.value);
     }
-    return (uint8_t)constrain((m_lightLevel-300.0f)/8,6,digifiz_parameters.brightnessLevel.value); //0..0.3V -> 0..400 (of 4095)
+
+    float minSig = (float)digifiz_parameters.brightnessSignalMin.value;
+    float maxSig = (float)digifiz_parameters.brightnessSignalMax.value;
+    float minBr = (float)digifiz_parameters.brightnessMin.value;
+    float maxBr = (float)digifiz_parameters.brightnessMax.value;
+
+    float level;
+    if (m_lightLevel <= minSig)
+        level = minBr;
+    else if (m_lightLevel >= maxSig)
+        level = maxBr;
+    else
+        level = minBr + (m_lightLevel - minSig) * (maxBr - minBr) / (maxSig - minSig);
+
+    if (level > digifiz_parameters.brightnessLevel.value)
+        level = digifiz_parameters.brightnessLevel.value;
+
+    return (uint8_t)constrain(level, 0, 255);
 }
 
 // Get the raw brightness level
