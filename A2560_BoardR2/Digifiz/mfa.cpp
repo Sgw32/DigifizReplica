@@ -36,6 +36,15 @@ void initMFA()
 
 void processMFA()
 {
+    // Block MFA inputs shortly after boot to avoid unintended actions
+    if (millis() < 3000)
+    {
+        prevMFAMode = digitalRead(MFA_MODE_PIN);
+        prevMFABlock = digitalRead(MFA_BLOCK_PIN);
+        prevMFAReset = digitalRead(MFA_RESET_PIN);
+        prevMFASensor = digitalRead(MFA_SENSOR_PIN);
+        return;
+    }
 
 #ifndef DISABLE_MANUFACTURER_MFA
     if (digifiz_parameters.digifiz_options.mfa_manufacturer)
