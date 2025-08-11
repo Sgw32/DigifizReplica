@@ -55,7 +55,17 @@ void processMFA()
     {
         bMFASensor = 0;//gpio_get_level(TOUCH_PIN);
     }
-    
+
+    // Block MFA input actions shortly after boot to prevent spurious events
+    if (millis() < 3000)
+    {
+        prevMFAMode = bMFAMode;
+        prevMFABlock = bMFABlock;
+        prevMFAReset = bMFAReset;
+        prevMFASensor = bMFASensor;
+        return;
+    }
+
 #ifndef DISABLE_MANUFACTURER_MFA
     if (digifiz_parameters.option_mfa_manufacturer.value)
     {
