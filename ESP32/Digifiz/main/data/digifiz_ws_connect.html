@@ -897,6 +897,11 @@ document.getElementById("defaultTab").click();
 
 <script>
 // Color scheme table management
+function updateSetColorSchemeButton() {
+    const rows = document.querySelectorAll('#colorSchemeTable tbody tr');
+    document.getElementById('setColorScheme').disabled = rows.length === 0;
+}
+
 function addColorSegmentRow(data = null) {
     const tbody = document.querySelector('#colorSchemeTable tbody');
     const row = document.createElement('tr');
@@ -1026,6 +1031,7 @@ function addColorSegmentRow(data = null) {
     deleteButton.onclick = function() {
         if (confirm('Are you sure you want to delete this segment?')) {
             row.remove();
+            updateSetColorSchemeButton();
         }
     };
 
@@ -1052,6 +1058,7 @@ function addColorSegmentRow(data = null) {
 
     // Append row to table
     tbody.appendChild(row);
+    updateSetColorSchemeButton();
 }
 
 document.getElementById('addColorSegment').addEventListener('click', function() {
@@ -1066,7 +1073,11 @@ document.getElementById("resetColorScheme").addEventListener("click", async func
 
 document.getElementById("setColorScheme").addEventListener("click", async function () {
     const rows = document.querySelectorAll('#colorSchemeTable tbody tr');
-	
+    if (rows.length === 0) {
+        alert("No color segments defined!");
+        return;
+    }
+
     let iter = 0;
 
     for (const row of rows) {
@@ -1129,6 +1140,7 @@ function loadColorScheme() {
             data.scheme.forEach(segment => {
                 addColorSegmentRow(segment);
             });
+            updateSetColorSchemeButton();
         })
         .catch(err => {
             console.error("Load failed:", err);
@@ -1182,6 +1194,7 @@ document.getElementById('importFile').addEventListener('change', function(e) {
                 scheme.forEach(segment => {
                     addColorSegmentRow(segment);
                 });
+                updateSetColorSchemeButton();
             } catch (err) {
                 alert('Error importing scheme: ' + err.message);
             }
@@ -1190,6 +1203,8 @@ document.getElementById('importFile').addEventListener('change', function(e) {
     }
     this.value = ''; // Reset file input
 });
+
+updateSetColorSchemeButton();
 </script>
 
 </body>

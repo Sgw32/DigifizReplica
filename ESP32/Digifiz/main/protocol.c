@@ -375,7 +375,7 @@ void processData(int parameter,long value)
         break;
       case PARAMETER_BRIGHTNESS_LEVEL:
         printLnCString("PARAMETER_BRIGHTNESS_LEVEL\n");
-        digifiz_parameters.brightnessLevel.value = value;
+        digifiz_parameters.brightnessLevel.value = value > 70 ? 70 : value;
         break;
       case PARAMETER_TANK_CAPACITY:
         printLnCString("PARAMETER_TANK_CAPACITY\n");
