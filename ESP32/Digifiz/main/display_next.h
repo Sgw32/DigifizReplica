@@ -11,6 +11,7 @@ extern "C" {
 #include "led_strip.h"
 #include "sdkconfig.h"
 #include "setup.h"
+#include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
 #ifdef DIGIFIZ_NEXT_DISPLAY
@@ -166,6 +167,7 @@ void setMFADisplayedNumber(int16_t data);
 void setFuel(uint8_t litres);
 void setRPMData(uint16_t data);
 void setSpeedometerData(uint16_t data);
+void setSpeedometerGear(int8_t gear);
 void setCoolantData(uint16_t data);
 void setDot(bool value);
 void setFloatDot(bool value);
