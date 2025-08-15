@@ -52,6 +52,13 @@ float spd_m_speedometer = 0;
 int spd_m_speedometerCnt = 0; //spd_m_speedometerCnt
 float current_averageSpeed = 0;
 
+// Gear change display control
+int last_displayed_gear = 0;
+uint8_t gear_blink_toggles = 0;
+uint32_t gear_blink_last_millis = 0;
+int gear_blink_value = 0;
+bool gear_blink_show = false;
+
 
 //RPM-related data
 float averageRPM = 0;
@@ -269,7 +276,16 @@ void displayUpdate(void *pvParameters) {
             averageRPM += (0-averageRPM)*0.5;
         }
         gear_estimator_set_input(rpm, spd_m);
-        
+
+        int current_gear = gear_estimator_get_current_gear();
+        if (digifiz_parameters.option_gear_change_indicator.value && current_gear != last_displayed_gear) {
+            last_displayed_gear = current_gear;
+            gear_blink_value = current_gear;
+            gear_blink_toggles = 5; // show gear three times
+            gear_blink_last_millis = millis();
+            gear_blink_show = true;
+            setSpeedometerGear(gear_blink_value);
+        }
 
         //For test fuel intake
 #ifdef TESTMODE
@@ -277,10 +293,9 @@ void displayUpdate(void *pvParameters) {
 #endif
 
         displaySpeedCnt++;
-        if (displaySpeedCnt==16) // 2 Hz loop(as on original Digifiz)  
+        if (displaySpeedCnt==16 && gear_blink_toggles==0) // 2 Hz loop(as on original Digifiz)
         {
             setSpeedometerData((uint16_t)spd_m_speedometer);
-            //setSpeedometerData(gear_estimator_get_current_gear()); // Convert to integer km/h);
             current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;
             if (digifiz_parameters.option_testmode_on.value)
             {
@@ -291,10 +306,22 @@ void displayUpdate(void *pvParameters) {
                 if (rpm>8000)
                     rpm=0;
             }
-            
+
             displaySpeedCnt = 0;
-            //printf("Status T RPM:%d %f %f %f %f\n",getDisplayedCoolantTemp(),getCoolantTemperature(),(float)((getCoolantTemperature()-digifiz_parameters.coolantMin.value)/
-            //     (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*14.0f), averageRPM, spd_m_speedometer);
+        }
+
+        if (gear_blink_toggles>0) {
+            uint32_t now = millis();
+            if (now - gear_blink_last_millis >= 250) {
+                gear_blink_last_millis = now;
+                if (gear_blink_show) {
+                    setSpeedometerData((uint16_t)spd_m_speedometer);
+                } else {
+                    setSpeedometerGear(gear_blink_value);
+                }
+                gear_blink_show = !gear_blink_show;
+                gear_blink_toggles--;
+            }
         }
 
         

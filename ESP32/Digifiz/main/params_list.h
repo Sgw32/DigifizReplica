@@ -538,6 +538,14 @@ extern "C" {
         .value = 10000, \
     ) \
     PARAM(  \
+        U8, \
+        option_gear_change_indicator, \
+        .p_name = "Gear change indicator", \
+        .p_info = "Blink gear on speedometer when gear changes",\
+        .value = 1, \
+        .max = 1, \
+    ) \
+    PARAM(  \
         U32, \
         speed_meas_period, \
         .p_name = "Speedometer measurement period in ms", \
