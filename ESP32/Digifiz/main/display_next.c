@@ -1104,3 +1104,18 @@ void fireDigifiz() {
     }
     led_strip_refresh(led_strip);
 }
+
+// Fill all display segments with a single color ignoring display mask
+void fillAllSegmentsWithColor(uint8_t r, uint8_t g, uint8_t b)
+{
+    if (!led_strip) {
+        return;
+    }
+    for (uint16_t i = 0; i < DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS; i++) {
+        led_strip_set_pixel(led_strip, i,
+            ((uint32_t)r * ((uint32_t)backlightLevel)) / 100,
+            ((uint32_t)g * ((uint32_t)backlightLevel)) / 100,
+            ((uint32_t)b * ((uint32_t)backlightLevel)) / 100);
+    }
+    led_strip_refresh(led_strip);
+}

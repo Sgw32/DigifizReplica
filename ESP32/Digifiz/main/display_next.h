@@ -34,6 +34,11 @@ extern "C" {
 
 #define USE_DISPLAY_LEDS
 
+// Test mode identifiers
+#define TEST_MODE_CYCLE  1
+#define TEST_MODE_STATIC 2
+#define TEST_MODE_COLOR  3
+
 enum 
 {
     DIGIT_NUMBER_0 = 0b0111111,
@@ -190,6 +195,8 @@ void setHeatLightsIndicator(bool onoff);
 void setBackLightsHeatIndicator(bool onoff);
 void setBackWindowHeatIndicator(bool onoff);
 void processIndicators();
+
+void fillAllSegmentsWithColor(uint8_t r, uint8_t g, uint8_t b);
 
 void deinit_leds(void);
 
