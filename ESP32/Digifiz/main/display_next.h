@@ -30,7 +30,7 @@ extern "C" {
 
 #define WSDATA_GPIO_PIN 21
 #define DIGIFIZ_DISPLAY_NEXT_LEDS 271
-#define DIGIFIZ_BACKLIGHT_LEDS 12
+#define DIGIFIZ_BACKLIGHT_LEDS 32
 
 #define USE_DISPLAY_LEDS
 
@@ -155,7 +155,7 @@ typedef struct __attribute__((packed)) DigifizNextDisplay
     uint8_t speed_digit_s2 : 7; //262
     uint8_t speed_digit_s3 : 7; //269
     uint8_t km_ind : 1; //270
-    uint16_t backlight_leds:12; //282
+    uint32_t backlight_leds:32; //282
 } DigifizNextDisplay;
 
 void initDisplay(); 

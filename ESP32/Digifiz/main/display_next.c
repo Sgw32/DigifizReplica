@@ -262,7 +262,7 @@ ColoringScheme digifizStandard = {
             .r = 60,
             .g = 80,
             .b = 2,
-            .end_segment = 282,
+            .end_segment = 302,
             .type = COLOR_SCHEME_UPPER_BACKLIGHT,
             .basecolor_enabled = 3
         },
