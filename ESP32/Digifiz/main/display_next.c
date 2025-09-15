@@ -333,7 +333,7 @@ void initDisplay() {
     display.fuel_ind = 1;
     display.lights_on_ind = 0;
     display.foglight_ind2 = 0;
-    display.backlight_leds = 0b111111111111;
+    display.backlight_leds = 0xFFFFFFFF;
 
     for (uint8_t i=0;i!=COLORING_SCHEME_MAX_ELEMENTS;i++)
     {
