@@ -211,6 +211,20 @@ extern "C" {
     ) \
     PARAM(  \
         U16, \
+        signalOptions_indicator_filter_cycles, \
+        .p_name = "Indicator filter cycles", \
+        .p_info = "Cycles required to confirm general indicator changes",\
+        .value = 0, \
+    ) \
+    PARAM(  \
+        U16, \
+        signalOptions_turn_filter_cycles, \
+        .p_name = "Turn signal filter cycles", \
+        .p_info = "Cycles required to confirm turn indicator changes",\
+        .value = 0, \
+    ) \
+    PARAM(  \
+        U16, \
         rpmCoefficient, \
         .p_name = "RPM Coefficient", \
         .p_info = "Coefficient for RPM calibration",\
