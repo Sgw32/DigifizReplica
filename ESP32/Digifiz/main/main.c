@@ -440,6 +440,29 @@ void on_cpu_1(void *pvParameters)
     initTacho();
     initDeviceSleep();
     initRegInOut();
+    // Check if MFA MODE button is held during startup for factory reset
+    {
+        regin_read(digifiz_reg_in.bytes);
+        if (digifiz_reg_in.mfaMode == 0) {
+            ESP_LOGW(LOG_TAG, "MFA MODE held, starting factory reset countdown");
+            uint32_t start = millis();
+            while ((millis() - start) < 10000) {
+                regin_read(digifiz_reg_in.bytes);
+                if (digifiz_reg_in.mfaMode != 0) {
+                    ESP_LOGI(LOG_TAG, "MFA MODE released, aborting reset");
+                    break;
+                }
+                vTaskDelay(pdMS_TO_TICKS(100));
+            }
+            if (digifiz_reg_in.mfaMode == 0) {
+                ESP_LOGW(LOG_TAG, "Factory reset triggered");
+                load_defaults();
+                saveParameters();
+                reinit_load_default_color_scheme();
+                compileColorScheme();
+            }
+        }
+    }
     initVehicleJSON();
     ble_module_init();
     //initKline();
