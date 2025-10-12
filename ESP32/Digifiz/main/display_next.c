@@ -582,6 +582,33 @@ void setSpeedometerData(uint16_t data) {
     }
 }
 
+// Display current gear in format "-G-" where G is gear number or '-' for neutral
+void setSpeedometerGear(int8_t gear) {
+    uint8_t number_spd[10]={DIGIT_NUMBER_0,
+                            DIGIT_NUMBER_1,
+                            DIGIT_NUMBER_2,
+                            DIGIT_NUMBER_3,
+                            DIGIT_NUMBER_4,
+                            DIGIT_NUMBER_5,
+                            DIGIT_NUMBER_6,
+                            DIGIT_NUMBER_7,
+                            DIGIT_NUMBER_8,
+                            DIGIT_NUMBER_9};
+    display.speed_digit_1 = DIGIT_NUMBER_MINUS;
+    display.speed_digit_s1 = DIGIT_NUMBER_MINUS;
+
+    if (gear > 0 && gear < 10) {
+        display.speed_digit_2 = number_spd[gear];
+        display.speed_digit_s2 = number_spd[gear];
+    } else {
+        display.speed_digit_2 = DIGIT_NUMBER_MINUS;
+        display.speed_digit_s2 = DIGIT_NUMBER_MINUS;
+    }
+
+    display.speed_digit_3 = DIGIT_NUMBER_MINUS;
+    display.speed_digit_s3 = DIGIT_NUMBER_MINUS;
+}
+
 // Set the coolant temperature data
 void setCoolantData(uint16_t data) {
     if (data>14)
