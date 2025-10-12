@@ -8,7 +8,8 @@
 
 Digifiz Replica project code
 
-Digifiz Replica is a Digifiz replacement for Golf/ Jetta/ Scirocco cars of mk2 generation. The project is not an official product(actually, it is a completely new product) and just resembles the look of the device.
+Digifiz Replica is a Digifiz replacement for Golf/ Jetta/ Scirocco cars of mk2 generation. The project is not an official Volkswagen product (actually, it is a completely new product), is a hobbyist product and just resembles the look of the device. Use it on your own risk!
+
 Currently Audi Digifiz with Red and Green version is also supported. 
 
 
