@@ -267,8 +267,12 @@ void displayUpdate(void *pvParameters) {
                 //rpmCoefficient = 3000 for Golf 2/Mk2 gasoline
                 //rpmCoefficient = 1500 for Audi 80 b2
                 rpm *= digifiz_parameters.rpmCoefficient.value/100; //4 cylinder motor, 60 sec in min, 2 strokes per revolution
-                
-                averageRPM += ((rpm-averageRPM)*digifiz_parameters.rpmFilterK.value)/1000;
+
+                float rpm_delta = (float)rpm - averageRPM;
+                uint16_t rpm_filter = (rpm_delta >= 0.0f)
+                    ? digifiz_parameters.rpmFilterK.value
+                    : digifiz_parameters.rpmFallingFilterK.value;
+                averageRPM += (rpm_delta * rpm_filter) / 1000.0f;
             }
         }
         else
