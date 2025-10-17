@@ -36,6 +36,8 @@ const uint8_t airChannel = ADC_CHANNEL_3; //Air temp sensor
 const uint8_t intakePressureChannel = ADC_CHANNEL_5; //Manifold pressure sensor pin
 const uint8_t fuelPressureChannel = ADC_CHANNEL_6; //Manifold pressure sensor pin
 
+#define HALF_HOUR_MS (30U * 60U * 1000U)
+
 float logR2 = 0.0f;
 float R2 = 0.0f;
 float coolantT = 0.0f;
@@ -646,6 +648,16 @@ void processGasLevel() {
     //printf("ADC fuel: %f %f\n",V0, gasolineLevel);
     gasolineLevel += tauGasoline*((1.0f-R2scaled)-gasolineLevel); //percents
     gasolineLevelFiltered += tauGasolineConsumption*(R2scaled-gasolineLevelFiltered); //percents
+
+    uint32_t now = millis();
+    if (consumptionCounter == 0) {
+        consumptionCounter = now;
+        gasolineLevelFiltered05hour = gasolineLevelFiltered;
+    } else if ((uint32_t)(now - consumptionCounter) >= HALF_HOUR_MS) {
+        consumptionLevel = (gasolineLevelFiltered05hour - gasolineLevelFiltered) * 2.0f;
+        gasolineLevelFiltered05hour = gasolineLevelFiltered;
+        consumptionCounter = now;
+    }
 }
 
 // Process ambient temperature data
@@ -755,6 +767,8 @@ void processFirstGasLevel() {
     //265 = empty
     gasolineLevel = 1.0f - R2scaled; //percents
     gasolineLevelFiltered = R2scaled; //percents
+    gasolineLevelFiltered05hour = R2scaled;
+    consumptionCounter = millis();
 }
 
 // Process the first ambient temperature data
