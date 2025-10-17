@@ -521,12 +521,15 @@
 
 <div id="Settings" class="tabcontent">
 	<div class="tci">
-		<div class="cl1">
-			<button onclick="loadParams()">Load Parameters</button>
-			<p>Page works in experimental mode. Ask manufacturer before interacting!</p>
-			<div id="table-container"></div>	  
-		</div>	
-	</div>
+                <div class="cl1">
+                        <button onclick="loadParams()">Load Parameters</button>
+                        <button id="exportParams">Export Parameters</button>
+                        <button id="importParams">Import Parameters</button>
+                        <input type="file" id="importParamsFile" style="display: none">
+                        <p>Page works in experimental mode. Ask manufacturer before interacting!</p>
+                        <div id="table-container"></div>
+                </div>
+        </div>
 </div>
 
 <div id="Colors" class="tabcontent">
@@ -582,16 +585,19 @@
 </div>
 
 <script>
-function loadParams() {
-	fetch('/params?type=params')
-	.then(res => res.json())
-	.then(data => {
-		const params = data.params;
-		const tableContainer = document.getElementById("table-container");
+let currentParams = [];
 
-		const table = document.createElement("table");
-		const thead = document.createElement("thead");
-		thead.innerHTML = `
+function loadParams() {
+        return fetch('/params?type=params')
+        .then(res => res.json())
+        .then(data => {
+                const params = Array.isArray(data.params) ? data.params : [];
+                currentParams = params.map(param => ({ ...param }));
+                const tableContainer = document.getElementById("table-container");
+
+                const table = document.createElement("table");
+                const thead = document.createElement("thead");
+                thead.innerHTML = `
 		<tr>
 			<th>Name</th>
 			<th>Value</th>
@@ -606,22 +612,23 @@ function loadParams() {
 		table.appendChild(thead);
 
 		const tbody = document.createElement("tbody");
-		params.forEach(param => {
-		const tr = document.createElement("tr");
+                params.forEach(param => {
+                const tr = document.createElement("tr");
 
-		let inputCellHTML = "";
-		if (param.min === 0 && param.max === 1) {
-			const checked = param.value === 1 || param.value === "1" ? "checked" : "";
-			inputCellHTML = `<input type="checkbox" id="input-${param.name}" ${checked}>`;
-		} else {
-			const inputType = param.type === "string" ? "text" : "number";
-			const step = inputType === "number" ? `step="${param.step}"` : "";
-			inputCellHTML = `<input type="${inputType}" id="input-${param.name}" value="${param.value}" ${step}>`;
-		}
+                let inputCellHTML = "";
+                if (param.min === 0 && param.max === 1) {
+                        const checked = param.value === 1 || param.value === "1" ? "checked" : "";
+                        inputCellHTML = `<input type="checkbox" id="input-${param.name}" ${checked}>`;
+                } else {
+                        const inputType = param.type === "string" ? "text" : "number";
+                        const stepValue = param.step !== undefined && param.step !== null ? param.step : "";
+                        const step = inputType === "number" && stepValue !== "" ? `step="${stepValue}"` : "";
+                        inputCellHTML = `<input type="${inputType}" id="input-${param.name}" value="${param.value}" ${step}>`;
+                }
 
-		tr.innerHTML = `
-			<td>${param.name}</td>
-			<td>${param.value}</td>
+                tr.innerHTML = `
+                        <td>${param.name}</td>
+                        <td>${param.value}</td>
 			<td>${param.info}</td>
 			<td>${param.type}</td>
 			<td>${param.min}</td>
@@ -640,31 +647,230 @@ function loadParams() {
 	.catch(err => {
 		console.error("Failed to load parameters:", err);
 		alert("Failed to load parameters");
-	});
+        });
 }
 
 function setParam(name) {
-	const input = document.getElementById(`input-${name}`);
-	const value = input.type === "checkbox" ? (input.checked ? 1 : 0) : input.value;
+        const input = document.getElementById(`input-${name}`);
+        const value = input.type === "checkbox" ? (input.checked ? 1 : 0) : input.value;
 
-	fetch('/set_param', {
-	method: 'POST',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({ name, value })
-	})
-	.then(res => {
-	if (!res.ok) throw new Error("Failed to set parameter");
-	return res.json();
-	})
-	.then(data => {
-	alert(`Parameter "${name}" updated successfully!`);
-	loadParams(); // Refresh values
-	})
-	.catch(err => {
-	console.error("Set failed:", err);
-	alert(`Failed to set parameter "${name}"`);
-	});
+        fetch('/set_param', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, value })
+        })
+        .then(res => {
+        if (!res.ok) throw new Error("Failed to set parameter");
+        return res.json();
+        })
+        .then(data => {
+        alert(`Parameter "${name}" updated successfully!`);
+        loadParams(); // Refresh values
+        })
+        .catch(err => {
+        console.error("Set failed:", err);
+        alert(`Failed to set parameter "${name}"`);
+        });
 }
+
+function collectCurrentParamsMap() {
+        const map = new Map();
+        currentParams.forEach(param => {
+                if (param && typeof param.name === "string") {
+                        map.set(param.name, { ...param });
+                }
+        });
+        return map;
+}
+
+document.getElementById('exportParams').addEventListener('click', function() {
+        if (!currentParams.length) {
+                alert('Please load parameters before exporting.');
+                return;
+        }
+
+        const blob = new Blob([JSON.stringify({ params: currentParams }, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'digifiz_params.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+});
+
+document.getElementById('importParams').addEventListener('click', function() {
+        const fileInput = document.getElementById('importParamsFile');
+        if (fileInput) {
+                fileInput.value = '';
+                fileInput.click();
+        }
+});
+
+function populateImportedParameterInputs(importedParams) {
+        const table = document.querySelector('#table-container table');
+        if (!table) {
+                alert('Please load parameters before importing.');
+                return { paramMap: new Map(), updatedCount: 0 };
+        }
+
+        const paramMap = collectCurrentParamsMap();
+        let updatedCount = 0;
+
+        importedParams.forEach(param => {
+                if (!param || typeof param.name !== 'string') {
+                        return;
+                }
+                const existing = paramMap.get(param.name) || {};
+                const merged = { ...existing, ...param };
+                const input = document.getElementById(`input-${param.name}`);
+                if (!input) {
+                        return;
+                }
+
+                if (input.type === 'checkbox') {
+                        const boolValue = merged.value === 1 || merged.value === '1' || merged.value === true || merged.value === 'true';
+                        input.checked = boolValue;
+                } else if (merged.value !== undefined) {
+                        input.value = merged.value;
+                }
+
+                paramMap.set(param.name, merged);
+                updatedCount += 1;
+        });
+
+        if (updatedCount > 0) {
+                currentParams = currentParams.map(param => paramMap.get(param.name) || param);
+        }
+
+        return { paramMap, updatedCount };
+}
+
+async function applyImportedParameterValues(paramMap) {
+        const entries = Array.from(paramMap.entries());
+        if (!entries.length) {
+                alert('No parameters found to apply.');
+                return;
+        }
+
+        const errors = [];
+        let appliedCount = 0;
+
+        for (const [name, param] of entries) {
+                if (!param || !param.hasOwnProperty('value')) {
+                        continue;
+                }
+
+                const type = typeof param.type === 'string' ? param.type.toLowerCase() : '';
+                if (type === 'str') {
+                        continue;
+                }
+
+                let value = param.value;
+                if (type === 'bool') {
+                        if (typeof value === 'string') {
+                                const normalized = value.trim().toLowerCase();
+                                if (normalized === 'true') {
+                                        value = 1;
+                                } else if (normalized === 'false') {
+                                        value = 0;
+                                } else if (!isNaN(normalized)) {
+                                        value = Number(normalized) ? 1 : 0;
+                                } else {
+                                        value = value ? 1 : 0;
+                                }
+                        } else {
+                                value = value ? 1 : 0;
+                        }
+                } else if (typeof value === 'string') {
+                        const trimmed = value.trim();
+                        if (trimmed !== '') {
+                                if (type === 'float') {
+                                        const parsed = parseFloat(trimmed);
+                                        if (!Number.isNaN(parsed)) {
+                                                value = parsed;
+                                        }
+                                } else if (type.includes('int') || type.includes('uint')) {
+                                        const parsed = parseInt(trimmed, 10);
+                                        if (!Number.isNaN(parsed)) {
+                                                value = parsed;
+                                        }
+                                } else {
+                                        const parsed = Number(trimmed);
+                                        if (!Number.isNaN(parsed)) {
+                                                value = parsed;
+                                        }
+                                }
+                        }
+                }
+
+                try {
+                        const response = await fetch('/set_param', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ name, value })
+                        });
+
+                        if (!response.ok) {
+                                const text = await response.text();
+                                errors.push(`${name}: ${text || response.statusText}`);
+                        } else {
+                                appliedCount += 1;
+                        }
+                } catch (err) {
+                        errors.push(`${name}: ${err.message}`);
+                }
+        }
+
+        if (appliedCount) {
+                loadParams();
+        }
+
+        if (errors.length) {
+                alert(`Finished applying parameters with some errors:\n${errors.join('\n')}`);
+        } else if (appliedCount) {
+                alert(`Successfully applied ${appliedCount} parameters.`);
+        } else {
+                alert('No applicable parameters were applied.');
+        }
+}
+
+document.getElementById('importParamsFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) {
+                return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async function(event) {
+                try {
+                        const text = event.target.result;
+                        const parsed = JSON.parse(text);
+                        const paramsArray = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.params) ? parsed.params : null);
+                        if (!paramsArray) {
+                                throw new Error('Invalid file format');
+                        }
+
+                        const { paramMap, updatedCount } = populateImportedParameterInputs(paramsArray);
+                        if (!updatedCount) {
+                                alert('No matching parameters were found in the imported file.');
+                                return;
+                        }
+
+                        if (confirm('Apply imported parameter values to the device now?')) {
+                                await applyImportedParameterValues(paramMap);
+                        } else {
+                                alert('Imported values have been populated. Use the Set buttons to apply individual parameters.');
+                        }
+                } catch (err) {
+                        alert('Error importing parameters: ' + err.message);
+                } finally {
+                        e.target.value = '';
+                }
+        };
+        reader.readAsText(file);
+});
 </script>
 
 <script>
