@@ -490,6 +490,13 @@ extern "C" {
     ) \
     PARAM(  \
         U16, \
+        rpmFallingFilterK, \
+        .p_name = "RPM LPF coeff. fall", \
+        .p_info = "LPF coefficient used when RPM decreases",\
+        .value = 200, \
+    ) \
+    PARAM(  \
+        U16, \
         speedFilterK, \
         .p_name = "LPF coefficient for speed calculation", \
         .p_info = "",\

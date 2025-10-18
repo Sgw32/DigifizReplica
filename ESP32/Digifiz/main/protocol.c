@@ -61,6 +61,7 @@ static const ParameterMap parameter_map[] = {
     {"PARAMETER_BACKCOLOR_G", PARAMETER_BACKCOLOR_G},
     {"PARAMETER_BACKCOLOR_B", PARAMETER_BACKCOLOR_B},
     {"PARAMETER_RPM_FILTER", PARAMETER_RPM_FILTER},
+    {"PARAMETER_RPM_FILTER_FALLING", PARAMETER_RPM_FILTER_FALLING},
     {"PARAMETER_SPEED_FILTER", PARAMETER_SPEED_FILTER},
     {"PARAMETER_SET_FUEL_CALC_FUNCTION", PARAMETER_SET_FUEL_CALC_FUNCTION},
     {"PARAMETER_SET_RPM_OPTIONS", PARAMETER_SET_RPM_OPTIONS},
@@ -476,6 +477,10 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_RPM_FILTER\n");
         digifiz_parameters.rpmFilterK.value = value;
         break;
+      case PARAMETER_RPM_FILTER_FALLING:
+        printLnCString("PARAMETER_RPM_FILTER_FALLING\n");
+        digifiz_parameters.rpmFallingFilterK.value = value;
+        break;
       case PARAMETER_SET_FUEL_CALC_FUNCTION:
         printLnCString("PARAMETER_SET_FUEL_CALC_FUNCTION\n");
         // digifiz_parameters.option_linear_fuel.value = value&1;
@@ -820,6 +825,10 @@ void processData(int parameter,long value)
       case PARAMETER_RPM_FILTER:
         printLnCString("PARAMETER_RPM_FILTER\n");
         printLnUINT8(digifiz_parameters.rpmFilterK.value);
+        break;
+      case PARAMETER_RPM_FILTER_FALLING:
+        printLnCString("PARAMETER_RPM_FILTER_FALLING\n");
+        printLnUINT8(digifiz_parameters.rpmFallingFilterK.value);
         break;
       case PARAMETER_SPEED_FILTER:
         printLnCString("PARAMETER_SPEED_FILTER\n");
