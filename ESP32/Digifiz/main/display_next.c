@@ -20,6 +20,92 @@ DigifizNextDisplay display;
 static led_strip_handle_t led_strip;
 float brightnessFiltered = 6.0f;
 
+typedef struct
+{
+    uint8_t output;
+    uint8_t pending;
+    uint16_t stable_count;
+    bool initialized;
+} indicator_filter_t;
+
+static indicator_filter_t brakes_indicator_filter;
+static indicator_filter_t foglight1_indicator_filter;
+static indicator_filter_t foglight2_indicator_filter;
+static indicator_filter_t glassheat_indicator_filter;
+static indicator_filter_t left_turn_indicator_filter;
+static indicator_filter_t right_turn_indicator_filter;
+
+static uint8_t apply_indicator_filter(indicator_filter_t *filter, uint8_t new_value, uint16_t required_cycles)
+{
+    uint8_t sanitized_value = new_value ? 1 : 0;
+
+    if (!filter->initialized)
+    {
+        filter->output = sanitized_value;
+        filter->pending = sanitized_value;
+        filter->stable_count = 0;
+        filter->initialized = true;
+        return sanitized_value;
+    }
+
+    if (sanitized_value == filter->output)
+    {
+        filter->pending = sanitized_value;
+        filter->stable_count = 0;
+        return filter->output;
+    }
+
+    if (sanitized_value == filter->pending)
+    {
+        if (filter->stable_count < UINT16_MAX)
+        {
+            filter->stable_count++;
+        }
+    }
+    else
+    {
+        filter->pending = sanitized_value;
+        filter->stable_count = 1;
+    }
+
+    if ((required_cycles == 0) || (filter->stable_count >= required_cycles))
+    {
+        filter->output = filter->pending;
+        filter->stable_count = 0;
+    }
+
+    return filter->output;
+}
+
+static uint8_t filter_general_indicator(indicator_filter_t *filter, uint8_t new_value)
+{
+    return apply_indicator_filter(filter, new_value, (uint16_t)digifiz_parameters.signalOptions_indicator_filter_cycles.value);
+}
+
+static uint8_t filter_turn_indicator(indicator_filter_t *filter, uint8_t new_value)
+{
+    return apply_indicator_filter(filter, new_value, (uint16_t)digifiz_parameters.signalOptions_turn_filter_cycles.value);
+}
+
+static void reset_indicator_filter(indicator_filter_t *filter, uint8_t value)
+{
+    uint8_t sanitized_value = value ? 1 : 0;
+    filter->output = sanitized_value;
+    filter->pending = sanitized_value;
+    filter->stable_count = 0;
+    filter->initialized = true;
+}
+
+static void reset_indicator_filters(void)
+{
+    reset_indicator_filter(&brakes_indicator_filter, display.brakes_ind);
+    reset_indicator_filter(&foglight1_indicator_filter, display.foglight_ind1);
+    reset_indicator_filter(&foglight2_indicator_filter, display.foglight_ind2);
+    reset_indicator_filter(&glassheat_indicator_filter, display.glassheat_ind);
+    reset_indicator_filter(&left_turn_indicator_filter, display.left_turn_ind);
+    reset_indicator_filter(&right_turn_indicator_filter, display.right_turn_ind);
+}
+
 static uint8_t maincolor_r;
 static uint8_t maincolor_g;
 static uint8_t maincolor_b;
@@ -334,6 +420,8 @@ void initDisplay() {
     display.lights_on_ind = 0;
     display.foglight_ind2 = 0;
     display.backlight_leds = 0xFFFFFFFF;
+
+    reset_indicator_filters();
 
     for (uint8_t i=0;i!=COLORING_SCHEME_MAX_ELEMENTS;i++)
     {
@@ -906,62 +994,56 @@ void setOilIndicator(bool onoff)
 }
 void setBrakesIndicator(bool onoff)
 {
-    display.brakes_ind = onoff ? 1 : 0;
+    display.brakes_ind = filter_general_indicator(&brakes_indicator_filter, onoff ? 1 : 0);
 }
 void setHeatLightsIndicator(bool onoff)
 {
-    display.foglight_ind1 = onoff ? 1 : 0;
+    display.foglight_ind1 = filter_general_indicator(&foglight1_indicator_filter, onoff ? 1 : 0);
 }
 void setBackLightsHeatIndicator(bool onoff)
 {
-    display.foglight_ind2 = onoff ? 1 : 0;
+    display.foglight_ind2 = filter_general_indicator(&foglight2_indicator_filter, onoff ? 1 : 0);
 }
 void setBackWindowHeatIndicator(bool onoff)
 {
-    display.glassheat_ind = onoff ? 1 : 0;
+    display.glassheat_ind = filter_general_indicator(&glassheat_indicator_filter, onoff ? 1 : 0);
 }
 void processIndicators()
 {
-    if (digifiz_parameters. signalOptions_use_blink_alt_in.value)
+    uint8_t left_raw = 0;
+    uint8_t right_raw = 0;
+
+    if (digifiz_parameters.signalOptions_use_blink_alt_in.value)
     {
-        if (!digifiz_reg_in.fogLightsInd)
+        left_raw = (!digifiz_reg_in.fogLightsInd) ? 1 : 0;
+        if (!left_raw && !digifiz_reg_in.glheatInd)
         {
-            display.left_turn_ind = 1;
-        }
-        else if (!digifiz_reg_in.glheatInd)
-        {
-            display.right_turn_ind = 1;
-        }
-        else
-        {
-            display.left_turn_ind = 0;
-            display.right_turn_ind = 0;
+            right_raw = 1;
         }
     }
     else
     {
-        //Normal way:
+        // Normal way:
         if (digifiz_reg_in.blinkAll)
         {
-            display.left_turn_ind = 0;
-            display.right_turn_ind = 0;
-            if (!digifiz_reg_in.blinkLeftInd)
-            {
-                display.left_turn_ind = 1;
-            }
-            if (!digifiz_reg_in.blinkRightInd)
-            {
-                display.right_turn_ind = 1;
-            }
+            left_raw = (!digifiz_reg_in.blinkLeftInd) ? 1 : 0;
+            right_raw = (!digifiz_reg_in.blinkRightInd) ? 1 : 0;
         }
         else
         {
-            display.left_turn_ind = 1;
-            display.right_turn_ind = 1;
+            left_raw = 1;
+            right_raw = 1;
         }
     }
-    display.brakes_ind = digifiz_reg_in.brakesInd ? 0 : 1;
-    display.foglight_ind2 = digifiz_reg_in.lightsHeatInd ? 0 : 1;
+
+    display.left_turn_ind = filter_turn_indicator(&left_turn_indicator_filter, left_raw);
+    display.right_turn_ind = filter_turn_indicator(&right_turn_indicator_filter, right_raw);
+
+    uint8_t brakes_raw = digifiz_reg_in.brakesInd ? 0 : 1;
+    uint8_t foglight2_raw = digifiz_reg_in.lightsHeatInd ? 0 : 1;
+
+    display.brakes_ind = filter_general_indicator(&brakes_indicator_filter, brakes_raw);
+    display.foglight_ind2 = filter_general_indicator(&foglight2_indicator_filter, foglight2_raw);
 }
 
 static void getColorBySegmentNumber(ColoringScheme* c_ptr, uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* b)
