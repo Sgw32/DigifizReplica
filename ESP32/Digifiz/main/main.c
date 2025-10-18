@@ -467,6 +467,8 @@ void on_cpu_1(void *pvParameters)
     initTacho();
     initDeviceSleep();
     initRegInOut();
+    //CRUCIAL! without it power is not set
+    device_sleep_dump();
     // Check if MFA MODE button is held during startup for factory reset
     {
         regin_read(digifiz_reg_in.bytes);
