@@ -611,6 +611,22 @@ extern "C" {
         .max = 1, \
     ) \
     PARAM(  \
+        U8, \
+        option_gear_indicator_in_refuel, \
+        .p_name = "Gear indicator in refuel", \
+        .p_info = "Show gear indicator in refuel segment instead of speed display",\
+        .value = 0, \
+        .max = 1, \
+    ) \
+    PARAM(  \
+        U8, \
+        option_refuel_blink, \
+        .p_name = "Blink refuel indicator", \
+        .p_info = "Blink refuel (R) indicator when fuel is low",\
+        .value = 0, \
+        .max = 1, \
+    ) \
+    PARAM(  \
         U32, \
         speed_meas_period, \
         .p_name = "Speedometer measurement period in ms", \

@@ -178,6 +178,7 @@ void setMFABlock(uint8_t block);
 void setBrightness(uint8_t levels);
 void resetBrightness();
 void setRefuelSign(bool onoff);
+void setRefuelGear(int8_t gear);
 void setCheckEngine(bool onoff);
 void setBacklight(bool onoff);
 void setServiceDisplayData(uint8_t data);
