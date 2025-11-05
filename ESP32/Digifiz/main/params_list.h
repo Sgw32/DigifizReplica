@@ -517,6 +517,13 @@ extern "C" {
     ) \
     PARAM(  \
         U16, \
+        oilThermistorSeriesRes, \
+        .p_name = "Oil series", \
+        .p_info = "Series resistance between oil sensor and ground",\
+        .value = 0, \
+    ) \
+    PARAM(  \
+        U16, \
         ambThermistorPullUpRes, \
         .p_name = "Amb. air pull-up", \
         .p_info = "Pull-up resistance for ambient temperature sensor",\
