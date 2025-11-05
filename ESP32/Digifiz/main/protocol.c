@@ -69,6 +69,7 @@ static const ParameterMap parameter_map[] = {
     {"PARAMETER_SET_SIGNAL_OPTIONS", PARAMETER_SET_SIGNAL_OPTIONS},
     {"PARAMETER_PULLUP_RESISTANCE_COOLANT", PARAMETER_PULLUP_RESISTANCE_COOLANT},
     {"PARAMETER_PULLUP_RESISTANCE_OIL", PARAMETER_PULLUP_RESISTANCE_OIL},
+    {"PARAMETER_SERIES_RESISTANCE_OIL", PARAMETER_SERIES_RESISTANCE_OIL},
     {"PARAMETER_PULLUP_RESISTANCE_AMB", PARAMETER_PULLUP_RESISTANCE_AMB},
     {"PARAMETER_BRIGHTNESS_SIGNAL_MIN", PARAMETER_BRIGHTNESS_SIGNAL_MIN},
     {"PARAMETER_BRIGHTNESS_SIGNAL_MAX", PARAMETER_BRIGHTNESS_SIGNAL_MAX},
@@ -518,6 +519,11 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_PULLUP_RESISTANCE_OIL\n");
         digifiz_parameters.oilThermistorPullUpRes.value = value;
         break;
+      case PARAMETER_SERIES_RESISTANCE_OIL:
+        printLnCString("PARAMETER_SERIES_RESISTANCE_OIL\n");
+        digifiz_parameters.oilThermistorSeriesRes.value = value;
+        updateADCSettings();
+        break;
       case PARAMETER_PULLUP_RESISTANCE_AMB:
         printLnCString("PARAMETER_PULLUP_RESISTANCE_AMB\n");
         digifiz_parameters.ambThermistorPullUpRes.value = value;
@@ -853,6 +859,10 @@ void processData(int parameter,long value)
       case PARAMETER_PULLUP_RESISTANCE_OIL:
         printLnCString("PARAMETER_PULLUP_RESISTANCE_OIL\n");
         printLnUINT32(digifiz_parameters.oilThermistorPullUpRes.value);
+        break;
+      case PARAMETER_SERIES_RESISTANCE_OIL:
+        printLnCString("PARAMETER_SERIES_RESISTANCE_OIL\n");
+        printLnUINT32(digifiz_parameters.oilThermistorSeriesRes.value);
         break;
       case PARAMETER_PULLUP_RESISTANCE_AMB:
         printLnCString("PARAMETER_PULLUP_RESISTANCE_AMB\n");

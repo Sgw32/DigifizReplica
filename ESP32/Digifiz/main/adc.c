@@ -38,6 +38,7 @@ const uint8_t fuelPressureChannel = ADC_CHANNEL_6; //Manifold pressure sensor pi
 
 float logR2 = 0.0f;
 float R2 = 0.0f;
+float Rseries_Oil = 0.0f;
 float coolantT = 0.0f;
 float oilT = 0.0f;
 float airT = 0.0f;
@@ -220,6 +221,7 @@ void updateADCSettings()
 
     if (digifiz_parameters.oilThermistorPullUpRes.value>0)
         R2_Oil = (float)digifiz_parameters.oilThermistorPullUpRes.value; //3300 or 3300 || 220
+    Rseries_Oil = (float)digifiz_parameters.oilThermistorSeriesRes.value;
     if (digifiz_parameters.ambThermistorPullUpRes.value>0)
         R2_Ambient = (float)digifiz_parameters.ambThermistorPullUpRes.value; //3300
     if (digifiz_parameters.coolantThermistorPullUpRes.value>0)
@@ -579,7 +581,8 @@ void processOilTemperature() {
     V0 = adc_raw.oilTempRawADCVal;
     if (V0<ADC_NTC_INCORRECT_UPPER_BOUND)
     {
-        R2 = R2_Oil * V0 / (ADC_UPPER_BOUND - V0); //
+        float R_total = R2_Oil * V0 / (ADC_UPPER_BOUND - V0); //
+        R2 = R_total - Rseries_Oil;
         if (R2>0)
         {
             float temp1 = (log(R2/R1_Oil)/oilB);
@@ -714,7 +717,8 @@ void processFirstOilTemperature() {
     V0 = adc_raw.oilTempRawADCVal;
     if (V0<ADC_NTC_INCORRECT_UPPER_BOUND)
     {
-        R2 = R2_Oil * V0 / (ADC_UPPER_BOUND - V0); //
+        float R_total = R2_Oil * V0 / (ADC_UPPER_BOUND - V0); //
+        R2 = R_total - Rseries_Oil;
         if (R2>0)
         {
             float temp1 = (log(R2/R1_Oil)/oilB);
