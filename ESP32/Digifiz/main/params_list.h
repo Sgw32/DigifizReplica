@@ -420,6 +420,43 @@ extern "C" {
     ) \
     PARAM(  \
         U8, \
+        speedColorChangeEnable, \
+        .p_name = "Speed color alert", \
+        .p_info = "Enable speed color change above threshold",\
+        .value = 0, \
+        .max = 1, \
+    ) \
+    PARAM(  \
+        U16, \
+        speedColorChangeThreshold, \
+        .p_name = "Speed alert threshold", \
+        .p_info = "Speed value that enables alert color",\
+        .value = 120, \
+        .max = 400, \
+    ) \
+    PARAM(  \
+        U8, \
+        speedAlertColor_r, \
+        .p_name = "Speed alert R", \
+        .p_info = "Speed alert color red component",\
+        .value = 255, \
+    ) \
+    PARAM(  \
+        U8, \
+        speedAlertColor_g, \
+        .p_name = "Speed alert G", \
+        .p_info = "Speed alert color green component",\
+        .value = 0, \
+    ) \
+    PARAM(  \
+        U8, \
+        speedAlertColor_b, \
+        .p_name = "Speed alert B", \
+        .p_info = "Speed alert color blue component",\
+        .value = 0, \
+    ) \
+    PARAM(  \
+        U8, \
         mainc_r, \
         .p_name = "Main R color", \
         .p_info = "Main theme Red color component",\
