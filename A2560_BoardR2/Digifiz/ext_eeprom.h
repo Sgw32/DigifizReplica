@@ -131,6 +131,8 @@ typedef struct digifiz_pars
     uint16_t ambThermistorDefRes;   // 2 bytes
     uint16_t rpmFilterK;   // 2 bytes
     uint16_t speedFilterK;   // 2 bytes
+    uint16_t rpmMaxThreshold;   // 2 bytes
+    uint16_t speedMaxThreshold;   // 2 bytes
     uint8_t crc; //crc
 };
 
