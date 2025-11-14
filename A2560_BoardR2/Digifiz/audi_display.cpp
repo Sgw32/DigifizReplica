@@ -5,7 +5,8 @@ MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, 4);
 STLED316S stled(NBR_OF_DIGIT, STB_CLK_PIN_STLED, CLK_PIN_STLED, DATA_PIN_STLED);
 STLED316S stled2(NBR_OF_DIGIT, STB_SPD_PIN_STLED, CLK_PIN_STLED, DATA_PIN_STLED);
 
-extern digifiz_pars digifiz_parameters;
+extern digifiz_pars_t digifiz_parameters;
+extern digifiz_stats_t digifiz_status;
 
 #ifdef EMULATE_RTC
 extern RTC_Millis myRTC;
@@ -99,8 +100,8 @@ void setRPM(int rpmdata)
 void setBacklight(bool onoff)
 {
   backlightStatus = onoff;
-  setMilesKMH((digifiz_parameters.digifiz_options.option_miles) ? 1 : 0);
-  setLBar((digifiz_parameters.digifiz_options.option_lbar) ? 1 : 0);
+  setMilesKMH(digifiz_parameters.option_miles.value ? 1 : 0);
+  setLBar(digifiz_parameters.option_lbar.value ? 1 : 0);
   stled.setLED(LEDall, onoff); //always
   stled2.setLED(audiOptions, true);
   stled2.setLED(~audiOptions, false);
@@ -176,22 +177,22 @@ void setCheckEngine(bool onoff)
 
 void displayMFAType(uint8_t mfaType)
 {    
-    switch(digifiz_parameters.mfaState)
+    switch(digifiz_parameters.mfaState.value)
     {
         case MFA_STATE_TRIP_L100KM:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
+            setMFADisplayedNumber((uint16_t)(digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]*100));
             setFloatDot(true);
             break; 
         case MFA_STATE_TRIP_CURRENT_L100KM:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
+            setMFADisplayedNumber((uint16_t)(digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]*100));
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
-            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
+            setMFADisplayedNumber((uint16_t)fabs(digifiz_status.averageSpeed[digifiz_parameters.mfaBlock.value]));
             setFloatDot(false);
             break; 
         case MFA_STATE_TRIP_DISTANCE:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
+            setMFADisplayedNumber((uint16_t)(digifiz_status.daily_mileage[digifiz_parameters.mfaBlock.value]/3600));
             setFloatDot(false);
             break;  
         case MFA_STATE_TRIP_DURATION:

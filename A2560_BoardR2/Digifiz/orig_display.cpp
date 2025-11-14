@@ -1,6 +1,7 @@
 #include "orig_display.h"
 #ifdef DIGIFIZ_ORIGINAL_DISPLAY
-extern digifiz_pars digifiz_parameters;
+extern digifiz_pars_t digifiz_parameters;
+extern digifiz_stats_t digifiz_status;
 
 #ifdef EMULATE_RTC
 extern RTC_Millis myRTC;
@@ -373,30 +374,30 @@ void setCheckEngine(bool onoff)
 
 void displayMFAType(uint8_t mfaType)
 {    
-    switch(digifiz_parameters.mfaState)
+    switch(digifiz_parameters.mfaState.value)
     {
         case MFA_STATE_TRIP_DURATION:
             setMFAClockData(sinceStart.hours(),sinceStart.minutes());
             break;
         case MFA_STATE_TRIP_DISTANCE:
-            setMFADisplayedNumber((uint16_t)digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600);
+            setMFADisplayedNumber((uint16_t)digifiz_status.daily_mileage[digifiz_parameters.mfaBlock.value]/3600);
             setFloatDot(false);
             break;
         case MFA_STATE_TRIP_L100KM:
-            setMFADisplayedNumber((uint16_t)digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100);
+            setMFADisplayedNumber((uint16_t)digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]*100);
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
-            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]*10));
+            setMFADisplayedNumber((uint16_t)fabs(digifiz_status.averageSpeed[digifiz_parameters.mfaBlock.value]*10));
             setFloatDot(true);
             break;
         case MFA_STATE_OIL_TEMP:
-            if (digifiz_parameters.digifiz_options.option_fahrenheit)
+            if (digifiz_parameters.option_fahrenheit.value)
             {
               setMFADisplayedNumber((int16_t)getOilTemperatureFahrenheit());
               setFloatDot(false);
             }
-            else if (digifiz_parameters.digifiz_options.option_kelvin)
+            else if (digifiz_parameters.option_kelvin.value)
             {
               setMFADisplayedNumber((int16_t)(getOilTemperature()+273.15f));
               setFloatDot(false);
@@ -408,12 +409,12 @@ void displayMFAType(uint8_t mfaType)
             }
             break;
         case MFA_STATE_AIR_TEMP:
-            if (digifiz_parameters.digifiz_options.option_fahrenheit)
+            if (digifiz_parameters.option_fahrenheit.value)
             {
               setMFADisplayedNumber((int16_t)getAmbientTemperatureFahrenheit());
               setFloatDot(false);
             }
-            else if (digifiz_parameters.digifiz_options.option_kelvin)
+            else if (digifiz_parameters.option_kelvin.value)
             { 
               setMFADisplayedNumber((int16_t)(getAmbientTemperature()+273.15f));
               setFloatDot(false);
@@ -773,7 +774,7 @@ void setRPMData(uint16_t data)
     //return; 
     long long rpm = data;
     rpm*=70;
-    rpm/=digifiz_parameters.maxRPM;
+    rpm/=digifiz_parameters.maxRPM.value;
     if (rpm>sizeof(rpm_segments))
       return;
     for (int i=rpm;i<70;i++)
@@ -827,14 +828,14 @@ void setSpeedometerData(uint16_t data)
 
 void setDot(bool value)
 {
-  if (!digifiz_parameters.displayDot)
+  if (!digifiz_parameters.displayDot.value)
   {
     bool_data_payload[40+3] = 1;
     return;
   }
   bool_data_payload[40+3] = value ? 1 : 0;
   
-  if (digifiz_parameters.mfaState==MFA_STATE_TRIP_DURATION)
+  if (digifiz_parameters.mfaState.value==MFA_STATE_TRIP_DURATION)
   {
     bool_data_payload[200+3] = value ? 1 : 0;
     bool_data_payload[232+3] = value ? 1 : 0;

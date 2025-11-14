@@ -23,7 +23,8 @@ extern RTC_DS3231 myRTC;
 
 extern DateTime startTime[2];
 
-extern digifiz_pars digifiz_parameters;
+extern digifiz_pars_t digifiz_parameters;
+extern digifiz_stats_t digifiz_status;
 
 void initMFA()
 {
@@ -47,15 +48,15 @@ void processMFA()
     }
 
 #ifndef DISABLE_MANUFACTURER_MFA
-    if (digifiz_parameters.digifiz_options.mfa_manufacturer)
+    if (digifiz_parameters.option_mfa_manufacturer.value)
     {
       if ((digitalRead(MFA_MODE_PIN)==LOW)&&(prevMFAMode==HIGH))
       {
           //Pressed MFA Mode
           pressMFAMode();
       } 
-      //digifiz_parameters.mfaBlock = (digitalRead(MFA_BLOCK_PIN)==LOW) ? 1 : 0;
-      digifiz_parameters.mfaBlock = (digitalRead(MFA_BLOCK_PIN)==HIGH) ? 1 : 0;
+      //digifiz_parameters.mfaBlock.value = (digitalRead(MFA_BLOCK_PIN)==LOW) ? 1 : 0;
+      digifiz_parameters.mfaBlock.value = (digitalRead(MFA_BLOCK_PIN)==HIGH) ? 1 : 0;
       
       if ((digitalRead(MFA_RESET_PIN)==LOW)&&(prevMFAReset==HIGH))
       {
@@ -65,7 +66,7 @@ void processMFA()
     }
 #endif
 #ifndef DISABLE_SENSOR_BUTTON
-    if (digifiz_parameters.sign_options.enable_touch_sensor)
+    if (digifiz_parameters.signOptions_enable_touch_sensor.value)
     {
         if ((digitalRead(MFA_SENSOR_PIN)==HIGH)&&(prevMFASensor==LOW))
         {
@@ -121,13 +122,13 @@ void pressMFASensorSuperSuperLong()
 
 void pressMFAMode()
 {
-digifiz_parameters.mfaState+=1;  
+digifiz_parameters.mfaState.value+=1;  
 #ifdef AUDI_RED_DISPLAY
-    if (digifiz_parameters.mfaState>6) // 0 1 2 3 4 5 6
-        digifiz_parameters.mfaState = 0;
+    if (digifiz_parameters.mfaState.value>6) // 0 1 2 3 4 5 6
+        digifiz_parameters.mfaState.value = 0;
 #else
-    if (digifiz_parameters.mfaState>5) // 0 1 2 3 4 5
-        digifiz_parameters.mfaState = 0;
+    if (digifiz_parameters.mfaState.value>5) // 0 1 2 3 4 5
+        digifiz_parameters.mfaState.value = 0;
 #endif
 #ifdef SAVE_BY_MFA_MODE
     saveParameters();
@@ -136,28 +137,28 @@ digifiz_parameters.mfaState+=1;
 
 void pressMFABlock()
 {
-    digifiz_parameters.mfaBlock+=1;
-    digifiz_parameters.mfaBlock&=0x1;
+    digifiz_parameters.mfaBlock.value+=1;
+    digifiz_parameters.mfaBlock.value&=0x1;
     //saveParameters();
-    //setMFABlock(digifiz_parameters.mfaBlock); //in display h
+    //setMFABlock(digifiz_parameters.mfaBlock.value); //in display h
 }
 
 void pressMFAReset()
 {
-    switch(digifiz_parameters.mfaState)
+    switch(digifiz_parameters.mfaState.value)
     {
         case MFA_STATE_TRIP_DURATION:
-            digifiz_parameters.duration[digifiz_parameters.mfaBlock] = 0;
-            startTime[digifiz_parameters.mfaBlock] = myRTC.now();
+            digifiz_status.duration[digifiz_parameters.mfaBlock.value] = 0;
+            startTime[digifiz_parameters.mfaBlock.value] = myRTC.now();
             break;
         case MFA_STATE_TRIP_DISTANCE:
-            digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock] = 0;
+            digifiz_status.daily_mileage[digifiz_parameters.mfaBlock.value] = 0;
             break;
         case MFA_STATE_TRIP_L100KM:
-            digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] = 0;
+            digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value] = 0;
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
-            digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock] = 0;
+            digifiz_status.averageSpeed[digifiz_parameters.mfaBlock.value] = 0;
             break;
 #if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
         case MFA_STATE_OIL_TEMP:
