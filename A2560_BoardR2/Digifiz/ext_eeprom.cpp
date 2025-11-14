@@ -1,365 +1,208 @@
 #include "ext_eeprom.h"
+#include <string.h>
+#include <stdlib.h>
 
-ExternalEEPROM myMem; //myMem is external EEPROM (24LC512)
+ExternalEEPROM myMem;
 uint8_t external_faulty;
-digifiz_pars digifiz_parameters;
+static uint8_t memory_locked = 0;
+static const size_t kStatusOffset = params_blob_size;
+
 EEPROMLoadResult eeprom_load_result = EEPROM_NO_LOAD_ATTEMPT;
-uint8_t memory_block_selected = 0;
-uint8_t memory_locked = 0;
 
-bool checkMagicBytes()
-{    
-    uint8_t test1,test2,test3,test4;
-    uint8_t cnt = 0;
-    for (int j=0;j!=EEPROM_DOUBLING;j++)
-    {
-      for (cnt=0;cnt!=10;cnt++) //What if we have a wrong negative results???
-      {
-        //Give it 10 chances
-        myMem.get(EXTERNAL_OFFSET+0+EEPROM_GAP_SIZE*j,test1);
-        myMem.get(EXTERNAL_OFFSET+1+EEPROM_GAP_SIZE*j,test2);
-        myMem.get(EXTERNAL_OFFSET+2+EEPROM_GAP_SIZE*j,test3);
-        myMem.get(EXTERNAL_OFFSET+3+EEPROM_GAP_SIZE*j,test4);
-        if ((test1=='D')&&
-            (test2=='I')&&
-            (test3=='G')&&
-            (test4=='I'))
-        {
-            return true;
-        }
-      }
+static bool blob_has_magic(const uint8_t* blob) {
+    if (blob == nullptr) {
+        return false;
     }
-    return false;
+    const xparam_img_t* img = (const xparam_img_t*)blob;
+    return img->header.magic == XPARAM_MAGIC;
 }
 
-bool checkInternalMagicBytes()
-{    
+static void write_internal_blob(const uint8_t* blob) {
+    for (size_t i = 0; i < params_blob_size; ++i) {
+        EEPROM.update(INTERNAL_OFFSET + i, blob[i]);
+    }
+    EEPROM.put(INTERNAL_OFFSET + kStatusOffset, digifiz_status);
+}
+
+static void write_external_blob(const uint8_t* blob) {
+    if (external_faulty) {
+        return;
+    }
+    for (size_t i = 0; i < params_blob_size; ++i) {
+        myMem.write(EXTERNAL_OFFSET + i, blob[i]);
+    }
+    myMem.put(EXTERNAL_OFFSET + kStatusOffset, digifiz_status);
+}
+
+static bool read_internal_blob(uint8_t* blob) {
+    for (size_t i = 0; i < params_blob_size; ++i) {
+        blob[i] = EEPROM.read(INTERNAL_OFFSET + i);
+    }
+    EEPROM.get(INTERNAL_OFFSET + kStatusOffset, digifiz_status);
+    return blob_has_magic(blob);
+}
+
+static bool read_external_blob(uint8_t* blob) {
+    if (external_faulty) {
+        return false;
+    }
+    for (size_t i = 0; i < params_blob_size; ++i) {
+        myMem.read(EXTERNAL_OFFSET + i, &blob[i]);
+    }
+    myMem.get(EXTERNAL_OFFSET + kStatusOffset, digifiz_status);
+    return blob_has_magic(blob);
+}
+
+static bool load_from_blob(uint8_t* blob) {
+    if (!blob_has_magic(blob)) {
+        return false;
+    }
+    if (!xparam_table_from_blob(&params_table, blob)) {
+        return false;
+    }
     return true;
-}
-
-
-void saveParameters()
-{
-  #ifdef DISABLE_EEPROM
-  return;
-  #endif
-
-  // Compute the CRC of the current parameters
-  computeCRC();
-
-  // Check if parameters have changed, if so, proceed with writing
-  bool dataChanged = false;
-  // Buffer to hold the parameters read from EEPROM for comparison
-  digifiz_pars buffer;
-  
-  // Read existing data to compare and check for changes
-  EEPROM.get(INTERNAL_OFFSET + 4 + EEPROM_GAP_SIZE * memory_block_selected, buffer);
-
-  // Only proceed if data has changed
-  if (memcmp(&buffer, &digifiz_parameters, sizeof(digifiz_parameters)) != 0)
-  {
-    dataChanged = true;
-  }
-
-  // Proceed if data has changed or external EEPROM is not faulty
-  if (dataChanged || !external_faulty)
-  {
-    cli();  // Disable interrupts for the critical section
-
-    // If external EEPROM is available and not faulty, write to it
-    if (!external_faulty)
-    {
-      myMem.put(EXTERNAL_OFFSET + 4 + EEPROM_GAP_SIZE * memory_block_selected, digifiz_parameters);
-    }
-
-    // Write to internal EEPROM
-    EEPROM.put(INTERNAL_OFFSET + 4 + EEPROM_GAP_SIZE * memory_block_selected, digifiz_parameters);
-
-    sei();  // Re-enable interrupts
-
-    // Optional: Verify the written data
-    digifiz_pars verifyBuffer;
-    EEPROM.get(INTERNAL_OFFSET + 4 + EEPROM_GAP_SIZE * memory_block_selected, verifyBuffer);
-
-    // If verification fails, log an error or take corrective action
-    if (memcmp(&verifyBuffer, &digifiz_parameters, sizeof(digifiz_parameters)) != 0)
-    {
-      // Handle error
-    }
-
-    // Increment memory block pointer
-    memory_block_selected++;
-    if (memory_block_selected == EEPROM_DOUBLING)
-    {
-      memory_block_selected = 0;
-    }
-  }
-}
-void computeCRC()
-{
-  uint8_t res = 0;
-  uint8_t* digi_buf = (uint8_t*)&digifiz_parameters;
-  for (int i=0;i!=CRC_FRAGMENT_SIZE;i++)
-  {
-    res^=digi_buf[i];
-  }
-  digifiz_parameters.crc = res;
-}
-
-uint8_t getCurrentMemoryBlock()
-{
-  return memory_block_selected;
 }
 
 void load_defaults()
 {
-    memcpy(digifiz_parameters.preamble,"DIGI",4);
+    digifiz_parameters = digifiz_default_parameters;
+    digifiz_status.mileage = DEFAULT_MILEAGE * 3600UL;
+    digifiz_status.daily_mileage[0] = 0;
+    digifiz_status.daily_mileage[1] = 0;
+    digifiz_status.uptime = 0;
+    digifiz_status.averageConsumption[0] = 0.0f;
+    digifiz_status.averageConsumption[1] = 0.0f;
+    digifiz_status.averageSpeed[0] = 0.0f;
+    digifiz_status.averageSpeed[1] = 0.0f;
+    digifiz_status.duration[0] = 0;
+    digifiz_status.duration[1] = 0;
+
 #if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
-    digifiz_parameters.rpmCoefficient = 3000;
-    digifiz_parameters.rpmFilterK = 70;
+    digifiz_parameters.rpmCoefficient.value = 3000;
 #else
-    digifiz_parameters.rpmCoefficient = 1500;
-    digifiz_parameters.rpmFilterK = 70;
+    digifiz_parameters.rpmCoefficient.value = 1500;
 #endif
 #ifdef DIESEL_MODE
-    digifiz_parameters.rpmCoefficient = 400;
-    digifiz_parameters.rpmFilterK = 70;
-#endif  
-    digifiz_parameters.speedCoefficient = 100;
-    digifiz_parameters.coolantThermistorB = COOLANT_THERMISTOR_B;
-    digifiz_parameters.oilThermistorB = OIL_THERMISTOR_B;
-    digifiz_parameters.airThermistorB = AIR_THERMISTOR_B;
-    digifiz_parameters.tankMinResistance = 35;
-    digifiz_parameters.tankMaxResistance = 265;
-    digifiz_parameters.tauCoolant = 2;
-    digifiz_parameters.tauOil = 2;
-    digifiz_parameters.tauAir = 2;
-    digifiz_parameters.tauTank = 2;
-    digifiz_parameters.mileage = DEFAULT_MILEAGE*3600L;
-    digifiz_parameters.daily_mileage[0] = 0;
-    digifiz_parameters.daily_mileage[1] = 0;
-    digifiz_parameters.autoBrightness = 1;
-    digifiz_parameters.brightnessLevel = 10;
-#if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
-    digifiz_parameters.tankCapacity = 70;
-#else
-    digifiz_parameters.tankCapacity = 63;//55;
+    digifiz_parameters.rpmCoefficient.value = 400;
 #endif
-    digifiz_parameters.mfaState = 0;
-    digifiz_parameters.buzzerOff = 1;
+    digifiz_parameters.rpmFilterK.value = 70;
+    digifiz_parameters.speedCoefficient.value = 100;
+    digifiz_parameters.coolantThermistorB.value = COOLANT_THERMISTOR_B;
+    digifiz_parameters.oilThermistorB.value = OIL_THERMISTOR_B;
+    digifiz_parameters.airThermistorB.value = AIR_THERMISTOR_B;
+    digifiz_parameters.tankMinResistance.value = 35;
+    digifiz_parameters.tankMaxResistance.value = 265;
+    digifiz_parameters.tauCoolant.value = 2;
+    digifiz_parameters.tauOil.value = 2;
+    digifiz_parameters.tauAir.value = 2;
+    digifiz_parameters.tauTank.value = 2;
+    digifiz_parameters.autoBrightness.value = 1;
+    digifiz_parameters.brightnessLevel.value = 10;
+#if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
+    digifiz_parameters.tankCapacity.value = 70;
+#else
+    digifiz_parameters.tankCapacity.value = 63;
+#endif
+    digifiz_parameters.mfaState.value = 0;
+    digifiz_parameters.buzzerOff.value = 1;
 #ifdef RPM_8000
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
-    digifiz_parameters.maxRPM = 7000; //Audi digifiz supports only 7000 RPM
+    digifiz_parameters.maxRPM.value = 7000;
 #else
-    digifiz_parameters.maxRPM = 8000;
+    digifiz_parameters.maxRPM.value = 8000;
 #endif
 #else
-    digifiz_parameters.maxRPM = 7000;
+    digifiz_parameters.maxRPM.value = 7000;
 #endif
-    digifiz_parameters.mfaBlock = 0; //0 or 1
-    digifiz_parameters.averageConsumption[0] = 0;
-    digifiz_parameters.averageConsumption[1] = 0;
-    digifiz_parameters.averageSpeed[0] = 0;
-    digifiz_parameters.averageSpeed[1] = 0;
-    digifiz_parameters.duration[0] = 0;
-    digifiz_parameters.duration[1] = 0;
-    digifiz_parameters.displayDot = 0;
-    digifiz_parameters.backlight_on = 1; 
-    digifiz_parameters.coolantMinResistance = 60;
-    digifiz_parameters.coolantMaxResistance = 120;
-    digifiz_parameters.medianDispFilterThreshold = 65535; // value below will pass
-    digifiz_parameters.coolantThermistorDefRes = COOLANT_R_AT_NORMAL_T;
-    digifiz_parameters.oilThermistorDefRes = OIL_R_AT_NORMAL_T;
-    digifiz_parameters.ambThermistorDefRes = AMBIENT_R_AT_NORMAL_T;
-    digifiz_parameters.uptime = 0;
-    digifiz_parameters.sign_options.enable_touch_sensor = 1;
-    digifiz_parameters.digifiz_options.packed_options = 0;
-    
-#ifdef DIESEL_MODE
-    //digifiz_parameters.maxRPM = 6000;
-#endif
+    digifiz_parameters.mfaBlock.value = 0;
+    digifiz_parameters.displayDot.value = 0;
+    digifiz_parameters.backlight_on.value = 1;
+    digifiz_parameters.coolantMinResistance.value = 60;
+    digifiz_parameters.coolantMaxResistance.value = 120;
+    digifiz_parameters.medianDispFilterThreshold.value = 65535;
+    digifiz_parameters.coolantThermistorDefRes.value = COOLANT_R_AT_NORMAL_T;
+    digifiz_parameters.oilThermistorDefRes.value = OIL_R_AT_NORMAL_T;
+    digifiz_parameters.ambThermistorDefRes.value = AMBIENT_R_AT_NORMAL_T;
+    digifiz_parameters.rpmFilterK.value = 70;
+    digifiz_parameters.speedFilterK.value = 0;
+    digifiz_parameters.signOptions_enable_touch_sensor.value = 1;
+    digifiz_parameters.option_testmode_on.value = 0;
 #ifdef FUEL_LEVEL_EXPERIMENTAL
-    digifiz_parameters.digifiz_options.option_linear_fuel = 0;
+    digifiz_parameters.option_linear_fuel.value = 0;
 #else
-    digifiz_parameters.digifiz_options.option_linear_fuel = 1;
+    digifiz_parameters.option_linear_fuel.value = 1;
 #endif
 #ifdef MANUFACTURER_MFA_SWITCH
-    digifiz_parameters.digifiz_options.mfa_manufacturer = 1;
+    digifiz_parameters.option_mfa_manufacturer.value = 1;
 #endif
-    
 #ifdef GALLONS
-    digifiz_parameters.digifiz_options.option_gallons = 1;
+    digifiz_parameters.option_gallons.value = 1;
 #endif
-
 #ifdef MILES
-    digifiz_parameters.digifiz_options.option_miles = 1;
+    digifiz_parameters.option_miles.value = 1;
 #endif
-
-#ifdef FAHRENHEIT 
-    digifiz_parameters.digifiz_options.option_fahrenheit = 1;
+#ifdef FAHRENHEIT
+    digifiz_parameters.option_fahrenheit.value = 1;
 #endif
-
-#ifdef KELVIN 
-    digifiz_parameters.digifiz_options.option_kelvin = 1;
+#ifdef KELVIN
+    digifiz_parameters.option_kelvin.value = 1;
 #endif
-    computeCRC();
 }
 
 void initEEPROM()
 {
-    external_faulty = 0;
-    load_defaults(); //from table, not from memory
-    //Serial.begin(9600);
-    //Serial.println("PHL EEPROM test");
+    load_defaults();
     #ifdef DISABLE_EEPROM
     return;
     #endif
-    Wire.begin();
 
-    if (myMem.begin() == false) //not found in I2C chain
-    {
-        //These lines of code execute on most of Digifiz Replica manufactured, 
-        //since I do not put external memory on most of them(economical reasons...) 
-        external_faulty = true; //mark external as faulty
-        //Serial.println("No memory detected. ");
-        if (checkInternalMagicBytes()) //check if we have internal memory present.
-        {
-          eeprom_load_result = EEPROM_CORRUPTED;
-          for (int j=0;j!=EEPROM_DOUBLING;j++) //try to read correct fragment "EEPROM_DOUBLING" times
-          {
-            EEPROM.get(INTERNAL_OFFSET+4+EEPROM_GAP_SIZE*j,digifiz_parameters);
-            uint8_t* digi_buf = (uint8_t*)&digifiz_parameters;
-            uint8_t crc = 0;
-            for(int i=0;i!=CRC_FRAGMENT_SIZE;i++)
-            {
-              crc^=digi_buf[i];
-            }
-            if (crc==digifiz_parameters.crc) //fragment is good, stop here. 
-            {
-              switch (j)
-              {
-                case 0:
-                  eeprom_load_result = EEPROM_OK1;
-                  break;
-                case 1:
-                  eeprom_load_result = EEPROM_OK2;
-                  break;
-                case 2:
-                  eeprom_load_result = EEPROM_OK3;
-                  break;
-                default:
-                  eeprom_load_result = EEPROM_OK_UNKNOWN;
-                  break;
-              }
-              break;
-            }  
-          }
-          if (eeprom_load_result == EEPROM_CORRUPTED)
-          {
-            load_defaults(); //from table, not from memory
-            saveParameters();
-            saveParameters();
-            saveParameters();
-          }
+    Wire.begin();
+    external_faulty = !myMem.begin();
+
+    bool loaded = false;
+    uint8_t* blob = (uint8_t*)malloc(params_blob_size);
+    if (blob != nullptr) {
+        if (read_internal_blob(blob) && load_from_blob(blob)) {
+            loaded = true;
+            eeprom_load_result = EEPROM_OK1;
+        } else if (read_external_blob(blob) && load_from_blob(blob)) {
+            loaded = true;
+            eeprom_load_result = EEPROM_OK2;
+            write_internal_blob(blob);
         }
-        else
-        {
-          eeprom_load_result = EEPROM_CORRUPTED;
-          //We have corrupted all "EEPROM_DOUBLING" slots in memory, rewrite all the data
-          //save it 3 times
-          saveParameters();
-          saveParameters();
-          saveParameters();
-        }
+        free(blob);
     }
-    else
-    {
-        eeprom_load_result = EEPROM_OK_TEST;
-        //EEPROM doubling mechanism
-        //Prefer external over internal
-        if (!checkInternalMagicBytes())
-        {
-          //This situation means it is a first boot/recovered unit
-          //Try to recover from EEPROM:
-          if (!checkMagicBytes()) //Check external memory first
-          {
-            //No magic bytes detected both in internal and external 
-            //write example digifiz parameters
-            saveParameters();
-            saveParameters();
-            saveParameters();
-          }
-          else
-          { 
-            //Magic bytes detected
-            //read to digifiz_parameters
-            //myMem.get(EXTERNAL_OFFSET+4,digifiz_parameters);
-            for (int j=0;j!=EEPROM_DOUBLING;j++)
-            {
-              myMem.get(INTERNAL_OFFSET+4+EEPROM_GAP_SIZE*j,digifiz_parameters);
-              uint8_t* digi_buf = (uint8_t*)&digifiz_parameters;
-              uint8_t crc = 0;
-              for(int i=0;i!=CRC_FRAGMENT_SIZE;i++)
-              {
-                crc^=digi_buf[i];
-              }
-              if (crc==digifiz_parameters.crc)
-                break;  
-            }
-          }
-          saveParameters();
-          saveParameters();
-          saveParameters();
-        }
-        else
-        {
-          //Internal memory works
-          if (!checkMagicBytes()) //Check external memory first
-          {
-            //Magic bytes detected in internal EEPROM only
-            //write example digifiz parameters to external EEPROM
-            for (int j=0;j!=EEPROM_DOUBLING;j++)
-            {
-              EEPROM.get(INTERNAL_OFFSET+4+EEPROM_GAP_SIZE*j,digifiz_parameters);
-              uint8_t* digi_buf = (uint8_t*)&digifiz_parameters;
-              uint8_t crc = 0;
-              for(int i=0;i!=CRC_FRAGMENT_SIZE;i++)
-              {
-                crc^=digi_buf[i];
-              }
-              if (crc==digifiz_parameters.crc)
-                break;  
-            }
-            saveParameters();
-            saveParameters();
-            saveParameters();
-          }
-          else
-          { 
-            //Magic bytes detected in both in internal and external EEPROM(the main case in first DRs manufactured)
-            //read to digifiz_parameters
-            //write to internal eeprom
-            for (int j=0;j!=EEPROM_DOUBLING;j++)
-            {
-              myMem.get(INTERNAL_OFFSET+4+EEPROM_GAP_SIZE*j,digifiz_parameters);
-              uint8_t* digi_buf = (uint8_t*)&digifiz_parameters;
-              uint8_t crc = 0;
-              for(int i=0;i!=CRC_FRAGMENT_SIZE;i++)
-              {
-                crc^=digi_buf[i];
-              }
-              if (crc==digifiz_parameters.crc)
-                break;  
-            }
-            saveParameters();
-            saveParameters();
-            saveParameters();
-          }
-        }
-   }
-   
+
+    if (!loaded) {
+        eeprom_load_result = EEPROM_CORRUPTED;
+        load_defaults();
+        saveParameters();
+    }
 }
 
+void saveParameters()
+{
+#ifdef DISABLE_EEPROM
+    return;
+#endif
+    if (memory_locked) {
+        return;
+    }
+    uint8_t* blob = xparam_table_to_blob(&params_table);
+    if (blob == nullptr) {
+        return;
+    }
+    cli();
+    write_internal_blob(blob);
+    write_external_blob(blob);
+    sei();
+    free(blob);
+}
+
+uint8_t getCurrentMemoryBlock()
+{
+    return 0;
+}
 
 void lockMemory()
 {

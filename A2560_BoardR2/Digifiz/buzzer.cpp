@@ -1,6 +1,6 @@
 #include "buzzer.h"
 
-extern digifiz_pars digifiz_parameters;
+extern digifiz_pars_t digifiz_parameters;
 uint8_t buzzerIsOn;
 
 void initBuzzer()
@@ -37,5 +37,5 @@ void buzzerOff()
 
 uint8_t getBuzzerEnabled()
 {
-    return buzzerIsOn&&(!digifiz_parameters.buzzerOff);
+    return buzzerIsOn&&(!digifiz_parameters.buzzerOff.value);
 }

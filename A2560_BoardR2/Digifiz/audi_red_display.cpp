@@ -5,7 +5,8 @@ MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, 4);
 STLED316S stled(NBR_OF_DIGIT, STB_CLK_PIN_STLED, CLK_PIN_STLED, DATA_PIN_STLED);
 STLED316S stled2(NBR_OF_DIGIT, STB_SPD_PIN_STLED, CLK_PIN_STLED, DATA_PIN_STLED);
 
-extern digifiz_pars digifiz_parameters;
+extern digifiz_pars_t digifiz_parameters;
+extern digifiz_stats_t digifiz_status;
 
 #ifdef EMULATE_RTC
 extern RTC_Millis myRTC;
@@ -179,14 +180,14 @@ void setCheckEngine(bool onoff)
 
 void displayMFAType(uint8_t mfaType)
 {    
-    switch(digifiz_parameters.mfaState)
+    switch(digifiz_parameters.mfaState.value)
     {
         case MFA_STATE_TRIP_MEAN_SPEED:
-            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
+            setMFADisplayedNumber((uint16_t)fabs(digifiz_status.averageSpeed[digifiz_parameters.mfaBlock.value]));
             setFloatDot(true);
             break; 
         case MFA_STATE_TRIP_L100KM:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
+            setMFADisplayedNumber((uint16_t)(digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]*100));
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_FUEL:
@@ -194,17 +195,17 @@ void displayMFAType(uint8_t mfaType)
             setFloatDot(false);
             break; 
         case MFA_STATE_TRIP_MPG:
-            setMFADisplayedNumber((uint16_t)(235.215f/digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]));
+            setMFADisplayedNumber((uint16_t)(235.215f/digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]));
             setFloatDot(true);
             break;  
         case MFA_STATE_TRIP_MEAN_MPH:
-            if (digifiz_parameters.digifiz_options.option_miles)
-                setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
+            if (digifiz_parameters.option_miles.value)
+                setMFADisplayedNumber((uint16_t)fabs(digifiz_status.averageSpeed[digifiz_parameters.mfaBlock.value]));
             else
-                setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock])*0.6214);
+                setMFADisplayedNumber((uint16_t)fabs(digifiz_status.averageSpeed[digifiz_parameters.mfaBlock.value])*0.6214);
             break;
         case MFA_STATE_TRIP_DISTANCE:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
+            setMFADisplayedNumber((uint16_t)(digifiz_status.daily_mileage[digifiz_parameters.mfaBlock.value]/3600));
             break;
         case MFA_STATE_TRIP_DURATION:
             setMFAClockData(sinceStart.hours(),sinceStart.minutes());
@@ -319,7 +320,7 @@ void setMFADisplayedNumber(int16_t data)
 void setFuel(uint8_t litres)
 {
     fuel_ind = litres;
-    barData_mem = (uint8_t)(((float)fuel_ind/digifiz_parameters.tankCapacity)*17);
+    barData_mem = (uint8_t)(((float)fuel_ind/digifiz_parameters.tankCapacity.value)*17);
 }
 
 void setRPMData(uint16_t data)
