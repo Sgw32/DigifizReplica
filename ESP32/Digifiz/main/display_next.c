@@ -112,6 +112,14 @@ static uint8_t maincolor_b;
 static uint8_t backcolor_r;
 static uint8_t backcolor_g;
 static uint8_t backcolor_b;
+
+#define SPEED_DIGITS_FIRST_SEGMENT 234
+#define SPEED_DIGITS_LAST_SEGMENT 269
+
+static void restore_speed_digit_colors(void);
+static void update_speed_digit_color_override(uint16_t speed_value);
+
+static bool speed_alert_color_active = false;
 int16_t redline_scheme_id = -1;
 
 // Sample script (to be written to NVS initially)
@@ -668,6 +676,8 @@ void setSpeedometerData(uint16_t data) {
             display.speed_digit_s3 = number_spd[(data / 1) % 10];
         }
     }
+
+    update_speed_digit_color_override(data);
 }
 
 // Display current gear in format "-G-" where G is gear number or '-' for neutral
@@ -695,6 +705,10 @@ void setSpeedometerGear(int8_t gear) {
 
     display.speed_digit_3 = DIGIT_NUMBER_MINUS;
     display.speed_digit_s3 = DIGIT_NUMBER_MINUS;
+
+    if (speed_alert_color_active) {
+        restore_speed_digit_colors();
+    }
 }
 
 // Set the coolant temperature data
@@ -1110,9 +1124,55 @@ static void getColorBySegmentNumber(ColoringScheme* c_ptr, uint16_t segment, uin
 
 uint16_t led_num = 0;
 
-static uint8_t r_colors[DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS];
-static uint8_t g_colors[DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS];
-static uint8_t b_colors[DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS];
+static uint8_t r_colors_default[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
+static uint8_t g_colors_default[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
+static uint8_t b_colors_default[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
+
+static uint8_t r_colors_active[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
+static uint8_t g_colors_active[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
+static uint8_t b_colors_active[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
+
+static void restore_speed_digit_colors(void)
+{
+    for (uint16_t led = SPEED_DIGITS_FIRST_SEGMENT; led <= SPEED_DIGITS_LAST_SEGMENT; ++led) {
+        r_colors_active[led] = r_colors_default[led];
+        g_colors_active[led] = g_colors_default[led];
+        b_colors_active[led] = b_colors_default[led];
+    }
+    speed_alert_color_active = false;
+}
+
+static void apply_speed_alert_colors(uint8_t r, uint8_t g, uint8_t b)
+{
+    for (uint16_t led = SPEED_DIGITS_FIRST_SEGMENT; led <= SPEED_DIGITS_LAST_SEGMENT; ++led) {
+        r_colors_active[led] = r;
+        g_colors_active[led] = g;
+        b_colors_active[led] = b;
+    }
+    speed_alert_color_active = true;
+}
+
+static void update_speed_digit_color_override(uint16_t speed_value)
+{
+    if (!digifiz_parameters.speedColorChangeEnable.value) {
+        if (speed_alert_color_active) {
+            restore_speed_digit_colors();
+        }
+        return;
+    }
+
+    uint16_t threshold = digifiz_parameters.speedColorChangeThreshold.value;
+    bool should_activate = speed_value >= threshold;
+
+    if (should_activate) {
+        apply_speed_alert_colors(
+            digifiz_parameters.speedAlertColor_r.value,
+            digifiz_parameters.speedAlertColor_g.value,
+            digifiz_parameters.speedAlertColor_b.value);
+    } else if (speed_alert_color_active) {
+        restore_speed_digit_colors();
+    }
+}
 
 void compileColorScheme(void)
 {
@@ -1164,9 +1224,13 @@ void compileColorScheme(void)
                 getColorBySegmentNumber(&digifizCustom, led_num,&r,&g,&b);
             else
                 getColorBySegmentNumber(&digifizStandard, led_num,&r,&g,&b);
-            r_colors[led_num] =  (uint32_t)r;
-            g_colors[led_num] =  (uint32_t)g;
-            b_colors[led_num] =  (uint32_t)b;
+            r_colors_default[led_num] = r;
+            g_colors_default[led_num] = g;
+            b_colors_default[led_num] = b;
+
+            r_colors_active[led_num] = r;
+            g_colors_active[led_num] = g;
+            b_colors_active[led_num] = b;
             led_num+=1;
             if (led_num>(DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1))
             {
@@ -1175,6 +1239,7 @@ void compileColorScheme(void)
             }
         }
     }
+    speed_alert_color_active = false;
 }
 
 // Fire up the Digifiz system
@@ -1187,9 +1252,9 @@ void fireDigifiz() {
         for (uint16_t j = 0; j != 8; j++)
         {
             uint8_t bit = (ptr[i] >> j) & 1;
-            uint8_t r = r_colors[led_num];
-            uint8_t g = g_colors[led_num];
-            uint8_t b = b_colors[led_num];
+            uint8_t r = r_colors_active[led_num];
+            uint8_t g = g_colors_active[led_num];
+            uint8_t b = b_colors_active[led_num];
 
             if (get_update_in_progress())
                 bit=0;
