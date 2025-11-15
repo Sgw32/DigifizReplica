@@ -70,18 +70,75 @@
 		background-color: #ccc;
 	}
 
-	.content {
-		display: flex;
-		flex: 1;
-		flex-direction: column;
-		overflow: auto;
-		height: 100%;
-	}
-	.tabcontent {
-		display: none;
-		flex: 1;
-		padding: 6px 12px;
-		border-top: none;
+        .content {
+                display: flex;
+                flex: 1;
+                flex-direction: column;
+                overflow: auto;
+                height: 100%;
+        }
+        .preset-controls {
+                margin-top: 10px;
+                padding: 10px;
+                border: 1px dashed #888;
+                border-radius: 6px;
+                text-align: left;
+                background-color: rgba(255, 255, 255, 0.8);
+        }
+        .preset-controls label {
+                font-weight: bold;
+                margin-right: 6px;
+        }
+        .preset-select-wrapper {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 8px;
+        }
+        .preset-buttons {
+                margin-top: 8px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+        }
+        .preset-buttons button {
+                padding: 6px 16px;
+        }
+        .coming-soon-tag {
+                display: inline-block;
+                padding: 2px 6px;
+                font-size: 0.75rem;
+                background-color: #ffd54f;
+                color: #333;
+                border-radius: 4px;
+                text-transform: uppercase;
+                letter-spacing: 0.03em;
+        }
+        .preset-preview {
+                margin-top: 8px;
+                padding: 8px;
+                border-radius: 4px;
+                border: 1px solid #ccc;
+                background-color: #f7f7f7;
+                font-size: 0.85rem;
+                max-height: 220px;
+                overflow: auto;
+                white-space: pre-wrap;
+        }
+        .legal-notice {
+                margin: 16px 12px;
+                padding: 12px 16px;
+                background-color: rgba(0, 0, 0, 0.05);
+                border-radius: 8px;
+                font-size: 0.85rem;
+                line-height: 1.5;
+                color: #444;
+        }
+        .tabcontent {
+                display: none;
+                flex: 1;
+                padding: 6px 12px;
+                border-top: none;
 		flex-direction: column;
 		overflow: auto;
 	}
@@ -375,18 +432,34 @@
 		color: white;
 		background-color: grey;
 	  }
-	  .leaflet-center {
-		color: white;
-		background-color: grey;
-	  }
-	  .leaflet-bar a {
-		background-color: grey !important;
-	  }
-	  .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-		color: white !important;
-		background: grey !important;
-	  }
-	}
+          .leaflet-center {
+                color: white;
+                background-color: grey;
+          }
+          .leaflet-bar a {
+                background-color: grey !important;
+          }
+          .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+                color: white !important;
+                background: grey !important;
+          }
+          .preset-controls {
+                background-color: rgba(51, 51, 51, 0.7);
+                border-color: #aaa;
+          }
+          .preset-preview {
+                background-color: rgba(51, 51, 51, 0.7);
+                border-color: #aaa;
+                color: #fff;
+          }
+          .coming-soon-tag {
+                color: #222;
+          }
+          .legal-notice {
+                background-color: rgba(255, 255, 255, 0.08);
+                color: #ddd;
+          }
+        }
 
 		
 	
@@ -528,18 +601,42 @@
                         <input type="file" id="importParamsFile" style="display: none">
                         <p>Page works in experimental mode. Ask manufacturer before interacting!</p>
                         <div id="table-container"></div>
+                        <div class="preset-controls">
+                                <div class="preset-select-wrapper">
+                                        <label for="settingsPresetSelect">Car presets</label>
+                                        <span class="coming-soon-tag">Coming soon</span>
+                                        <select id="settingsPresetSelect"></select>
+                                </div>
+                                <div class="preset-buttons">
+                                        <button id="previewSettingsPreset">Preview preset data</button>
+                                        <button id="applySettingsPreset">Load example into table</button>
+                                </div>
+                                <pre id="settingsPresetPreview" class="preset-preview" aria-live="polite">Select a preset to preview example settings data.</pre>
+                        </div>
                 </div>
         </div>
 </div>
 
 <div id="Colors" class="tabcontent">
-	<div class="tci">
-		<div class="hdr">Color Scheme Editor</div>
-		<div class="cl1">
-			<table id="colorSchemeTable" style="width: 100%;">
-				<thead>
-					<tr>
-						<th>End Segment</th>
+        <div class="tci">
+                <div class="hdr">Color Scheme Editor</div>
+                <div class="preset-controls">
+                        <div class="preset-select-wrapper">
+                                <label for="colorsPresetSelect">Car presets</label>
+                                <span class="coming-soon-tag">Coming soon</span>
+                                <select id="colorsPresetSelect"></select>
+                        </div>
+                        <div class="preset-buttons">
+                                <button id="previewColorsPreset">Preview preset colors</button>
+                                <button id="applyColorsPreset">Load example into editor</button>
+                        </div>
+                        <pre id="colorsPresetPreview" class="preset-preview" aria-live="polite">Select a preset to preview example color scheme data.</pre>
+                </div>
+                <div class="cl1">
+                        <table id="colorSchemeTable" style="width: 100%;">
+                                <thead>
+                                        <tr>
+                                                <th>End Segment</th>
 						<th>Type</th>
 						<th>Base Color</th>
 						<th>Color</th>
@@ -583,6 +680,10 @@
 </div>
 
 </div>
+
+<footer class="legal-notice">
+        Volkswagen&reg;, Golf&reg;, Jetta&reg;, Scirocco&reg;, and Vento&reg; are trademarks of Volkswagen AG. All other product names, logos, and brands are property of their respective owners. Preset examples are provided for reference only and do not represent official calibration data. Always verify compatibility with your vehicle before applying any configuration.
+</footer>
 
 <script>
 let currentParams = [];
@@ -1411,6 +1512,290 @@ document.getElementById('importFile').addEventListener('change', function(e) {
 });
 
 updateSetColorSchemeButton();
+</script>
+
+<script>
+const carModelPresets = [
+        { key: 'golf_jetta_1', label: 'Volkswagen Golf/Jetta 1', baseSpeed: 180, baseRpm: 5200, palette: ['#004080', '#00897b', '#ff8f00'] },
+        { key: 'golf_jetta_scirocco_2', label: 'Volkswagen Golf/Jetta/Scirocco 2', baseSpeed: 200, baseRpm: 5600, palette: ['#0d47a1', '#43a047', '#f4511e'] },
+        { key: 'golf_jetta_vento_3', label: 'Volkswagen Golf/Jetta/Vento 3', baseSpeed: 220, baseRpm: 6000, palette: ['#1a237e', '#2e7d32', '#c62828'] }
+];
+
+const carRegions = [
+        { key: 'uk', label: 'UK', unit: 'MPH', speedAdjust: -10, tint: { r: 5, g: 20, b: 15 } },
+        { key: 'usa', label: 'USA', unit: 'MPH', speedAdjust: 0, tint: { r: 20, g: 10, b: 0 } }
+];
+
+const carFuels = [
+        { key: 'diesel', label: 'Diesel', rpmAdjust: -600, speedAdjust: -5, tint: { r: -10, g: 25, b: 0 } },
+        { key: 'gasoline', label: 'Gasoline', rpmAdjust: 400, speedAdjust: 5, tint: { r: 30, g: -5, b: 15 } }
+];
+
+function clampColor(value) {
+        return Math.max(0, Math.min(255, Math.round(value)));
+}
+
+function hexToRgb(hex) {
+        const value = hex.replace('#', '');
+        const bigint = parseInt(value, 16);
+        return {
+                r: (bigint >> 16) & 255,
+                g: (bigint >> 8) & 255,
+                b: bigint & 255
+        };
+}
+
+function addTint(rgb, tint) {
+        return {
+                r: clampColor(rgb.r + ((tint && tint.r) || 0)),
+                g: clampColor(rgb.g + ((tint && tint.g) || 0)),
+                b: clampColor(rgb.b + ((tint && tint.b) || 0))
+        };
+}
+
+function buildCarPreset(model, region, fuel) {
+        const key = `${model.key}_${region.key}_${fuel.key}`;
+        const label = `${model.label} — ${region.label} — ${fuel.label}`;
+
+        const speedLimit = model.baseSpeed + region.speedAdjust + fuel.speedAdjust;
+        const rpmLimit = model.baseRpm + region.speedAdjust * 5 + fuel.rpmAdjust;
+
+        const params = [
+                {
+                        name: 'vehicle_profile',
+                        value: label,
+                        info: 'Friendly name for the currently selected preset',
+                        type: 'string',
+                        min: '',
+                        max: ''
+                },
+                {
+                        name: 'speedometer_max',
+                        value: speedLimit,
+                        info: 'Speedometer maximum scale',
+                        type: 'int',
+                        min: 0,
+                        max: 320
+                },
+                {
+                        name: 'tachometer_redline',
+                        value: rpmLimit,
+                        info: 'Engine redline (RPM)',
+                        type: 'int',
+                        min: 0,
+                        max: 8000
+                },
+                {
+                        name: 'fuel_type',
+                        value: fuel.label.toLowerCase(),
+                        info: 'Fuel type specific calibration',
+                        type: 'string',
+                        min: '',
+                        max: ''
+                },
+                {
+                        name: 'regional_units',
+                        value: region.unit,
+                        info: 'Primary display units for speed',
+                        type: 'string',
+                        min: '',
+                        max: ''
+                }
+        ];
+
+        const scheme = model.palette.map((hex, index) => {
+                const rgb = hexToRgb(hex);
+                const tinted = addTint(addTint(rgb, region.tint), fuel.tint);
+                return {
+                        end_segment: (index + 1) * 16,
+                        type: 20 + index,
+                        basecolor_enabled: index % 3,
+                        r: tinted.r,
+                        g: tinted.g,
+                        b: tinted.b,
+                        i: index
+                };
+        });
+
+        return {
+                key,
+                label,
+                settings: { params },
+                colors: { scheme }
+        };
+}
+
+const generatedPresets = [];
+carModelPresets.forEach(model => {
+        carRegions.forEach(region => {
+                carFuels.forEach(fuel => {
+                        generatedPresets.push(buildCarPreset(model, region, fuel));
+                });
+        });
+});
+
+const presetRegistry = generatedPresets.reduce((acc, preset) => {
+        acc[preset.key] = preset;
+        return acc;
+}, {});
+
+function populatePresetSelect(selectId) {
+        const select = document.getElementById(selectId);
+        if (!select) {
+                return;
+        }
+        select.innerHTML = '';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select a vehicle preset';
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        select.appendChild(placeholder);
+
+        generatedPresets.forEach(preset => {
+                const option = document.createElement('option');
+                option.value = preset.key;
+                option.textContent = preset.label;
+                select.appendChild(option);
+        });
+}
+
+populatePresetSelect('settingsPresetSelect');
+populatePresetSelect('colorsPresetSelect');
+
+function updatePresetPreview(type, key) {
+        const previewId = type === 'settings' ? 'settingsPresetPreview' : 'colorsPresetPreview';
+        const previewElement = document.getElementById(previewId);
+        if (!previewElement) {
+                return;
+        }
+        const preset = presetRegistry[key];
+        if (!preset) {
+                previewElement.textContent = type === 'settings'
+                        ? 'Select a preset to preview example settings data.'
+                        : 'Select a preset to preview example color scheme data.';
+                return;
+        }
+        const payload = type === 'settings' ? preset.settings : preset.colors;
+        previewElement.textContent = JSON.stringify(payload, null, 2);
+}
+
+function syncPresetSelection(source, key) {
+        if (!key) {
+                return;
+        }
+        if (source === 'settings') {
+                const colorsSelect = document.getElementById('colorsPresetSelect');
+                if (colorsSelect && colorsSelect.value !== key) {
+                        colorsSelect.value = key;
+                        updatePresetPreview('colors', key);
+                }
+        } else if (source === 'colors') {
+                const settingsSelect = document.getElementById('settingsPresetSelect');
+                if (settingsSelect && settingsSelect.value !== key) {
+                        settingsSelect.value = key;
+                        updatePresetPreview('settings', key);
+                }
+        }
+}
+
+const settingsPresetSelect = document.getElementById('settingsPresetSelect');
+if (settingsPresetSelect) {
+        settingsPresetSelect.addEventListener('change', function() {
+                updatePresetPreview('settings', this.value);
+                syncPresetSelection('settings', this.value);
+        });
+}
+
+const colorsPresetSelect = document.getElementById('colorsPresetSelect');
+if (colorsPresetSelect) {
+        colorsPresetSelect.addEventListener('change', function() {
+                updatePresetPreview('colors', this.value);
+                syncPresetSelection('colors', this.value);
+        });
+}
+
+const previewSettingsPresetButton = document.getElementById('previewSettingsPreset');
+if (previewSettingsPresetButton) {
+        previewSettingsPresetButton.addEventListener('click', function() {
+                const key = settingsPresetSelect ? settingsPresetSelect.value : '';
+                if (!key) {
+                        alert('Select a preset to preview.');
+                        return;
+                }
+                updatePresetPreview('settings', key);
+                alert('Example preset data updated below. Future releases will apply presets automatically.');
+        });
+}
+
+const previewColorsPresetButton = document.getElementById('previewColorsPreset');
+if (previewColorsPresetButton) {
+        previewColorsPresetButton.addEventListener('click', function() {
+                const key = colorsPresetSelect ? colorsPresetSelect.value : '';
+                if (!key) {
+                        alert('Select a preset to preview.');
+                        return;
+                }
+                updatePresetPreview('colors', key);
+                alert('Example color scheme data updated below.');
+        });
+}
+
+const applySettingsPresetButton = document.getElementById('applySettingsPreset');
+if (applySettingsPresetButton) {
+        applySettingsPresetButton.addEventListener('click', function() {
+                const key = settingsPresetSelect ? settingsPresetSelect.value : '';
+                if (!key) {
+                        alert('Select a preset before loading example data.');
+                        return;
+                }
+                if (!currentParams.length) {
+                        alert('Please load parameters before applying a preset.');
+                        return;
+                }
+                const preset = presetRegistry[key];
+                if (!preset || !preset.settings || !preset.settings.params) {
+                        alert('Preset data is not available.');
+                        return;
+                }
+                const { updatedCount } = populateImportedParameterInputs(preset.settings.params);
+                if (updatedCount > 0) {
+                        alert(`Loaded example preset values for ${updatedCount} parameter(s). Remember to review before applying.`);
+                } else {
+                        alert('No matching parameters were updated. The preset data is provided for preview purposes.');
+                }
+        });
+}
+
+const applyColorsPresetButton = document.getElementById('applyColorsPreset');
+if (applyColorsPresetButton) {
+        applyColorsPresetButton.addEventListener('click', function() {
+                const key = colorsPresetSelect ? colorsPresetSelect.value : '';
+                if (!key) {
+                        alert('Select a preset before loading example data.');
+                        return;
+                }
+                const preset = presetRegistry[key];
+                if (!preset || !preset.colors || !preset.colors.scheme) {
+                        alert('Preset color data is not available.');
+                        return;
+                }
+                const tbody = document.querySelector('#colorSchemeTable tbody');
+                if (!tbody) {
+                        alert('Color scheme table is unavailable.');
+                        return;
+                }
+                tbody.innerHTML = '';
+                preset.colors.scheme.forEach(segment => {
+                        addColorSegmentRow(segment);
+                });
+                updateSetColorSchemeButton();
+                alert('Example color preset loaded into the editor. Save changes to apply them to the device.');
+        });
+}
+
+updatePresetPreview('settings', settingsPresetSelect ? settingsPresetSelect.value : '');
+updatePresetPreview('colors', colorsPresetSelect ? colorsPresetSelect.value : '');
 </script>
 
 </body>
