@@ -58,6 +58,13 @@ uint8_t gear_blink_toggles = 0;
 uint32_t gear_blink_last_millis = 0;
 int gear_blink_value = 0;
 bool gear_blink_show = false;
+uint8_t gear_refuel_toggles = 0;
+uint32_t gear_refuel_last_millis = 0;
+int gear_refuel_value = 0;
+bool gear_refuel_show = false;
+uint32_t refuel_blink_last_millis = 0;
+bool refuel_blink_visible = true;
+bool refuel_low_active = false;
 
 
 //RPM-related data
@@ -281,14 +288,26 @@ void displayUpdate(void *pvParameters) {
         }
         gear_estimator_set_input(rpm, spd_m);
 
+        bool showGearInRefuel = digifiz_parameters.option_gear_indicator_in_refuel.value;
         int current_gear = gear_estimator_get_current_gear();
         if (digifiz_parameters.option_gear_change_indicator.value && current_gear != last_displayed_gear) {
             last_displayed_gear = current_gear;
-            gear_blink_value = current_gear;
-            gear_blink_toggles = 5; // show gear three times
-            gear_blink_last_millis = millis();
-            gear_blink_show = true;
-            setSpeedometerGear(gear_blink_value);
+            if (showGearInRefuel) {
+                gear_refuel_value = current_gear;
+                gear_refuel_toggles = 5; // show gear three times
+                gear_refuel_last_millis = millis();
+                gear_refuel_show = false;
+                gear_blink_toggles = 0;
+                if (!refuel_low_active) {
+                    setRefuelGear(gear_refuel_value);
+                }
+            } else {
+                gear_blink_value = current_gear;
+                gear_blink_toggles = 5; // show gear three times
+                gear_blink_last_millis = millis();
+                gear_blink_show = true;
+                setSpeedometerGear(gear_blink_value);
+            }
         }
 
         //For test fuel intake
@@ -314,7 +333,7 @@ void displayUpdate(void *pvParameters) {
             displaySpeedCnt = 0;
         }
 
-        if (gear_blink_toggles>0) {
+        if (!showGearInRefuel && gear_blink_toggles>0) {
             uint32_t now = millis();
             if (now - gear_blink_last_millis >= 250) {
                 gear_blink_last_millis = now;
@@ -330,23 +349,93 @@ void displayUpdate(void *pvParameters) {
 
         
 
+        bool refuel_indicator_managed = false;
+        bool wasRefuelLow = refuel_low_active;
+        bool lowFuel = false;
+
         if (digifiz_parameters.option_gallons.value)
         {
             fuel = getGallonsInTank();
-            if (fuel<2)
-            setRefuelSign(true);
-            else
-            setRefuelSign(false);
+            lowFuel = (fuel < 2);
         }
         else
         {
             fuel = getLitresInTank();
-            if (fuel<10)
-            setRefuelSign(true);
-            else
-            setRefuelSign(false);  
+            lowFuel = (fuel < 10);
         }
- 
+
+        if (lowFuel)
+        {
+            if (!wasRefuelLow)
+            {
+                refuel_blink_last_millis = millis();
+                refuel_blink_visible = true;
+            }
+
+            refuel_low_active = true;
+            gear_refuel_toggles = 0;
+            refuel_indicator_managed = true;
+
+            if (digifiz_parameters.option_refuel_blink.value)
+            {
+                uint32_t now = millis();
+                if (now - refuel_blink_last_millis >= 500)
+                {
+                    refuel_blink_last_millis = now;
+                    refuel_blink_visible = !refuel_blink_visible;
+                }
+
+                if (refuel_blink_visible)
+                {
+                    setRefuelSign(true);
+                }
+                else
+                {
+                    setRefuelSign(false);
+                }
+            }
+            else
+            {
+                setRefuelSign(true);
+                refuel_blink_visible = true;
+            }
+        }
+        else
+        {
+            if (wasRefuelLow)
+            {
+                setRefuelSign(false);
+                refuel_blink_visible = true;
+            }
+
+            refuel_low_active = false;
+
+            if (showGearInRefuel && gear_refuel_toggles > 0)
+            {
+                refuel_indicator_managed = true;
+                uint32_t now = millis();
+                if (now - gear_refuel_last_millis >= 250)
+                {
+                    gear_refuel_last_millis = now;
+                    if (gear_refuel_show)
+                    {
+                        setRefuelSign(false);
+                    }
+                    else
+                    {
+                        setRefuelGear(gear_refuel_value);
+                    }
+                    gear_refuel_show = !gear_refuel_show;
+                    gear_refuel_toggles--;
+                }
+            }
+        }
+
+        if (!refuel_indicator_managed)
+        {
+            setRefuelSign(false);
+        }
+
         setFuel(fuel);
         setCoolantData(getDisplayedCoolantTemp());
         processIndicators();

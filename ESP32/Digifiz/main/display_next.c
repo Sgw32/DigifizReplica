@@ -363,6 +363,40 @@ ColoringScheme digifizStandard = {
     }
 };
 
+#define REFUEL_SEG_TOP          (1 << 0)
+#define REFUEL_SEG_TOP_LEFT     (1 << 1)
+#define REFUEL_SEG_TOP_RIGHT    (1 << 2)
+#define REFUEL_SEG_BOTTOM_LEFT  (1 << 3)
+#define REFUEL_SEG_BOTTOM_RIGHT (1 << 4)
+#define REFUEL_SEG_BOTTOM       (1 << 5)
+#define REFUEL_PATTERN_R        0b111111
+
+static const uint8_t refuel_digit_patterns[10] = {
+    [0] = REFUEL_SEG_TOP | REFUEL_SEG_TOP_LEFT | REFUEL_SEG_TOP_RIGHT |
+          REFUEL_SEG_BOTTOM_LEFT | REFUEL_SEG_BOTTOM_RIGHT | REFUEL_SEG_BOTTOM,
+    [1] = REFUEL_SEG_TOP_RIGHT | REFUEL_SEG_BOTTOM_RIGHT,
+    [2] = REFUEL_SEG_TOP | REFUEL_SEG_TOP_RIGHT | REFUEL_SEG_BOTTOM |
+          REFUEL_SEG_BOTTOM_LEFT,
+    [3] = REFUEL_SEG_TOP | REFUEL_SEG_TOP_RIGHT | REFUEL_SEG_BOTTOM |
+          REFUEL_SEG_BOTTOM_RIGHT,
+    [4] = REFUEL_SEG_TOP_LEFT | REFUEL_SEG_TOP_RIGHT |
+          REFUEL_SEG_BOTTOM_RIGHT,
+    [5] = REFUEL_SEG_TOP | REFUEL_SEG_TOP_LEFT | REFUEL_SEG_BOTTOM_RIGHT |
+          REFUEL_SEG_BOTTOM,
+    [6] = REFUEL_SEG_TOP | REFUEL_SEG_TOP_LEFT | REFUEL_SEG_BOTTOM_LEFT |
+          REFUEL_SEG_BOTTOM_RIGHT | REFUEL_SEG_BOTTOM,
+    [7] = REFUEL_SEG_TOP | REFUEL_SEG_TOP_RIGHT,
+    [8] = REFUEL_SEG_TOP | REFUEL_SEG_TOP_LEFT | REFUEL_SEG_TOP_RIGHT |
+          REFUEL_SEG_BOTTOM_LEFT | REFUEL_SEG_BOTTOM_RIGHT | REFUEL_SEG_BOTTOM,
+    [9] = REFUEL_SEG_TOP | REFUEL_SEG_TOP_LEFT | REFUEL_SEG_TOP_RIGHT |
+          REFUEL_SEG_BOTTOM_RIGHT | REFUEL_SEG_BOTTOM,
+};
+
+static void set_refuel_pattern(uint8_t pattern)
+{
+    display.fuel_low_ind = pattern & 0x3F;
+}
+
 static void configure_led(void)
 {
     ESP_LOGI(LOG_TAG, "Digifiz WS2812 LED init.");
@@ -984,7 +1018,15 @@ void resetBrightness()
 
 // Set the refuel sign status
 void setRefuelSign(bool onoff) {
-    display.fuel_low_ind = onoff ? 0b111111 : 0;
+    set_refuel_pattern(onoff ? REFUEL_PATTERN_R : 0);
+}
+
+void setRefuelGear(int8_t gear) {
+    if (gear > 0 && gear < 10) {
+        set_refuel_pattern(refuel_digit_patterns[gear]);
+    } else {
+        set_refuel_pattern(0);
+    }
 }
 
 // Set the check engine sign status
