@@ -55,6 +55,8 @@ typedef enum {
     PARAMETER_SET_RPM_OPTIONS,         // 40
     PARAMETER_SET_TEMP_OPTIONS,         // 41
     PARAMETER_SET_SIGNAL_OPTIONS,         // 42
+    PARAMETER_MAX_RPM_THRESHOLD,        // 43
+    PARAMETER_MAX_SPEED_THRESHOLD,      // 44
     // Additional parameters and functions
     PARAMETER_UPTIME = 123,
     PARAMETER_READ_ADDITION = 128,

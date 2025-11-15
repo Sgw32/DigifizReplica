@@ -411,6 +411,18 @@ void processData(int parameter,long value)
         #endif
         digifiz_parameters.sign_options.packed_options = value;
         break;
+      case PARAMETER_MAX_RPM_THRESHOLD:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_MAX_RPM_THRESHOLD");
+        #endif
+        digifiz_parameters.rpmMaxThreshold = value;
+        break;
+      case PARAMETER_MAX_SPEED_THRESHOLD:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_MAX_SPEED_THRESHOLD");
+        #endif
+        digifiz_parameters.speedMaxThreshold = value;
+        break;
       case PARAMETER_UPTIME:
         #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_UPTIME");
@@ -928,6 +940,24 @@ void processData(int parameter,long value)
         UIODserial.println(digifiz_parameters.sign_options.packed_options);
         #endif
         break;
+      case PARAMETER_MAX_RPM_THRESHOLD:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_MAX_RPM_THRESHOLD");
+        BTserial.println(digifiz_parameters.rpmMaxThreshold);
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.rpmMaxThreshold);
+        #endif
+        break;
+      case PARAMETER_MAX_SPEED_THRESHOLD:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_MAX_SPEED_THRESHOLD");
+        BTserial.println(digifiz_parameters.speedMaxThreshold);
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.speedMaxThreshold);
+        #endif
+        break;
       case PARAMETER_UPTIME:
         #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_UPTIME");
@@ -1003,9 +1033,13 @@ void printHelp()
     BTserial.println("Gallons");
   else
     BTserial.println("Liters");
-  
+
   BTserial.print(digifiz_parameters.maxRPM);
   BTserial.println(" RPM");
+  BTserial.print("RPM threshold: ");
+  BTserial.println(digifiz_parameters.rpmMaxThreshold);
+  BTserial.print("Speed threshold: ");
+  BTserial.println(digifiz_parameters.speedMaxThreshold);
   BTserial.println("BUILD_VERSION");
   #endif
 }

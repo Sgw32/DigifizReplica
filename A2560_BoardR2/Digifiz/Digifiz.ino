@@ -188,31 +188,49 @@ ISR(TIMER4_COMPA_vect)
   }
   else
   {
-    spd_m = readLastSpeed();
-    if (spd_m>0)
+    uint32_t speedPeriod = readLastSpeed();
+    float computedSpeed = 0.0f;
+    bool speedValid = false;
+    if (speedPeriod>0)
     {
-      spd_m = 1000000/spd_m ; //Hz
-      spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
-      //#ifdef MILES
+      computedSpeed = (1000000.0f/speedPeriod) * (digifiz_parameters.speedCoefficient/100.0f);
       if (digifiz_parameters.digifiz_options.option_miles)
-        spd_m *= 0.6214;
-      //#endif
-      spd_m /= 100;
-    }
-    spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
-    rpm = readLastRPM(); 
-    if (rpm>0)
-    {
-      if((getRPMDispertion()<digifiz_parameters.medianDispFilterThreshold)) //30 or LESS!!!
+        computedSpeed *= 0.6214f;
+      if ((digifiz_parameters.speedMaxThreshold == 0) || (computedSpeed <= digifiz_parameters.speedMaxThreshold))
       {
-      rpm = 1000000/rpm;
-      rpm *= digifiz_parameters.rpmCoefficient/100; //4 cylinder motor, 60 sec in min
-      averageRPM += (rpm-averageRPM)*digifiz_parameters.rpmFilterK/140; //default = 0.2
+        speedValid = true;
       }
+    }
+    if (speedValid)
+    {
+      spd_m = (uint32_t)computedSpeed;
+      spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5f;
     }
     else
     {
+      spd_m = 0;
+      spd_m_speedometer += (-spd_m_speedometer)*0.5f;
+    }
+
+    uint32_t rpmPeriod = readLastRPM();
+    bool rpmValid = false;
+    if (rpmPeriod>0)
+    {
+      if((getRPMDispertion()<digifiz_parameters.medianDispFilterThreshold)) //30 or LESS!!!
+      {
+        float rpmValue = (1000000.0f/rpmPeriod) * (digifiz_parameters.rpmCoefficient/100.0f); //4 cylinder motor, 60 sec in min
+        if ((digifiz_parameters.rpmMaxThreshold == 0) || (rpmValue <= digifiz_parameters.rpmMaxThreshold))
+        {
+          averageRPM += (rpmValue-averageRPM)*digifiz_parameters.rpmFilterK/140; //default = 0.2
+          rpm = (uint32_t)rpmValue;
+          rpmValid = true;
+        }
+      }
+    }
+    if (!rpmValid)
+    {
       averageRPM += (0-averageRPM)*0.5;
+      rpm = 0;
     }
 
     if (digifiz_parameters.digifiz_options.option_gallons)
