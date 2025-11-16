@@ -55,6 +55,10 @@ typedef enum {
     PARAMETER_PULLUP_RESISTANCE_COOLANT,    // 43
     PARAMETER_PULLUP_RESISTANCE_OIL,        // 44
     PARAMETER_PULLUP_RESISTANCE_AMB,        // 45
+    PARAMETER_EFFECT_TYPE,          // 46
+    PARAMETER_EFFECT_HUE,           // 47
+    PARAMETER_EFFECT_SATURATION,    // 48
+    PARAMETER_EFFECT_VALUE,         // 49
     // Additional parameters and functions
     PARAMETER_UPTIME = 123,
     PARAMETER_READ_ADDITION = 128,

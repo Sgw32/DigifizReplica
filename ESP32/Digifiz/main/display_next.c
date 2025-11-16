@@ -5,6 +5,7 @@
 #include <cJSON.h>
 //If updating, do not display anything
 #include "digifiz_ws_server.h"
+#include "led_effects.h"
 
 #define TAG "display_next"
 #define SCRIPT_KEY "display_next_script"
@@ -18,6 +19,7 @@ uint8_t backlightLevel = 30;
 DigifizNextDisplay display;
 static led_strip_handle_t led_strip;
 float brightnessFiltered = 6.0f;
+static led_effect_state_t effect_state;
 
 static uint8_t maincolor_r;
 static uint8_t maincolor_g;
@@ -352,6 +354,11 @@ void initDisplay() {
     //Compile colors from mJS backend
     //run_mjs_script(default_mjs_script);
     compileColorScheme();
+    effect_state.effect = digifiz_parameters.ledEffect_type.value;
+    effect_state.hue = digifiz_parameters.ledEffect_hue.value;
+    effect_state.saturation = digifiz_parameters.ledEffect_saturation.value;
+    effect_state.value = digifiz_parameters.ledEffect_value.value;
+    led_effect_init(&effect_state);
     ESP_LOGI(LOG_TAG, "initDisplay ended");
 }
 
@@ -1068,18 +1075,17 @@ void fireDigifiz() {
         for (uint16_t j = 0; j != 8; j++)
         {
             uint8_t bit = (ptr[i] >> j) & 1;
-            uint8_t r = r_colors[led_num];
-            uint8_t g = g_colors[led_num];
-            uint8_t b = b_colors[led_num];
-
+            led_rgb_t col = led_effect_compute(&effect_state, led_num);
+            
             if (get_update_in_progress())
                 bit=0;
             //led_strip_set_pixel(led_strip, led_num, 10,10,10);
             if (bit)
             {
-                led_strip_set_pixel(led_strip, led_num, ((uint32_t)r*((uint32_t)backlightLevel))/100,
-                    ((uint32_t)g*((uint32_t)backlightLevel))/100,
-                    ((uint32_t)b*((uint32_t)backlightLevel))/100);
+                led_strip_set_pixel(led_strip, led_num,
+                    ((uint32_t)col.r*((uint32_t)backlightLevel))/100,
+                    ((uint32_t)col.g*((uint32_t)backlightLevel))/100,
+                    ((uint32_t)col.b*((uint32_t)backlightLevel))/100);
             }
             else
             {
@@ -1094,4 +1100,5 @@ void fireDigifiz() {
         }
     }
     led_strip_refresh(led_strip);
+    led_effect_step(&effect_state, 1.0f);
 }
