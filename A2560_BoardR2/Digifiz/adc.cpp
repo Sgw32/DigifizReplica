@@ -1,5 +1,6 @@
 #include "adc.h"
 #include "setup.h"
+#include <math.h> // for isnan/isfinite
 
 float R1_Coolant = COOLANT_R_AT_NORMAL_T; //for Coolant
 
@@ -48,6 +49,49 @@ extern float spd_m_speedometer;
 #define TAU 0.01
 
 uint32_t consumptionCounter;
+
+// New safety/startup helpers and sample counters
+#define ADC_MIN_VALID 2
+#define ADC_MAX_VALID 1021
+#define ADC_DENOM_EPS 1e-3f
+#define STARTUP_SAMPLES 40
+
+static uint16_t samples_coolant = 0;
+static uint16_t samples_oil = 0;
+static uint16_t samples_air = 0;
+static uint16_t samples_gas = 0;
+static uint16_t samples_light = 0;
+
+// Track consecutive invalid reads
+static uint16_t invalid_coolant = 0;
+static uint16_t invalid_oil = 0;
+static uint16_t invalid_air = 0;
+static uint16_t invalid_gas = 0;
+
+#define MAX_CONSECUTIVE_INVALID 50  // Threshold for error state
+
+static inline bool isValidADC(float v) {
+    return (v > ADC_MIN_VALID) && (v < ADC_MAX_VALID);
+}
+
+static inline float safeAnalogRead(uint8_t pin) {
+    // single raw read, caller will validate
+    int r = analogRead(pin);
+    if (r < 0) r = 0;
+    if (r > 1023) r = 1023;
+    return (float)r;
+}
+
+static inline float startupAlpha(float tau, uint16_t samples) {
+    // Provide faster convergence during initial samples or after reconnect
+    if (samples < STARTUP_SAMPLES) {
+        float a = tau * 8.0f; // amplify tau while starting
+        if (a < 0.25f) a = 0.25f;
+        if (a > 0.9f) a = 0.9f;
+        return a;
+    }
+    return tau;
+}
 
 extern digifiz_pars digifiz_parameters;
 
@@ -106,17 +150,28 @@ uint8_t getBrightnessLevel()
 
 void processBrightnessLevel()
 {
-   uint16_t lData = analogRead(lightSensorPin);
-   lData += analogRead(lightSensorPin);
-   lData += analogRead(lightSensorPin);
-   lData += analogRead(lightSensorPin);
-   lData += analogRead(lightSensorPin);
-   lData += analogRead(lightSensorPin);
-   lData += analogRead(lightSensorPin);
-   if (lData>800)
-    return; //I do not believe you.
-   
-   lightLevel = lData>>3;
+   // Read and average several samples (same as before) but protect and use startup alpha
+   uint32_t lData = 0;
+   for (int i = 0; i < 7; ++i) lData += analogRead(lightSensorPin);
+
+   // still guard against impossible huge value
+   if (lData > 800) {
+       // treat as invalid/read error -> reset sample counter so reconnect causes fast convergence
+       samples_light = 0;
+       return; // ignore this burst
+   }
+
+   uint16_t avg = (uint16_t)(lData >> 3);
+
+   // alpha behaviour: during startup, converge faster toward measured value
+   float alpha = (samples_light < STARTUP_SAMPLES) ? 0.5f : 1.0f;
+   if (samples_light == 0) {
+       // first valid reading: set immediately
+       lightLevel = avg;
+   } else {
+       lightLevel = (uint16_t)((1.0f - alpha) * (float)lightLevel + alpha * (float)avg);
+   }
+   samples_light++;
 }
 
 //RAW values 0..1024
@@ -148,6 +203,8 @@ uint16_t getRawLightLevel()
 //Data values
 float getCoolantTemperature()
 {
+    if (invalid_coolant >= MAX_CONSECUTIVE_INVALID)
+        return -999.9f;
     if (coolantT<-50.0f)
         return -999.9f;
     else if (coolantT>200.0)
@@ -158,6 +215,8 @@ float getCoolantTemperature()
 
 float getOilTemperature()
 {
+    if (invalid_oil >= MAX_CONSECUTIVE_INVALID)
+        return -999.9f;
     V0 = (float)analogRead(oilPin);
     R2 = R2_Oil * V0 / (1023.0f - V0); //
     float tempT = 1.0f/(log(R2/R1_Oil)/oilB+1.0f/(25.0f+273.15f))-273.15f;
@@ -178,20 +237,101 @@ float getOilTemperatureFahrenheit()
 
 void processCoolantTemperature()
 {
-    V0 = (float)analogRead(coolantPin);
-    R2 = 220.0f * V0 / (1023.0f - V0); //
-    float temp1 = (log(R2/R1_Coolant)/coolantB);
-    temp1 += 1/(25.0f+273.15f);
-    coolantT += tauCoolant*(1.0f/temp1 - 273.15f - coolantT);
+    float v = safeAnalogRead(coolantPin);
+    if (!isValidADC(v)) {
+        // invalid reading
+        samples_coolant = 0;
+        invalid_coolant++;
+        return;
+    }
+
+    float denom = 1023.0f - v;
+    if (denom < ADC_DENOM_EPS) {
+        samples_coolant = 0;
+        invalid_coolant++;
+        return;
+    }
+
+    float R2_local = 220.0f * v / denom;
+    if (!isfinite(R2_local) || R2_local <= 0.0f) {
+        samples_coolant = 0;
+        invalid_coolant++;
+        return;
+    }
+
+    float temp1 = (log(R2_local / R1_Coolant) / coolantB);
+    temp1 += 1.0f / (25.0f + 273.15f);
+    if (!isfinite(temp1) || temp1 == 0.0f) {
+        samples_coolant = 0;
+        invalid_coolant++;
+        return;
+    }
+
+    float measured = 1.0f / temp1 - 273.15f;
+    if (!isfinite(measured)) {
+        samples_coolant = 0;
+        invalid_coolant++;
+        return;
+    }
+
+    // Valid reading - reset invalid counter
+    invalid_coolant = 0;
+
+    // alpha: faster during initial samples
+    float alpha = startupAlpha(tauCoolant, samples_coolant);
+    // initialize if first valid sample
+    if (samples_coolant == 0) coolantT = measured;
+    else coolantT += alpha * (measured - coolantT);
+
+    samples_coolant++;
 }
 
 void processOilTemperature()
 {
-    V0 = (float)analogRead(oilPin);
-    R2 = R2_Oil * V0 / (1023.0f - V0); //
-    float temp1 = (log(R2/R1_Oil)/oilB);
-    temp1 += 1/(25.0f+273.15f);
-    oilT += tauOil*(1.0f/temp1 - 273.15f - oilT);
+    float v = safeAnalogRead(oilPin);
+    if (!isValidADC(v)) {
+        samples_oil = 0;
+        invalid_oil++;
+        return;
+    }
+
+    float denom = 1023.0f - v;
+    if (denom < ADC_DENOM_EPS) {
+        samples_oil = 0;
+        invalid_oil++;
+        return;
+    }
+
+    float R2_local = R2_Oil * v / denom;
+    if (!isfinite(R2_local) || R2_local <= 0.0f) {
+        samples_oil = 0;
+        invalid_oil++;
+        return;
+    }
+
+    float temp1 = (log(R2_local / R1_Oil) / oilB);
+    temp1 += 1.0f / (25.0f + 273.15f);
+    if (!isfinite(temp1) || temp1 == 0.0f) {
+        samples_oil = 0;
+        invalid_oil++;
+        return;
+    }
+
+    float measured = 1.0f / temp1 - 273.15f;
+    if (!isfinite(measured)) {
+        samples_oil = 0;
+        invalid_oil++;
+        return;
+    }
+
+    // Valid reading - reset invalid counter
+    invalid_oil = 0;
+
+    float alpha = startupAlpha(tauOil, samples_oil);
+    if (samples_oil == 0) oilT = measured;
+    else oilT += alpha * (measured - oilT);
+
+    samples_oil++;
 }
 
 float getIntakeVoltage()
@@ -209,7 +349,7 @@ float getIntakePressure()
 
 #ifdef FUEL_CONSUMPTION_TESTMODE
    intp = 512;
-#endif
+#endif   
    
     return 84749.0f-20152.0f*intp/1023.0f*5.0f;
 }
@@ -245,95 +385,210 @@ float getCurrentIntakeFuelConsumption()
 
 void processGasLevel()
 {
+    float v = safeAnalogRead(gasolinePin);
+    if (!isValidADC(v)) {
+        samples_gas = 0;
+        invalid_gas++;
+        return;
+    }
+
+    float denom = 1023.0f - v;
+    if (denom < ADC_DENOM_EPS) {
+        samples_gas = 0;
+        invalid_gas++;
+        return;
+    }
+
+    float R2_local = 220.0f * v / denom;
+    // clamp to configured tank limits (preserve previous behaviour)
+    R2_local = constrain(R2_local, digifiz_parameters.tankMinResistance, digifiz_parameters.tankMaxResistance);
+
     float R2scaled = 0.0f;
-    V0 = (float)analogRead(gasolinePin);
-    R2 = constrain(220 * V0 / (1023.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
     if (digifiz_parameters.digifiz_options.option_linear_fuel)
     {
-        R2scaled = (((float)R2-
-              digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                                                digifiz_parameters.tankMinResistance));
+        R2scaled = ((float)R2_local - digifiz_parameters.tankMinResistance) /
+                   (digifiz_parameters.tankMaxResistance - digifiz_parameters.tankMinResistance);
     }
     else
     {
-        R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
+        R2scaled = 1.0f - (1300.0f - 10.3f * R2_local + 0.0206f * R2_local * R2_local) / 1000.0f;
     }
 
-    gasolineLevel += tauGasoline*((1.0f-R2scaled)-gasolineLevel); //percents
-    gasolineLevelFiltered += tauGasolineConsumption*(R2scaled-gasolineLevelFiltered); //percents
-                                                
-    if ((millis()-consumptionCounter)>1800000)
+    if (!isfinite(R2scaled)) {
+        samples_gas = 0;
+        invalid_gas++;
+        return;
+    }
+
+    // Valid reading - reset invalid counter
+    invalid_gas = 0;
+
+    float alphaLevel = startupAlpha(tauGasoline, samples_gas);
+    float alphaFilter = startupAlpha(tauGasolineConsumption, samples_gas);
+
+    if (samples_gas == 0) {
+        // initialize both on first valid sample
+        gasolineLevel = (1.0f - R2scaled);
+        gasolineLevelFiltered = R2scaled;
+        gasolineLevelFiltered05hour = gasolineLevelFiltered;
+    } else {
+        gasolineLevel += alphaLevel * ((1.0f - R2scaled) - gasolineLevel); // percents
+        gasolineLevelFiltered += alphaFilter * (R2scaled - gasolineLevelFiltered); // percents
+    }
+
+    if ((millis() - consumptionCounter) > 1800000)
     {
-      //half hour
+      // half hour
       consumptionCounter = millis();
-      consumptionLevel = (gasolineLevelFiltered05hour-gasolineLevelFiltered)*2.0f;
+      consumptionLevel = (gasolineLevelFiltered05hour - gasolineLevelFiltered) * 2.0f;
       gasolineLevelFiltered05hour = gasolineLevelFiltered;
     }
+
+    samples_gas++;
 }
 
 void processAmbientTemperature()
 {
-    V0 = (float)analogRead(airPin);
-    R2 = R2_Ambient * V0 / (1023.0f - V0); 
-    float temp1 = (log(R2/R1_Ambient)/airB);
-    temp1 += 1/(25.0f+273.15f);
-    airT += tauAir*(1.0f/temp1 - 273.15f - airT);
+    float v = safeAnalogRead(airPin);
+    if (!isValidADC(v)) {
+        samples_air = 0;
+        invalid_air++;
+        return;
+    }
+
+    float denom = 1023.0f - v;
+    if (denom < ADC_DENOM_EPS) {
+        samples_air = 0;
+        invalid_air++;
+        return;
+    }
+
+    float R2_local = R2_Ambient * v / denom;
+    if (!isfinite(R2_local) || R2_local <= 0.0f) {
+        samples_air = 0;
+        invalid_air++;
+        return;
+    }
+
+    float temp1 = (log(R2_local / R1_Ambient) / airB);
+    temp1 += 1.0f / (25.0f + 273.15f);
+    if (!isfinite(temp1) || temp1 == 0.0f) {
+        samples_air = 0;
+        invalid_air++;
+        return;
+    }
+
+    float measured = 1.0f / temp1 - 273.15f;
+    if (!isfinite(measured)) {
+        samples_air = 0;
+        invalid_air++;
+        return;
+    }
+
+    // Valid reading - reset invalid counter
+    invalid_air = 0;
+
+    float alpha = startupAlpha(tauAir, samples_air);
+    if (samples_air == 0) airT = measured;
+    else airT += alpha * (measured - airT);
+
+    samples_air++;
 }
 
 void processFirstCoolantTemperature() //to prevent filtering from zero value
 {
-    for (int i=0;i!=100;i++)
-      V0 += (float)analogRead(coolantPin);
-    V0/=100;
-    R2 = 220.0f * V0 / (1023.0f - V0); //
-    float temp1 = (log(R2/R1_Coolant)/coolantB);
-    temp1 += 1/(25.0f+273.15f);
-    coolantT = (1.0f/temp1 - 273.15f);
+    float vacc = 0.0f;
+    for (int i = 0; i != 100; i++) {
+      vacc += safeAnalogRead(coolantPin);
+    }
+    vacc /= 100.0f;
+    if (!isValidADC(vacc) || (1023.0f - vacc) < ADC_DENOM_EPS) {
+        // leave default coolantT; set samples to zero so later good reads cause fast convergence
+        samples_coolant = 0;
+        return;
+    }
+    float R2_local = 220.0f * vacc / (1023.0f - vacc);
+    float temp1 = (log(R2_local / R1_Coolant) / coolantB);
+    temp1 += 1.0f / (25.0f + 273.15f);
+    coolantT = (1.0f / temp1 - 273.15f);
+    if (!isfinite(coolantT)) {
+        samples_coolant = 0;
+    } else {
+        samples_coolant = STARTUP_SAMPLES; // consider this warmed-up
+    }
 }
 
 void processFirstOilTemperature()
 {
-    for (int i=0;i!=100;i++)
-      V0 += (float)analogRead(oilPin);
-    V0/=100;
-    R2 = R2_Oil * V0 / (1023.0f - V0); //
-    float temp1 = (log(R2/R1_Oil)/oilB);
-    temp1 += 1/(25.0f+273.15f);
-    oilT = (1.0f/temp1 - 273.15f );
+    float vacc = 0.0f;
+    for (int i = 0; i != 100; i++) {
+      vacc += safeAnalogRead(oilPin);
+    }
+    vacc /= 100.0f;
+    if (!isValidADC(vacc) || (1023.0f - vacc) < ADC_DENOM_EPS) {
+        samples_oil = 0;
+        return;
+    }
+    float R2_local = R2_Oil * vacc / (1023.0f - vacc);
+    float temp1 = (log(R2_local / R1_Oil) / oilB);
+    temp1 += 1.0f / (25.0f + 273.15f);
+    oilT = (1.0f / temp1 - 273.15f );
+    if (!isfinite(oilT)) {
+        samples_oil = 0;
+    } else {
+        samples_oil = STARTUP_SAMPLES;
+    }
 }
 
 void processFirstGasLevel()
 {
+    float vacc = 0.0f;
+    for (int i = 0; i != 300; i++) {
+      vacc += safeAnalogRead(gasolinePin);
+    }
+    vacc /= 300.0f;
+    if (!isValidADC(vacc) || (1023.0f - vacc) < ADC_DENOM_EPS) {
+        samples_gas = 0;
+        return;
+    }
+    float R2_local = constrain(220 * vacc / (1023.0f - vacc), digifiz_parameters.tankMinResistance, digifiz_parameters.tankMaxResistance);
     float R2scaled = 0.0f;
-    for (int i=0;i!=300;i++)
-      V0 += (float)analogRead(gasolinePin);
-    V0/=300;
-    R2 = constrain(220 * V0 / (1023.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
     if (digifiz_parameters.digifiz_options.option_linear_fuel)
     {
-        R2scaled = (((float)R2-
-              digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                                                digifiz_parameters.tankMinResistance));
+        R2scaled = (((float)R2_local - digifiz_parameters.tankMinResistance) / (digifiz_parameters.tankMaxResistance - digifiz_parameters.tankMinResistance));
     }
     else
     {
-        R2scaled = 1.0f - (1300.0f-10.3f*R2+0.0206f*R2*R2)/1000.0f;
+        R2scaled = 1.0f - (1300.0f - 10.3f * R2_local + 0.0206f * R2_local * R2_local) / 1000.0f;
     }
     //35 = full
     //265 = empty
     gasolineLevel = 1.0f - R2scaled; //percents
     gasolineLevelFiltered = R2scaled; //percents
+    gasolineLevelFiltered05hour = gasolineLevelFiltered;
+    samples_gas = STARTUP_SAMPLES;
 }
 
 void processFirstAmbientTemperature()
 {
-    for (int i=0;i!=100;i++)
-      V0 += (float)analogRead(airPin);
-    V0/=100;
-    R2 = R2_Ambient * V0 / (1023.0f - V0); 
-    float temp1 = (log(R2/R1_Ambient)/airB);
-    temp1 += 1/(25.0f+273.15f);
-    airT = temp1;
+    float vacc = 0.0f;
+    for (int i = 0; i != 100; i++) {
+      vacc += safeAnalogRead(airPin);
+    }
+    vacc /= 100.0f;
+    if (!isValidADC(vacc) || (1023.0f - vacc) < ADC_DENOM_EPS) {
+        samples_air = 0;
+        return;
+    }
+    float R2_local = R2_Ambient * vacc / (1023.0f - vacc);
+    float temp1 = (log(R2_local / R1_Ambient) / airB);
+    temp1 += 1.0f / (25.0f + 273.15f);
+    airT = (1.0f / temp1 - 273.15f);
+    if (!isfinite(airT)) {
+        samples_air = 0;
+    } else {
+        samples_air = STARTUP_SAMPLES;
+    }
 }
 
 float getRToFuelLevel(float R)
@@ -348,8 +603,7 @@ float getGasLevel()
     float R2scaled = 0.0f;
     if (digifiz_parameters.digifiz_options.option_linear_fuel)
     {
-        R2scaled = (((float)R2-digifiz_parameters.tankMinResistance)/(digifiz_parameters.tankMaxResistance-
-                                                digifiz_parameters.tankMinResistance));
+        R2scaled = (((float)R2-digifiz_parameters.tankMinResistance) / (digifiz_parameters.tankMaxResistance - digifiz_parameters.tankMinResistance));
     }
     else
     {
@@ -363,16 +617,22 @@ float getGasLevel()
 
 uint8_t getLitresInTank() //0..99
 {
+    if (invalid_gas >= MAX_CONSECUTIVE_INVALID)
+        return 0;
     return constrain(gasolineLevel*(float)tankCapacity,0,99); //where 99 of course means error
 }
 
 uint8_t getGallonsInTank() //0..99
 {
+    if (invalid_gas >= MAX_CONSECUTIVE_INVALID)
+        return 0;
     return constrain(gasolineLevel*(float)tankCapacity*0.264172f,0,99); //where 99 of course means error 
 }
 
 uint8_t getDisplayedCoolantTemp()  //0..14, 0..16
 {
+  if (invalid_coolant >= MAX_CONSECUTIVE_INVALID)
+      return 0;
 #ifdef AUDI_DISPLAY
     //16 LEDs
     return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance)/

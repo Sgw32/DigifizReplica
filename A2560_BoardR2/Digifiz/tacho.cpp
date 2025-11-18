@@ -1,10 +1,13 @@
 #include "tacho.h"
 #include "setup.h"
+#include "ext_eeprom.h"
 
 uint32_t mRPMSenseData;
 uint32_t lastMillisRPM;
 
 MedianDispertionFilter<uint32_t> medianFilterRPM(5);
+
+extern digifiz_pars digifiz_parameters; 
 
 /**
  * @brief PCInt20 interrupt which reads RPM
@@ -18,11 +21,7 @@ void PCInt20()
     // So mRPMSenseData has a window of 1000000/300 ... 1000000
     uint32_t cur_micros = micros();
     uint32_t delta = (cur_micros-lastMillisRPM);
-    #if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
-    if (delta>3000)
-    #else
-    if (delta>1500)
-    #endif
+    if (delta>digifiz_parameters.rpmMaxThreshold)
     {
         mRPMSenseData = delta;
         lastMillisRPM = micros();

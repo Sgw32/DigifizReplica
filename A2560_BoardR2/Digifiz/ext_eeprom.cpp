@@ -168,8 +168,12 @@ void load_defaults()
     digifiz_parameters.coolantMinResistance = 60;
     digifiz_parameters.coolantMaxResistance = 120;
     digifiz_parameters.medianDispFilterThreshold = 65535; // value below will pass
-    digifiz_parameters.rpmMaxThreshold = digifiz_parameters.maxRPM;
-    digifiz_parameters.speedMaxThreshold = 300;
+    #if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
+    digifiz_parameters.rpmMaxThreshold = 3000;
+    #else
+    digifiz_parameters.rpmMaxThreshold = 1500;
+    #endif
+    digifiz_parameters.speedMaxThreshold = 1666;
     digifiz_parameters.coolantThermistorDefRes = COOLANT_R_AT_NORMAL_T;
     digifiz_parameters.oilThermistorDefRes = OIL_R_AT_NORMAL_T;
     digifiz_parameters.ambThermistorDefRes = AMBIENT_R_AT_NORMAL_T;

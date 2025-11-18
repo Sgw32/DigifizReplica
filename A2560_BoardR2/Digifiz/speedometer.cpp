@@ -1,10 +1,13 @@
 #include "speedometer.h"
 #include "setup.h"
+#include "ext_eeprom.h"
 
 uint32_t mSpdData;
 uint32_t lastMillis;
 
 MedianFilter2<uint32_t> medianFilter(12);
+
+extern digifiz_pars digifiz_parameters; 
 
 void PCInt12()
 {
@@ -14,7 +17,7 @@ void PCInt12()
     // So mRPMSenseData has a window of 1000000/600 ... 1000000
     uint32_t cur_micros = micros();
     uint32_t delta = (cur_micros-lastMillis);
-    if (delta>1666)
+    if (delta>digifiz_parameters.speedMaxThreshold)
     {
         mSpdData = (micros()-lastMillis);
         lastMillis = micros();
