@@ -388,6 +388,34 @@ extern "C" {
     ) \
     PARAM(  \
         U8, \
+        fuel_low_threshold_liters, \
+        .p_name = "Low fuel threshold (L)", \
+        .p_info = "Fuel level in liters that triggers refuel indicator",\
+        .value = 10, \
+    ) \
+    PARAM(  \
+        U8, \
+        fuel_critical_threshold_liters, \
+        .p_name = "Critical fuel threshold (L)", \
+        .p_info = "Fuel level in liters that triggers refuel blinking",\
+        .value = 5, \
+    ) \
+    PARAM(  \
+        U8, \
+        fuel_low_threshold_gallons, \
+        .p_name = "Low fuel threshold (gal)", \
+        .p_info = "Fuel level in gallons that triggers refuel indicator",\
+        .value = 2, \
+    ) \
+    PARAM(  \
+        U8, \
+        fuel_critical_threshold_gallons, \
+        .p_name = "Critical fuel threshold (gal)", \
+        .p_info = "Fuel level in gallons that triggers refuel blinking",\
+        .value = 1, \
+    ) \
+    PARAM(  \
+        U8, \
         mfaState, \
         .p_name = "MFA function state", \
         .p_info = "Selected MFA function",\
