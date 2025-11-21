@@ -405,14 +405,14 @@ extern "C" {
         fuel_low_threshold_gallons, \
         .p_name = "Low fuel threshold (gal)", \
         .p_info = "Fuel level in gallons that triggers refuel indicator",\
-        .value = 2, \
+        .value = 3, \
     ) \
     PARAM(  \
         U8, \
         fuel_critical_threshold_gallons, \
         .p_name = "Critical fuel threshold (gal)", \
         .p_info = "Fuel level in gallons that triggers refuel blinking",\
-        .value = 1, \
+        .value = 2, \
     ) \
     PARAM(  \
         U8, \
