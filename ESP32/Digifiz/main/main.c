@@ -352,17 +352,28 @@ void displayUpdate(void *pvParameters) {
         bool refuel_indicator_managed = false;
         bool wasRefuelLow = refuel_low_active;
         bool lowFuel = false;
+        bool criticalFuel = false;
+        float fuel_level = 0.0f;
+        float lowFuelThreshold = 0.0f;
+        float criticalFuelThreshold = 0.0f;
 
         if (digifiz_parameters.option_gallons.value)
         {
-            fuel = getGallonsInTank();
-            lowFuel = (fuel < 2);
+            fuel_level = getGallonsInTank();
+            fuel = (uint8_t)fuel_level;
+            lowFuelThreshold = digifiz_parameters.fuel_low_threshold_gallons.value;
+            criticalFuelThreshold = digifiz_parameters.fuel_critical_threshold_gallons.value;
         }
         else
         {
-            fuel = getLitresInTank();
-            lowFuel = (fuel < 10);
+            fuel_level = getLitresInTank();
+            fuel = (uint8_t)fuel_level;
+            lowFuelThreshold = digifiz_parameters.fuel_low_threshold_liters.value;
+            criticalFuelThreshold = digifiz_parameters.fuel_critical_threshold_liters.value;
         }
+
+        lowFuel = (fuel_level < lowFuelThreshold);
+        criticalFuel = (fuel_level < criticalFuelThreshold);
 
         if (lowFuel)
         {
@@ -376,7 +387,9 @@ void displayUpdate(void *pvParameters) {
             gear_refuel_toggles = 0;
             refuel_indicator_managed = true;
 
-            if (digifiz_parameters.option_refuel_blink.value)
+            bool shouldBlink = criticalFuel && digifiz_parameters.option_refuel_blink.value;
+
+            if (shouldBlink)
             {
                 uint32_t now = millis();
                 if (now - refuel_blink_last_millis >= 500)
