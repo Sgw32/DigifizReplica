@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <esp_system.h>
+#include <esp_random.h>
 
 static inline uint32_t rand32(void)
 {
