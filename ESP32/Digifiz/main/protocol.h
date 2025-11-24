@@ -62,6 +62,10 @@ typedef enum {
     PARAMETER_BRIGHTNESS_MAX,               // 50
     PARAMETER_BRIGHTNESS_SPEED,             // 51
     PARAMETER_RPM_FILTER_FALLING,           // 52
+    PARAMETER_EFFECT_TYPE,          // 46
+    PARAMETER_EFFECT_HUE,           // 47
+    PARAMETER_EFFECT_SATURATION,    // 48
+    PARAMETER_EFFECT_VALUE,         // 49
     // Additional parameters and functions
     PARAMETER_UPTIME = 123,
     PARAMETER_READ_ADDITION = 128,

@@ -526,6 +526,34 @@ extern "C" {
         .value = 6, \
     ) \
     PARAM(  \
+        U8, \
+        ledEffect_type, \
+        .p_name = "LED effect", \
+        .p_info = "LED effect type",\
+        .value = 0, \
+    ) \
+    PARAM(  \
+        U8, \
+        ledEffect_hue, \
+        .p_name = "Effect hue", \
+        .p_info = "Base hue value",\
+        .value = 0, \
+    ) \
+    PARAM(  \
+        U8, \
+        ledEffect_saturation, \
+        .p_name = "Effect saturation", \
+        .p_info = "Base saturation",\
+        .value = 255, \
+    ) \
+    PARAM(  \
+        U8, \
+        ledEffect_value, \
+        .p_name = "Effect value", \
+        .p_info = "Base brightness",\
+        .value = 30, \
+    ) \
+    PARAM(  \
         U16, \
         coolantThermistorDefRes, \
         .p_name = "Coolant default resistance", \

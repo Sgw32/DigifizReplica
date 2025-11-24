@@ -76,6 +76,10 @@ static const ParameterMap parameter_map[] = {
     {"PARAMETER_BRIGHTNESS_MIN", PARAMETER_BRIGHTNESS_MIN},
     {"PARAMETER_BRIGHTNESS_MAX", PARAMETER_BRIGHTNESS_MAX},
     {"PARAMETER_BRIGHTNESS_SPEED", PARAMETER_BRIGHTNESS_SPEED},
+    {"PARAMETER_EFFECT_TYPE", PARAMETER_EFFECT_TYPE},
+    {"PARAMETER_EFFECT_HUE", PARAMETER_EFFECT_HUE},
+    {"PARAMETER_EFFECT_SATURATION", PARAMETER_EFFECT_SATURATION},
+    {"PARAMETER_EFFECT_VALUE", PARAMETER_EFFECT_VALUE},
     {"PARAMETER_UPTIME", PARAMETER_UPTIME},
     {"PARAMETER_READ_ADDITION", PARAMETER_READ_ADDITION},
     {"PARAMETER_SET_HOUR", PARAMETER_SET_HOUR},
@@ -548,6 +552,22 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_BRIGHTNESS_SPEED\n");
         digifiz_parameters.brightnessSpeed.value = value;
         break;
+      case PARAMETER_EFFECT_TYPE:
+        printLnCString("PARAMETER_EFFECT_TYPE\n");
+        digifiz_parameters.ledEffect_type.value = value;
+        break;
+      case PARAMETER_EFFECT_HUE:
+        printLnCString("PARAMETER_EFFECT_HUE\n");
+        digifiz_parameters.ledEffect_hue.value = value;
+        break;
+      case PARAMETER_EFFECT_SATURATION:
+        printLnCString("PARAMETER_EFFECT_SATURATION\n");
+        digifiz_parameters.ledEffect_saturation.value = value;
+        break;
+      case PARAMETER_EFFECT_VALUE:
+        printLnCString("PARAMETER_EFFECT_VALUE\n");
+        digifiz_parameters.ledEffect_value.value = value;
+        break;
       case PARAMETER_UPTIME:
         printLnCString("PARAMETER_UPTIME\n");
         digifiz_status.uptime = value;
@@ -887,6 +907,22 @@ void processData(int parameter,long value)
       case PARAMETER_BRIGHTNESS_SPEED:
         printLnCString("PARAMETER_BRIGHTNESS_SPEED\n");
         printLnUINT8(digifiz_parameters.brightnessSpeed.value);
+        break;
+      case PARAMETER_EFFECT_TYPE:
+        printLnCString("PARAMETER_EFFECT_TYPE\n");
+        printLnUINT8(digifiz_parameters.ledEffect_type.value);
+        break;
+      case PARAMETER_EFFECT_HUE:
+        printLnCString("PARAMETER_EFFECT_HUE\n");
+        printLnUINT8(digifiz_parameters.ledEffect_hue.value);
+        break;
+      case PARAMETER_EFFECT_SATURATION:
+        printLnCString("PARAMETER_EFFECT_SATURATION\n");
+        printLnUINT8(digifiz_parameters.ledEffect_saturation.value);
+        break;
+      case PARAMETER_EFFECT_VALUE:
+        printLnCString("PARAMETER_EFFECT_VALUE\n");
+        printLnUINT8(digifiz_parameters.ledEffect_value.value);
         break;
       default:
         break;
