@@ -115,16 +115,19 @@ void load_defaults()
 {
     memcpy(digifiz_parameters.preamble,"DIGI",4);
 #if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
+    digifiz_parameters.rpmQuadraticCoefficient = 0;
     digifiz_parameters.rpmCoefficient = 3000;
     digifiz_parameters.rpmFilterK = 70;
 #else
+    digifiz_parameters.rpmQuadraticCoefficient = 0;
     digifiz_parameters.rpmCoefficient = 1500;
     digifiz_parameters.rpmFilterK = 70;
 #endif
 #ifdef DIESEL_MODE
+    digifiz_parameters.rpmQuadraticCoefficient = 0;
     digifiz_parameters.rpmCoefficient = 400;
     digifiz_parameters.rpmFilterK = 70;
-#endif  
+#endif
     digifiz_parameters.speedCoefficient = 100;
     digifiz_parameters.coolantThermistorB = COOLANT_THERMISTOR_B;
     digifiz_parameters.oilThermistorB = OIL_THERMISTOR_B;

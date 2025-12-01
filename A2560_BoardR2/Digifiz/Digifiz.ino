@@ -206,7 +206,10 @@ ISR(TIMER4_COMPA_vect)
       if((getRPMDispertion()<digifiz_parameters.medianDispFilterThreshold)) //30 or LESS!!!
       {
       rpm = 1000000/rpm;
-      rpm *= digifiz_parameters.rpmCoefficient/100; //4 cylinder motor, 60 sec in min
+      float rpm_quadratic_coeff = digifiz_parameters.rpmQuadraticCoefficient / 100000.0f;
+      float rpm_linear_coeff = digifiz_parameters.rpmCoefficient / 100.0f; //4 cylinder motor, 60 sec in min
+      float rpm_raw = rpm;
+      rpm = (rpm_quadratic_coeff * rpm_raw * rpm_raw) + (rpm_linear_coeff * rpm_raw);
       averageRPM += (rpm-averageRPM)*digifiz_parameters.rpmFilterK/140; //default = 0.2
       }
     }
