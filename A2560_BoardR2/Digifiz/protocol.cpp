@@ -192,6 +192,12 @@ void processData(int parameter,long value)
         #endif
         digifiz_parameters.rpmCoefficient = value;
         break;
+      case PARAMETER_RPM_QUADRATIC_COEFFICIENT:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_RPM_QUADRATIC_COEFFICIENT");
+        #endif
+        digifiz_parameters.rpmQuadraticCoefficient = value;
+        break;
       case PARAMETER_SPEEDCOEEFICIENT:
         #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_SPEEDCOEEFICIENT");
@@ -677,6 +683,15 @@ void processData(int parameter,long value)
         #endif
         #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.rpmCoefficient);
+        #endif
+        break;
+      case PARAMETER_RPM_QUADRATIC_COEFFICIENT:
+      #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_RPM_QUADRATIC_COEFFICIENT");
+        BTserial.println(digifiz_parameters.rpmQuadraticCoefficient);
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.rpmQuadraticCoefficient);
         #endif
         break;
       case PARAMETER_SPEEDCOEEFICIENT:
