@@ -25,7 +25,11 @@ void gear_estimator_init(void) {
 void gear_estimator_set_input(float rpm, float speed_kmh) {
     current_input.rpm += (rpm-current_input.rpm) * 0.3f; // Smooth RPM input
     current_input.speed_kmh += (speed_kmh-current_input.speed_kmh) * 0.3f;
-    current_input.ratio = (rpm > 300.0f) ? (speed_kmh / rpm) : 0.0f;
+    if (current_input.speed_kmh > 0.1f && current_input.rpm > 300.0f) {
+        current_input.ratio = current_input.rpm / current_input.speed_kmh;
+    } else {
+        current_input.ratio = 0.0f;
+    }
     ble_module_update_values(current_input.rpm, current_input.speed_kmh);
 }
 
