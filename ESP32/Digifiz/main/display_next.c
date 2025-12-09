@@ -1296,8 +1296,12 @@ void fireDigifiz() {
     led_num = 0;
 
     uint8_t *ptr = (uint8_t*)&display;
+    effect_state.effect = digifiz_parameters.ledEffect_type.value;
     if (effect_state.effect != LED_EFFECT_NONE)
     {
+        effect_state.hue = digifiz_parameters.ledEffect_hue.value;
+        effect_state.saturation = digifiz_parameters.ledEffect_saturation.value;
+        effect_state.value = digifiz_parameters.ledEffect_value.value;
         for (uint16_t i = 0; i != sizeof(DigifizNextDisplay); i++)
         {
             for (uint16_t j = 0; j != 8; j++)
