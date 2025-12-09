@@ -271,9 +271,10 @@ void displayUpdate(void *pvParameters) {
             if((getRPMDispertion()<digifiz_parameters.medianDispFilterThreshold.value)) //30 or LESS!!!
             {
                 //50 Hz - 1500 rev/min
-                //rpmCoefficient = 3000 for Golf 2/Mk2 gasoline
-                //rpmCoefficient = 1500 for Audi 80 b2
-                rpm *= digifiz_parameters.rpmCoefficient.value/100; //4 cylinder motor, 60 sec in min, 2 strokes per revolution
+                float rpm_quadratic_coeff = digifiz_parameters.rpmQuadraticCoefficient.value / 100000.0f;
+                float rpm_linear_coeff = digifiz_parameters.rpmCoefficient.value / 100.0f; // 4 cylinder motor, 60 sec in min, 2 strokes per revolution
+                float rpm_raw = rpm;
+                rpm = (rpm_quadratic_coeff * rpm_raw * rpm_raw) + (rpm_linear_coeff * rpm_raw);
 
                 float rpm_delta = (float)rpm - averageRPM;
                 uint16_t rpm_filter = (rpm_delta >= 0.0f)

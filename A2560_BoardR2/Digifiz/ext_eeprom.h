@@ -100,6 +100,7 @@ typedef struct digifiz_pars
     u_rpm_options rpm_options;             //1 byte
     u_temp_options temp_options;             //1 byte
     u_signal_options sign_options;             //1 byte
+    uint16_t rpmQuadraticCoefficient; //div 100000
     uint16_t rpmCoefficient; //used //div 100 //16 //2
     uint16_t speedCoefficient; //used //div 100 //32 //4
     uint16_t coolantThermistorB; //used //34 //6
