@@ -228,7 +228,7 @@ extern "C" {
         rpmCoefficient, \
         .p_name = "RPM Coefficient", \
         .p_info = "Coefficient for RPM calibration",\
-        .value = 3000, \
+        .value = 1500, \
     ) \
     PARAM(  \
         U16, \
@@ -606,7 +606,7 @@ extern "C" {
         oilThermistorPullUpRes, \
         .p_name = "Oil pull-up", \
         .p_info = "Pull-up resistance for oil temperature sensor",\
-        .value = 3300, \
+        .value = 220, \
     ) \
     PARAM(  \
         U16, \
@@ -700,7 +700,7 @@ extern "C" {
         option_gear_change_indicator, \
         .p_name = "Gear change indicator", \
         .p_info = "Blink gear on speedometer when gear changes",\
-        .value = 1, \
+        .value = 0, \
         .max = 1, \
     ) \
     PARAM(  \

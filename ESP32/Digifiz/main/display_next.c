@@ -1,7 +1,7 @@
 #include "display_next.h"
 #include "reg_inout.h"
 #include "esp_log.h"
-#include "mjs.h"
+//#include "mjs.h"
 #include <cJSON.h>
 //If updating, do not display anything
 #include "digifiz_ws_server.h"
@@ -1296,35 +1296,72 @@ void fireDigifiz() {
     led_num = 0;
 
     uint8_t *ptr = (uint8_t*)&display;
-    for (uint16_t i = 0; i != sizeof(DigifizNextDisplay); i++)
+    if (effect_state.effect != LED_EFFECT_NONE)
     {
-        for (uint16_t j = 0; j != 8; j++)
+        for (uint16_t i = 0; i != sizeof(DigifizNextDisplay); i++)
         {
-            uint8_t bit = (ptr[i] >> j) & 1;
-            led_rgb_t col = led_effect_compute(&effect_state, led_num);
-            
-            if (get_update_in_progress())
-                bit=0;
-            //led_strip_set_pixel(led_strip, led_num, 10,10,10);
-            if (bit)
+            for (uint16_t j = 0; j != 8; j++)
             {
-                led_strip_set_pixel(led_strip, led_num,
-                    ((uint32_t)col.r*((uint32_t)backlightLevel))/100,
-                    ((uint32_t)col.g*((uint32_t)backlightLevel))/100,
-                    ((uint32_t)col.b*((uint32_t)backlightLevel))/100);
-            }
-            else
-            {
-                led_strip_set_pixel(led_strip, led_num, 0,0,0);
-            }
-            led_num+=1;
-            if (led_num>(DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1))
-            {
-                led_num=DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1;
-                break;
+                uint8_t bit = (ptr[i] >> j) & 1;
+                led_rgb_t col = led_effect_compute(&effect_state, led_num);
+                
+                if (get_update_in_progress())
+                    bit=0;
+                //led_strip_set_pixel(led_strip, led_num, 10,10,10);
+                if (bit)
+                {
+                    led_strip_set_pixel(led_strip, led_num,
+                        ((uint32_t)col.r*((uint32_t)backlightLevel))/100,
+                        ((uint32_t)col.g*((uint32_t)backlightLevel))/100,
+                        ((uint32_t)col.b*((uint32_t)backlightLevel))/100);
+                }
+                else
+                {
+                    led_strip_set_pixel(led_strip, led_num, 0,0,0);
+                }
+                led_num+=1;
+                if (led_num>(DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1))
+                {
+                    led_num=DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1;
+                    break;
+                }
             }
         }
     }
+    else
+    {
+        for (uint16_t i = 0; i != sizeof(DigifizNextDisplay); i++)
+        {
+            for (uint16_t j = 0; j != 8; j++)
+            {
+                uint8_t bit = (ptr[i] >> j) & 1;
+                uint8_t r = r_colors_active[led_num];
+                uint8_t g = g_colors_active[led_num];
+                uint8_t b = b_colors_active[led_num];
+
+                if (get_update_in_progress())
+                    bit=0;
+                //led_strip_set_pixel(led_strip, led_num, 10,10,10);
+                if (bit)
+                {
+                    led_strip_set_pixel(led_strip, led_num, ((uint32_t)r*((uint32_t)backlightLevel))/100,
+                        ((uint32_t)g*((uint32_t)backlightLevel))/100,
+                        ((uint32_t)b*((uint32_t)backlightLevel))/100);
+                }
+                else
+                {
+                    led_strip_set_pixel(led_strip, led_num, 0,0,0);
+                }
+                led_num+=1;
+                if (led_num>(DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1))
+                {
+                    led_num=DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1;
+                    break;
+                }
+            }
+        }
+    }
+    
     led_strip_refresh(led_strip);
     led_effect_step(&effect_state, 1.0f);
 }

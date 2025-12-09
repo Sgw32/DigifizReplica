@@ -1,4 +1,4 @@
-idf_component_register(SRCS "ble_module.c" "gear_estimator.c" "kline.c" "mjs.c" "vehicle_data.c" "digifiz_time.c" "digifiz_wifi_connect.c" "digifiz_ws_server.c" "millis.c" "reg_inout.c" "frequency_count.c" "device_sleep.c" "emegrency.c" 
+idf_component_register(SRCS "ble_module.c" "gear_estimator.c" "kline.c" "vehicle_data.c" "digifiz_time.c" "digifiz_wifi_connect.c" "digifiz_ws_server.c" "millis.c" "reg_inout.c" "frequency_count.c" "device_sleep.c" "emegrency.c" 
 "buzzer.c" 
 "protocol.c" 
 "params.c" 
