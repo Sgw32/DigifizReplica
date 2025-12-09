@@ -225,6 +225,13 @@ extern "C" {
     ) \
     PARAM(  \
         U16, \
+        rpmQuadraticCoefficient, \
+        .p_name = "RPM Quadratic coefficient", \
+        .p_info = "Quadratic term coefficient for RPM calibration (div 100000)",\
+        .value = 0, \
+    ) \
+    PARAM(  \
+        U16, \
         rpmCoefficient, \
         .p_name = "RPM Coefficient", \
         .p_info = "Coefficient for RPM calibration",\

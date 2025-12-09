@@ -46,6 +46,7 @@ static const ParameterMap parameter_map[] = {
     {"PARAMETER_NORMAL_RESISTANCE_OIL", PARAMETER_NORMAL_RESISTANCE_OIL},
     {"PARAMETER_NORMAL_RESISTANCE_AMB", PARAMETER_NORMAL_RESISTANCE_AMB},
     {"PARAMETER_RPMCOEFFICIENT", PARAMETER_RPMCOEFFICIENT},
+    {"PARAMETER_RPM_QUADRATIC_COEFFICIENT", PARAMETER_RPM_QUADRATIC_COEFFICIENT},
     {"PARAMETER_DOT_OFF", PARAMETER_DOT_OFF},
     {"PARAMETER_BACKLIGHT_ON", PARAMETER_BACKLIGHT_ON},
     {"PARAMETER_M_D_FILTER", PARAMETER_M_D_FILTER},
@@ -322,6 +323,10 @@ void processData(int parameter,long value)
       case PARAMETER_RPMCOEFFICIENT:
         printLnCString("PARAMETER_RPMCOEFFICIENT\n");
         digifiz_parameters.rpmCoefficient.value = value;
+        break;
+      case PARAMETER_RPM_QUADRATIC_COEFFICIENT:
+        printLnCString("PARAMETER_RPM_QUADRATIC_COEFFICIENT\n");
+        digifiz_parameters.rpmQuadraticCoefficient.value = value;
         break;
       case PARAMETER_SPEEDCOEEFICIENT:
         printLnCString("PARAMETER_SPEEDCOEEFICIENT\n");
@@ -716,6 +721,10 @@ void processData(int parameter,long value)
       case PARAMETER_RPMCOEFFICIENT:
         printLnCString("PARAMETER_RPMCOEFFICIENT\n");
         printLnFloat(digifiz_parameters.rpmCoefficient.value);
+        break;
+      case PARAMETER_RPM_QUADRATIC_COEFFICIENT:
+        printLnCString("PARAMETER_RPM_QUADRATIC_COEFFICIENT\n");
+        printLnFloat(digifiz_parameters.rpmQuadraticCoefficient.value);
         break;
       case PARAMETER_SPEEDCOEEFICIENT:
         printLnCString("PARAMETER_SPEEDCOEEFICIENT\n");
