@@ -256,7 +256,7 @@ void displayUpdate(void *pvParameters) {
             if (digifiz_parameters.option_miles.value)
                 spd_m *= 0.6214;
             spd_m /= 100;
-            if (digifiz_parameters.speed_min_threshold_enable.value &&
+            if (digifiz_parameters.speed_min_threshold_value.value > 0 &&
                 spd_m < digifiz_parameters.speed_min_threshold_value.value)
             {
                 spd_m = 0;
