@@ -760,6 +760,22 @@ extern "C" {
         .value = 1, \
         .max = 1, \
     ) \
+    PARAM(  \
+        U8, \
+        speed_min_threshold_enable, \
+        .p_name = "Minimum speed enable", \
+        .p_info = "Show zero speed when below threshold",\
+        .value = 0, \
+        .max = 1, \
+    ) \
+    PARAM(  \
+        U16, \
+        speed_min_threshold_value, \
+        .p_name = "Minimum speed threshold", \
+        .p_info = "Minimum speed shown as non-zero",\
+        .value = 5, \
+        .max = 400, \
+    ) \
 
 
 #ifdef __cplusplus
