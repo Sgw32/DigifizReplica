@@ -44,69 +44,90 @@ typedef enum{
                 char*                   field_name;                     \
 
 typedef struct xparam_s{
-    uint32_t                value;          // parameter value
+    union {
+        uint32_t value;          // parameter value
+        uintptr_t _align;        // ensure consistent first-field width
+    };
         _COMMON_PARAM_FIELDS()
 }xparam_U32_t;
 
 typedef xparam_U32_t xparam_t;
 
 typedef struct{
-        int32_t                                 value;
+        union {
+                int32_t                         value;
+                uintptr_t                       _align;
+        };
         _COMMON_PARAM_FIELDS()
 }xparam_I32_t;
 static_assert(  sizeof(xparam_U32_t) == sizeof(xparam_I32_t),
                 "xparams module expects identical size of parameters");
 
 typedef struct{
-        bool                                    value;
+        union {
+                bool                            value;
+                uintptr_t                       _align;
+        };
         _COMMON_PARAM_FIELDS()
 }xparam_BOOL_t;
 static_assert(  sizeof(xparam_U32_t) == sizeof(xparam_BOOL_t),
                 "xparams module expects identical size of parameters");
 
 typedef struct{
-        int16_t                                 value;
-        uint16_t                                _zero;
+        union {
+                int16_t                         value;
+                uintptr_t                       _align;
+        };
         _COMMON_PARAM_FIELDS()
 }xparam_I16_t;
 static_assert(  sizeof(xparam_U32_t) == sizeof(xparam_I16_t),
                 "xparams module expects identical size of parameters");
 
 typedef struct{
-        uint16_t                                value;
-        uint16_t                                _zero;
+        union {
+                uint16_t                        value;
+                uintptr_t                       _align;
+        };
         _COMMON_PARAM_FIELDS()
 }xparam_U16_t;
 static_assert(  sizeof(xparam_U32_t) == sizeof(xparam_U16_t),
                 "xparams module expects identical size of parameters");
 
 typedef struct{
-        int8_t                                  value;
-        uint8_t                                 _zero1;
-        uint16_t                                _zero2;
+        union {
+                int8_t                          value;
+                uintptr_t                       _align;
+        };
         _COMMON_PARAM_FIELDS()
 }xparam_I8_t;
 static_assert(  sizeof(xparam_U32_t) == sizeof(xparam_I8_t),
                 "xparams module expects identical size of parameters");
 
 typedef struct{
-        uint8_t                                 value;
-        uint8_t                                 _zero1;
-        uint16_t                                _zero2;
+        union {
+                uint8_t                         value;
+                uintptr_t                       _align;
+        };
         _COMMON_PARAM_FIELDS()
 }xparam_U8_t;
 static_assert(  sizeof(xparam_U32_t) == sizeof(xparam_U8_t),
                 "xparams module expects identical size of parameters");
 
 typedef struct{
-        float                                   value;
+        union {
+                float                           value;
+                uintptr_t                       _align;
+        };
         _COMMON_PARAM_FIELDS()
 }xparam_FLOAT_t;
 static_assert(  sizeof(xparam_U32_t) == sizeof(xparam_FLOAT_t),
                 "xparams module expects identical size of parameters");
 
 typedef struct{
-        char*                                   value;
+        union {
+                char*                           value;
+                uintptr_t                       _align;
+        };
         _COMMON_PARAM_FIELDS()
 }xparam_STRING_t;
 static_assert(  sizeof(xparam_U32_t) == sizeof(xparam_STRING_t),
