@@ -13,6 +13,7 @@ static constexpr uint16_t EEPROM_STORAGE_OFFSET = 0;
 
 ExternalEEPROM myMem;
 static bool external_faulty = false;
+static EEPROMLoadResult eeprom_load_result = EEPROM_NO_LOAD_ATTEMPT;
 
 const digifiz_pars default_parameters = {
     PARAM_LIST(DEFINE_PARAM)
@@ -82,6 +83,7 @@ void saveParameters()
     {
         writeBlobToExternal(blob_data, XPARAM_BLOB_SIZE);
     }
+    eeprom_load_result = external_faulty ? EEPROM_OK_INTERNAL : EEPROM_OK_EXTERNAL;
 
     free(blob_data);
 }
@@ -112,19 +114,33 @@ void initEEPROM()
     {
         readBlobFromExternal(blob, XPARAM_BLOB_SIZE);
         loaded = xparam_table_from_blob(&params_table, blob);
+        if (loaded)
+        {
+            eeprom_load_result = EEPROM_OK_EXTERNAL;
+        }
     }
 
     if (!loaded)
     {
         readBlobFromInternal(blob, XPARAM_BLOB_SIZE);
         loaded = xparam_table_from_blob(&params_table, blob);
+        if (loaded)
+        {
+            eeprom_load_result = EEPROM_OK_INTERNAL;
+        }
     }
 
     if (!loaded)
     {
         load_defaults();
         saveParameters();
+        eeprom_load_result = EEPROM_DEFAULT_STORED;
     }
 
     free(blob);
+}
+
+EEPROMLoadResult getLoadResult()
+{
+    return eeprom_load_result;
 }

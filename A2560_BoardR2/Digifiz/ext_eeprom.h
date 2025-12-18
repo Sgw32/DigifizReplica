@@ -13,6 +13,15 @@ typedef struct
 extern digifiz_pars digifiz_parameters;
 extern xparam_table_t params_table;
 
+typedef enum
+{
+    EEPROM_NO_LOAD_ATTEMPT = 555,
+    EEPROM_CORRUPTED = 800,
+    EEPROM_OK_EXTERNAL = 100,
+    EEPROM_OK_INTERNAL = 200,
+    EEPROM_DEFAULT_STORED = 300,
+} EEPROMLoadResult;
+
 inline uint32_t& dailyMileage(uint8_t block)
 {
     return block ? digifiz_parameters.daily_mileage_1.value : digifiz_parameters.daily_mileage_0.value;
@@ -50,5 +59,10 @@ void initEEPROM();
  *
  */
 void saveParameters();
+
+/**
+ * @brief Returns last EEPROM load result code
+ */
+EEPROMLoadResult getLoadResult();
 
 #endif

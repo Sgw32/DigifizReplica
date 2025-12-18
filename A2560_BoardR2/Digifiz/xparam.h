@@ -63,7 +63,7 @@ static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_I32_t),
 		"xparams module expects identical size of parameters");
 
 typedef struct{
-	bool					value;
+	uint32_t				value;
 	_COMMON_PARAM_FIELDS()
 }xparam_BOOL_t;
 static_assert(	sizeof(xparam_U32_t) == sizeof(xparam_BOOL_t),
