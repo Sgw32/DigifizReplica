@@ -37,5 +37,5 @@ void buzzerOff()
 
 uint8_t getBuzzerEnabled()
 {
-    return buzzerIsOn&&(!digifiz_parameters.buzzerOff);
+    return buzzerIsOn&&(!digifiz_parameters.buzzerOff.value);
 }

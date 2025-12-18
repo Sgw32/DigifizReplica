@@ -209,30 +209,30 @@ void setCheckEngine(bool onoff)
 
 void displayMFAType(uint8_t mfaType)
 {    
-    switch(digifiz_parameters.mfaState)
+    switch(digifiz_parameters.mfaState.value)
     {
         case MFA_STATE_TRIP_DURATION:
             setMFAClockData(sinceStart.hours(),sinceStart.minutes());
             break;
         case MFA_STATE_TRIP_DISTANCE:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
+            setMFADisplayedNumber((uint16_t)(dailyMileage(digifiz_parameters.mfaBlock.value)/3600));
             setFloatDot(false);
             break;
         case MFA_STATE_TRIP_L100KM:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
+            setMFADisplayedNumber((uint16_t)(averageConsumption(digifiz_parameters.mfaBlock.value)*100));
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
-            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]*10));
+            setMFADisplayedNumber((uint16_t)fabs(averageSpeed(digifiz_parameters.mfaBlock.value)*10));
             setFloatDot(true);
             break;
         case MFA_STATE_OIL_TEMP:
-            if (digifiz_parameters.digifiz_options.option_fahrenheit)
+            if (digifiz_parameters.option_fahrenheit.value)
             {
               setMFADisplayedNumber((int16_t)getOilTemperatureFahrenheit());
               setFloatDot(false);
             }
-            else if (digifiz_parameters.digifiz_options.option_kelvin)
+            else if (digifiz_parameters.option_kelvin.value)
             {
               setMFADisplayedNumber((int16_t)(getOilTemperature()+273.15f));
               setFloatDot(false);
@@ -244,12 +244,12 @@ void displayMFAType(uint8_t mfaType)
             }
             break;
         case MFA_STATE_AIR_TEMP:
-            if (digifiz_parameters.digifiz_options.option_fahrenheit)
+            if (digifiz_parameters.option_fahrenheit.value)
             {
               setMFADisplayedNumber((int16_t)getAmbientTemperatureFahrenheit());
               setFloatDot(false);
             }
-            else if (digifiz_parameters.digifiz_options.option_kelvin)
+            else if (digifiz_parameters.option_kelvin.value)
             { 
               setMFADisplayedNumber((int16_t)(getAmbientTemperature()+273.15f));
               setFloatDot(false);
