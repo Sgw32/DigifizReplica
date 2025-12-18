@@ -201,7 +201,7 @@ int xparam_stringify(xparam_t* param, char* buf)
 	}
 	else if (XPARAM_STRING == param->value_type){
         xparam_STRING_t* p_param = (xparam_STRING_t*)param;
-		return sprintf(buf, "%s", p_param->value);
+		return sprintf(buf, "%s", (char*)p_param->value);
 	}
 	else if (XPARAM_FLOAT == param->value_type){
         xparam_FLOAT_t* p_param = (xparam_FLOAT_t*)param;
