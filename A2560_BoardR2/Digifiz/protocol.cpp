@@ -970,7 +970,7 @@ void processData(int parameter,long value)
         BTserial.println((digifiz_parameters.signalOptions_use_blink_alt_in.value & 0x1) | ((digifiz_parameters.signalOptions_enable_touch_sensor.value & 0x1)<<1));
         #endif
         #ifdef USE_UIOD
-        UIODserial.println((digifiz_parameters.signalOptions_use_blink_alt_in.value & 0x1) | ((digifiz_parameters.signalOptions_enable_touch_sensor.value & 0x1)<<1) | ((digifiz_parameters.signalOptions_invert_light_input.value & 0x1)<<2));
+        UIODserial.println((digifiz_parameters.signalOptions_use_blink_alt_in.value & 0x1) | ((digifiz_parameters.signalOptions_enable_touch_sensor.value & 0x1)<<1));
         #endif
         break;
       case PARAMETER_MAX_RPM_THRESHOLD:
