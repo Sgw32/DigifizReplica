@@ -21,8 +21,8 @@
 /* Private macro -------------------------------------------------------------*/
 #if XPARAM_LOG == 1
     #define LOG(...) printf(__VA_ARGS__)
-#elif
-    #define LOG(...)
+#else
+    #define LOG(...) do {} while (0)
 #endif
 
 

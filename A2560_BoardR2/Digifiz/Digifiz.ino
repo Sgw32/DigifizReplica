@@ -35,7 +35,8 @@ uint16_t displaySpeedCnt = 0;
 uint32_t spd_m = 0;
 float spd_m_speedometer = 0;
 int spd_m_speedometerCnt = 0; //spd_m_speedometerCnt
-float current_averageSpeed = 0;
+float current_averageSpeed1 = 0;
+float current_averageSpeed2 = 0;
 
 //RPM-related data
 float averageRPM = 0;
@@ -115,8 +116,8 @@ void setup()
   #endif
   
   initEEPROM(); //Start memory container
-  current_averageSpeed = averageSpeed(digifiz_parameters.mfaBlock.value);
-
+  current_averageSpeed1 = digifiz_parameters.averageSpeed_0.value;
+  current_averageSpeed2 = digifiz_parameters.averageSpeed_1.value;
 
   if (clockRunning)
   {
@@ -203,10 +204,10 @@ ISR(TIMER4_COMPA_vect)
     rpm = readLastRPM(); 
     if (rpm>0)
     {
-      if((getRPMDispertion()<digifiz_parameters.medianDispFilterThreshold.value)) //30 or LESS!!!
+      if((getRPMDispertion()<65535)) //30 or LESS!!!
       {
       rpm = 1000000/rpm;
-      float rpm_quadratic_coeff = digifiz_parameters.rpmQuadraticCoefficient.value / 100000.0f;
+      float rpm_quadratic_coeff = 0.0f;
       float rpm_linear_coeff = digifiz_parameters.rpmCoefficient.value / 100.0f; //4 cylinder motor, 60 sec in min
       float rpm_raw = rpm;
       rpm = (rpm_quadratic_coeff * rpm_raw * rpm_raw) + (rpm_linear_coeff * rpm_raw);
@@ -246,7 +247,8 @@ ISR(TIMER4_COMPA_vect)
   if (displaySpeedCnt==4) // 2 Hz loop(as on original Digifiz)  
   {
     setSpeedometerData((uint16_t)spd_m_speedometer);
-    current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;
+    current_averageSpeed1 += (spd_m_speedometer-current_averageSpeed1)*0.01;
+    current_averageSpeed2 += (spd_m_speedometer-current_averageSpeed2)*0.01;
     displaySpeedCnt = 0;
   }
   if (getBuzzerEnabled())
@@ -303,8 +305,10 @@ void loop()
       newTime = myRTC.now();
       current_hour = newTime.hour();
       current_minute = newTime.minute();
-      sinceStart = newTime - startTime[digifiz_parameters.mfaBlock.value];
-      durationMinutes(digifiz_parameters.mfaBlock.value) = sinceStart.totalseconds()/60;
+      sinceStart = newTime - startTime[1];
+      digifiz_parameters.duration_1.value = sinceStart.totalseconds()/60;
+      sinceStart = newTime - startTime[0];
+      digifiz_parameters.duration_0.value = sinceStart.totalseconds()/60;
       setClockData(current_hour,current_minute);
     }
     else
@@ -316,13 +320,16 @@ void loop()
       digifiz_parameters.uptime.value += 1;
     
     digifiz_parameters.mileage.value+=spd_m;
-    dailyMileage(digifiz_parameters.mfaBlock.value)+=spd_m;
+    digifiz_parameters.daily_mileage_0.value+=spd_m;
+    digifiz_parameters.daily_mileage_1.value+=spd_m;
     #ifdef AVERAGE_CONSUMPTION_L100KM
-      averageConsumption(digifiz_parameters.mfaBlock.value) += 0.01f*(getCurrentIntakeFuelConsumption()-averageConsumption(digifiz_parameters.mfaBlock.value));//getFuelConsumption()*digifiz_parameters.tankCapacity;
+      digifiz_parameters.averageConsumption_1.value += 0.01f*(getCurrentIntakeFuelConsumption()-digifiz_parameters.averageConsumption_1.value);
+      digifiz_parameters.averageConsumption_0.value += 0.01f*(getCurrentIntakeFuelConsumption()-digifiz_parameters.averageConsumption_0.value);
     #endif
 
     #ifdef CURRENT_CONSUMPTION_L100KM
-    averageConsumption(digifiz_parameters.mfaBlock.value) = getCurrentIntakeFuelConsumption();//getFuelConsumption()*digifiz_parameters.tankCapacity;
+    digifiz_parameters.averageConsumption_1.value = getCurrentIntakeFuelConsumption();
+    digifiz_parameters.averageConsumption_0.value = getCurrentIntakeFuelConsumption();
     #endif
     
     if (millis()<5000)
@@ -351,7 +358,8 @@ void loop()
     //setAudiOptions(0x9);
     if (saveParametersCounter>EEPROM_SAVE_INTERVAL)
     {
-        averageSpeed(digifiz_parameters.mfaBlock.value) = current_averageSpeed;
+        digifiz_parameters.averageSpeed_1.value = current_averageSpeed2;
+        digifiz_parameters.averageSpeed_0.value = current_averageSpeed1;
         saveParameters();
         saveParametersCounter=0;
         //pressMFAMode();

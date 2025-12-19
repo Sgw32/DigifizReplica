@@ -147,17 +147,47 @@ void pressMFAReset()
     switch(digifiz_parameters.mfaState.value)
     {
         case MFA_STATE_TRIP_DURATION:
-            durationMinutes(digifiz_parameters.mfaBlock.value) = 0;
+            if (digifiz_parameters.mfaBlock.value)
+            {
+              digifiz_parameters.duration_1.value = 0;
+            }
+            else
+            {
+              digifiz_parameters.duration_0.value = 0;
+            }
             startTime[digifiz_parameters.mfaBlock.value] = myRTC.now();
             break;
         case MFA_STATE_TRIP_DISTANCE:
-            dailyMileage(digifiz_parameters.mfaBlock.value) = 0;
+            if (digifiz_parameters.mfaBlock.value)
+            {
+              digifiz_parameters.daily_mileage_1.value = 0;
+            }
+            else
+            {
+              digifiz_parameters.daily_mileage_0.value = 0;
+            }
             break;
         case MFA_STATE_TRIP_L100KM:
-            averageConsumption(digifiz_parameters.mfaBlock.value) = 0;
+            if (digifiz_parameters.mfaBlock.value)
+            {
+              digifiz_parameters.averageConsumption_1.value = 0;
+            }
+            else
+            {
+              digifiz_parameters.averageConsumption_0.value = 0;
+            }
+            //averageConsumption(digifiz_parameters.mfaBlock.value) = 0;
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
-            averageSpeed(digifiz_parameters.mfaBlock.value) = 0;
+            if (digifiz_parameters.mfaBlock.value)
+            {
+                digifiz_parameters.averageSpeed_1.value = 0;
+            }
+            else
+            {
+                digifiz_parameters.averageSpeed_0.value = 0;
+            }
+            //averageSpeed(digifiz_parameters.mfaBlock.value) = 0;
             break;
 #if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
         case MFA_STATE_OIL_TEMP:

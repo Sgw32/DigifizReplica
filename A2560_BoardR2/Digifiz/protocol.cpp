@@ -196,7 +196,7 @@ void processData(int parameter,long value)
         #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_RPM_QUADRATIC_COEFFICIENT");
         #endif
-        digifiz_parameters.rpmQuadraticCoefficient.value = value;
+        //digifiz_parameters.rpmQuadraticCoefficient.value = value;
         break;
       case PARAMETER_SPEEDCOEEFICIENT:
         #ifdef USE_BTSERIAL
@@ -277,7 +277,14 @@ void processData(int parameter,long value)
       #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_DAILY_MILEAGE");
         #endif
-        dailyMileage(digifiz_parameters.mfaBlock.value) = value;
+        if (digifiz_parameters.mfaBlock.value)
+        {
+          digifiz_parameters.daily_mileage_1.value = value;
+        }
+        else
+        {
+          digifiz_parameters.daily_mileage_0.value = value;
+        }
         break;
       case PARAMETER_AUTO_BRIGHTNESS:
       #ifdef USE_BTSERIAL
@@ -353,7 +360,7 @@ void processData(int parameter,long value)
       #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_M_D_FILTER");
         #endif
-        digifiz_parameters.medianDispFilterThreshold.value = value;
+        //digifiz_parameters.medianDispFilterThreshold.value = value;
         break;
       case PARAMETER_COOLANT_MAX_R:
       #ifdef USE_BTSERIAL
@@ -419,7 +426,7 @@ void processData(int parameter,long value)
         #endif
         digifiz_parameters.signalOptions_use_blink_alt_in.value = value & 0x1;
         digifiz_parameters.signalOptions_enable_touch_sensor.value = (value >> 1) & 0x1;
-        digifiz_parameters.signalOptions_invert_light_input.value = (value >> 2) & 0x1;
+        //digifiz_parameters.signalOptions_invert_light_input.value = (value >> 2) & 0x1;
         break;
       case PARAMETER_MAX_RPM_THRESHOLD:
         #ifdef USE_BTSERIAL
@@ -519,7 +526,14 @@ void processData(int parameter,long value)
           #ifdef USE_BTSERIAL
           BTserial.println("PARAMETER_UPTIME");
           #endif
-          dailyMileage(digifiz_parameters.mfaBlock.value) = 0;
+          if (digifiz_parameters.mfaBlock.value)
+          {
+            digifiz_parameters.daily_mileage_1.value = 0;
+          }
+          else
+          {
+            digifiz_parameters.daily_mileage_0.value = 0;
+          }
         }
       } 
     }
@@ -692,10 +706,10 @@ void processData(int parameter,long value)
       case PARAMETER_RPM_QUADRATIC_COEFFICIENT:
       #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_RPM_QUADRATIC_COEFFICIENT");
-        BTserial.println(digifiz_parameters.rpmQuadraticCoefficient.value);
+        BTserial.println(0);
         #endif
         #ifdef USE_UIOD
-        UIODserial.println(digifiz_parameters.rpmQuadraticCoefficient.value);
+        UIODserial.println(0);
         #endif
         break;
       case PARAMETER_SPEEDCOEEFICIENT:
@@ -872,10 +886,10 @@ void processData(int parameter,long value)
       case PARAMETER_M_D_FILTER:
       #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_M_D_FILTER");
-        BTserial.println(digifiz_parameters.medianDispFilterThreshold.value);
+        BTserial.println(65535);
         #endif
         #ifdef USE_UIOD
-        UIODserial.println(digifiz_parameters.medianDispFilterThreshold.value);
+        UIODserial.println(65535);
         #endif
         break;
       case PARAMETER_COOLANT_MAX_R:
@@ -953,7 +967,7 @@ void processData(int parameter,long value)
       case PARAMETER_SET_SIGNAL_OPTIONS:
         #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_SET_SIGNAL_OPTIONS");
-        BTserial.println((digifiz_parameters.signalOptions_use_blink_alt_in.value & 0x1) | ((digifiz_parameters.signalOptions_enable_touch_sensor.value & 0x1)<<1) | ((digifiz_parameters.signalOptions_invert_light_input.value & 0x1)<<2));
+        BTserial.println((digifiz_parameters.signalOptions_use_blink_alt_in.value & 0x1) | ((digifiz_parameters.signalOptions_enable_touch_sensor.value & 0x1)<<1));
         #endif
         #ifdef USE_UIOD
         UIODserial.println((digifiz_parameters.signalOptions_use_blink_alt_in.value & 0x1) | ((digifiz_parameters.signalOptions_enable_touch_sensor.value & 0x1)<<1) | ((digifiz_parameters.signalOptions_invert_light_input.value & 0x1)<<2));

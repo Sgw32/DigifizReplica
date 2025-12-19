@@ -15,19 +15,6 @@ ExternalEEPROM myMem;
 static bool external_faulty = false;
 static EEPROMLoadResult eeprom_load_result = EEPROM_NO_LOAD_ATTEMPT;
 
-const digifiz_pars default_parameters = {
-    PARAM_LIST(DEFINE_PARAM)
-};
-
-digifiz_pars digifiz_parameters = {
-    PARAM_LIST(DEFINE_PARAM)
-};
-
-xparam_table_t params_table = {
-    .params = (xparam_t*)&digifiz_parameters,
-    .n_params = XPARAM_PARAM_COUNT,
-};
-
 static void writeBlobToInternal(const uint8_t* blob, size_t len)
 {
     for (size_t i = 0; i < len; i++)
