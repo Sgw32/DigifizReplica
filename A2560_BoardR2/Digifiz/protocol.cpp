@@ -400,6 +400,18 @@ void processData(int parameter,long value)
         #endif
         digifiz_parameters.rpmFilterK.value = value;
         break;
+      case PARAMETER_RPM_FALLING_FILTER:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_RPM_FALLING_FILTER");
+        #endif
+        digifiz_parameters.rpmFallingFilterK.value = value;
+        break;
+      case PARAMETER_SPEED_FILTER:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_SPEED_FILTER");
+        #endif
+        digifiz_parameters.speedFilterK.value = value;
+        break;
       case PARAMETER_SET_FUEL_CALC_FUNCTION:
         #ifdef USE_BTSERIAL
         BTserial.println("PARAMETER_SET_FUEL_CALC_FUNCTION");
@@ -935,6 +947,24 @@ void processData(int parameter,long value)
         #endif
         #ifdef USE_UIOD
         UIODserial.println(digifiz_parameters.rpmFilterK.value);
+        #endif
+        break;
+      case PARAMETER_RPM_FALLING_FILTER:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_RPM_FALLING_FILTER");
+        BTserial.println(digifiz_parameters.rpmFallingFilterK.value);
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.rpmFallingFilterK.value);
+        #endif
+        break;
+      case PARAMETER_SPEED_FILTER:
+        #ifdef USE_BTSERIAL
+        BTserial.println("PARAMETER_SPEED_FILTER");
+        BTserial.println(digifiz_parameters.speedFilterK.value);
+        #endif
+        #ifdef USE_UIOD
+        UIODserial.println(digifiz_parameters.speedFilterK.value);
         #endif
         break;
       case PARAMETER_SET_FUEL_CALC_FUNCTION:
