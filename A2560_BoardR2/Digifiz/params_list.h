@@ -436,10 +436,17 @@ extern "C" {
     ) \
     PARAM(  \
         U16, \
+        rpmFallingFilterK, \
+        .p_name = "", \
+        .p_info = "",\
+        .value = 200, \
+    ) \
+    PARAM(  \
+        U16, \
         speedFilterK, \
         .p_name = "", \
         .p_info = "",\
-        .value = 0, \
+        .value = 500, \
     ) \
     PARAM(  \
         U16, \
