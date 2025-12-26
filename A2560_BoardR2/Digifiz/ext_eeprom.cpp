@@ -51,7 +51,9 @@ static bool readBlobFromExternal(uint8_t* blob, size_t len)
 
 void load_defaults()
 {
-    digifiz_parameters = default_parameters;
+    memcpy(&digifiz_parameters,
+           &default_parameters,
+           sizeof(digifiz_parameters));
 }
 
 void saveParameters()
@@ -79,7 +81,7 @@ void initEEPROM()
 {
     external_faulty = false;
     load_defaults();
-
+ 
 #ifdef DISABLE_EEPROM
     return;
 #endif

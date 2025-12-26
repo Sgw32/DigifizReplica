@@ -15,7 +15,7 @@ extern DateTime startTime[2];
 extern bool clockRunning;
 int orig_mRPMData = 4000;
 bool orig_floatDot = 0;
-extern TimeSpan sinceStart;
+extern TimeSpan sinceStart[2];
 
 uint8_t tr_status = 0x00; // sending, clockbit, 000000
 uint16_t data_cnt = 0;
@@ -212,7 +212,8 @@ void displayMFAType(uint8_t mfaType)
     switch(digifiz_parameters.mfaState.value)
     {
         case MFA_STATE_TRIP_DURATION:
-            setMFAClockData(sinceStart.hours(),sinceStart.minutes());
+            setMFAClockData(sinceStart[digifiz_parameters.mfaBlock.value].hours(),
+                            sinceStart[digifiz_parameters.mfaBlock.value].minutes());
             break;
         case MFA_STATE_TRIP_DISTANCE:
             setMFADisplayedNumber((uint16_t)(dailyMileage(digifiz_parameters.mfaBlock.value)/3600));

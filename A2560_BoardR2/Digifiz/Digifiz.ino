@@ -57,7 +57,7 @@ int current_hour = 99;
 int current_minute = 99;
 uint8_t coolant_segments = 0;
 DateTime newTime;
-TimeSpan sinceStart = 0;
+TimeSpan sinceStart[2] = {0,0};
 bool clockRunning;
 uint8_t fuel = 0;
 
@@ -247,6 +247,7 @@ ISR(TIMER4_COMPA_vect)
   if (displaySpeedCnt==4) // 2 Hz loop(as on original Digifiz)  
   {
     setSpeedometerData((uint16_t)spd_m_speedometer);
+    //setSpeedometerData(digifiz_parameters.mfaState.value);
     current_averageSpeed1 += (spd_m_speedometer-current_averageSpeed1)*0.01;
     current_averageSpeed2 += (spd_m_speedometer-current_averageSpeed2)*0.01;
     displaySpeedCnt = 0;
@@ -305,10 +306,10 @@ void loop()
       newTime = myRTC.now();
       current_hour = newTime.hour();
       current_minute = newTime.minute();
-      sinceStart = newTime - startTime[1];
-      digifiz_parameters.duration_1.value = sinceStart.totalseconds()/60;
-      sinceStart = newTime - startTime[0];
-      digifiz_parameters.duration_0.value = sinceStart.totalseconds()/60;
+      sinceStart[1] = newTime - startTime[1]; //Not working for two MFAs. TODO fix
+      digifiz_parameters.duration_1.value = sinceStart[1].totalseconds()/60;
+      sinceStart[0] = newTime - startTime[0];
+      digifiz_parameters.duration_0.value = sinceStart[0].totalseconds()/60;
       setClockData(current_hour,current_minute);
     }
     else
@@ -372,5 +373,5 @@ void loop()
   }
   setMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState.value);
   processMFA();
-  protocolParse();
+  //protocolParse();
 }

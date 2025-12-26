@@ -240,7 +240,7 @@ extern "C" {
         signalOptions_enable_touch_sensor, \
         .p_name = "", \
         .p_info = "",\
-        .value = 0, \
+        .value = 1, \
         .max = 1, \
     ) \
     PARAM(  \

@@ -150,12 +150,13 @@ void pressMFAReset()
             if (digifiz_parameters.mfaBlock.value)
             {
               digifiz_parameters.duration_1.value = 0;
+              startTime[1] = myRTC.now();
             }
             else
             {
               digifiz_parameters.duration_0.value = 0;
+              startTime[0] = myRTC.now();
             }
-            startTime[digifiz_parameters.mfaBlock.value] = myRTC.now();
             break;
         case MFA_STATE_TRIP_DISTANCE:
             if (digifiz_parameters.mfaBlock.value)

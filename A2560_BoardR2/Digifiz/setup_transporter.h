@@ -53,8 +53,8 @@
 //#define DIGIFIZ_ORIGINAL_DISPLAY
 //#define DIGIFIZ_LCD_DISPLAY
 #define AUDI_DISPLAY
-//#define AUDI_RED_DISPLAY
 #define TRANSPORTER
+//#define AUDI_RED_DISPLAY
 
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
 #ifndef DISABLE_SENSOR_BUTTON
@@ -70,11 +70,12 @@
 #undef UIOD_PARSE_INPUT
 
 //DEFAULT for miniUIOD if ONLY mUIOD is installed!!!
-#define BTserial Serial1
+#define BTserial Serial
 #define UIODserial Serial1
 
-#define USE_UIOD
-#define UIOD_PARSE_INPUT //default for UIOD
+#define USE_BTSERIAL
+//#define USE_UIOD
+//#define UIOD_PARSE_INPUT //default for UIOD
 
 #endif
 

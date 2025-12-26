@@ -17,7 +17,7 @@ extern DateTime startTime[2];
 extern bool clockRunning;
 int mRPMData = 4000;
 bool floatDot = 0;
-extern TimeSpan sinceStart;
+extern TimeSpan sinceStart[2];
 
 bool checkEngineActive;
 bool backlightStatus;
@@ -207,7 +207,8 @@ void displayMFAType(uint8_t mfaType)
             setMFADisplayedNumber((uint16_t)(dailyMileage(digifiz_parameters.mfaBlock.value)/3600));
             break;
         case MFA_STATE_TRIP_DURATION:
-            setMFAClockData(sinceStart.hours(),sinceStart.minutes());
+            setMFAClockData(sinceStart[digifiz_parameters.mfaBlock.value].hours(),
+                            sinceStart[digifiz_parameters.mfaBlock.value].minutes());
             break;
         default:
             break;
