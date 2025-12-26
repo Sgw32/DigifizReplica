@@ -200,7 +200,12 @@ ISR(TIMER4_COMPA_vect)
       //#endif
       spd_m /= 100;
     }
-    spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
+    float speed_filter = digifiz_parameters.speedFilterK.value;
+    if (speed_filter > 1000.0f)
+    {
+      speed_filter = 1000.0f;
+    }
+    spd_m_speedometer += (spd_m - spd_m_speedometer) * (speed_filter / 1000.0f);
     rpm = readLastRPM(); 
     if (rpm>0)
     {
@@ -211,7 +216,15 @@ ISR(TIMER4_COMPA_vect)
       float rpm_linear_coeff = digifiz_parameters.rpmCoefficient.value / 100.0f; //4 cylinder motor, 60 sec in min
       float rpm_raw = rpm;
       rpm = (rpm_quadratic_coeff * rpm_raw * rpm_raw) + (rpm_linear_coeff * rpm_raw);
-      averageRPM += (rpm-averageRPM)*digifiz_parameters.rpmFilterK.value/140; //default = 0.2
+      float rpm_delta = rpm - averageRPM;
+      float rpm_filter = (rpm_delta >= 0.0f)
+        ? digifiz_parameters.rpmFilterK.value
+        : digifiz_parameters.rpmFallingFilterK.value;
+      if (rpm_filter > 1000.0f)
+      {
+        rpm_filter = 1000.0f;
+      }
+      averageRPM += (rpm_delta * rpm_filter) / 1000.0f;
       }
     }
     else
