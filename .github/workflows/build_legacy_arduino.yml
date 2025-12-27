@@ -59,7 +59,7 @@ jobs:
 
       # --- Define Variants ---
       - name: Set Variant List
-        run: echo "VARIANTS=setup_audi_red setup_audi_green setup_g2 setup_g2_uk setup_g2_usa setup_g2_diesel" >> $GITHUB_ENV
+        run: echo "VARIANTS=setup_audi_red setup_audi_green setup_g2 setup_g2_uk setup_g2_usa setup_g2_diesel setup_transporter" >> $GITHUB_ENV
 
       # --- Install Dependencies (Arduino Libraries) ---
       - name: Install Required Arduino Libraries

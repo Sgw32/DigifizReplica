@@ -35,7 +35,8 @@ uint16_t displaySpeedCnt = 0;
 uint32_t spd_m = 0;
 float spd_m_speedometer = 0;
 int spd_m_speedometerCnt = 0; //spd_m_speedometerCnt
-float current_averageSpeed = 0;
+float current_averageSpeed1 = 0;
+float current_averageSpeed2 = 0;
 
 //RPM-related data
 float averageRPM = 0;
@@ -56,7 +57,7 @@ int current_hour = 99;
 int current_minute = 99;
 uint8_t coolant_segments = 0;
 DateTime newTime;
-TimeSpan sinceStart = 0;
+TimeSpan sinceStart[2] = {0,0};
 bool clockRunning;
 uint8_t fuel = 0;
 
@@ -115,15 +116,15 @@ void setup()
   #endif
   
   initEEPROM(); //Start memory container
-  current_averageSpeed = digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock];
-
+  current_averageSpeed1 = digifiz_parameters.averageSpeed_0.value;
+  current_averageSpeed2 = digifiz_parameters.averageSpeed_1.value;
 
   if (clockRunning)
   {
     startTime[0] = myRTC.now();
-    startTime[0] = startTime[0] - TimeSpan(digifiz_parameters.duration[0]*60); //minus minutes
+    startTime[0] = startTime[0] - TimeSpan(durationMinutes(0)*60); //minus minutes
     startTime[1] = myRTC.now();
-    startTime[1] = startTime[1] - TimeSpan(digifiz_parameters.duration[1]*60); //minus minutes
+    startTime[1] = startTime[1] - TimeSpan(durationMinutes(1)*60); //minus minutes
   }
 
   initDisplay(); //Start MAX7219 display driver
@@ -167,7 +168,7 @@ ISR(TIMER4_COMPA_vect)
       fuel+=1;
       if (fuel>99)
         fuel=0;
-      if (digifiz_parameters.digifiz_options.option_gallons)
+      if (digifiz_parameters.option_gallons.value)
       {
         if (fuel<2)
           setRefuelSign(true);
@@ -192,25 +193,38 @@ ISR(TIMER4_COMPA_vect)
     if (spd_m>0)
     {
       spd_m = 1000000/spd_m ; //Hz
-      spd_m *= digifiz_parameters.speedCoefficient; //to kmh (or to miles? - why not)
+      spd_m *= digifiz_parameters.speedCoefficient.value; //to kmh (or to miles? - why not)
       //#ifdef MILES
-      if (digifiz_parameters.digifiz_options.option_miles)
+      if (digifiz_parameters.option_miles.value)
         spd_m *= 0.6214;
       //#endif
       spd_m /= 100;
     }
-    spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
+    float speed_filter = digifiz_parameters.speedFilterK.value;
+    if (speed_filter > 1000.0f)
+    {
+      speed_filter = 1000.0f;
+    }
+    spd_m_speedometer += (spd_m - spd_m_speedometer) * (speed_filter / 1000.0f);
     rpm = readLastRPM(); 
     if (rpm>0)
     {
-      if((getRPMDispertion()<digifiz_parameters.medianDispFilterThreshold)) //30 or LESS!!!
+      if((getRPMDispertion()<65535)) //30 or LESS!!!
       {
       rpm = 1000000/rpm;
-      float rpm_quadratic_coeff = digifiz_parameters.rpmQuadraticCoefficient / 100000.0f;
-      float rpm_linear_coeff = digifiz_parameters.rpmCoefficient / 100.0f; //4 cylinder motor, 60 sec in min
+      float rpm_quadratic_coeff = 0.0f;
+      float rpm_linear_coeff = digifiz_parameters.rpmCoefficient.value / 100.0f; //4 cylinder motor, 60 sec in min
       float rpm_raw = rpm;
       rpm = (rpm_quadratic_coeff * rpm_raw * rpm_raw) + (rpm_linear_coeff * rpm_raw);
-      averageRPM += (rpm-averageRPM)*digifiz_parameters.rpmFilterK/140; //default = 0.2
+      float rpm_delta = rpm - averageRPM;
+      float rpm_filter = (rpm_delta >= 0.0f)
+        ? digifiz_parameters.rpmFilterK.value
+        : digifiz_parameters.rpmFallingFilterK.value;
+      if (rpm_filter > 1000.0f)
+      {
+        rpm_filter = 1000.0f;
+      }
+      averageRPM += (rpm_delta * rpm_filter) / 1000.0f;
       }
     }
     else
@@ -218,7 +232,7 @@ ISR(TIMER4_COMPA_vect)
       averageRPM += (0-averageRPM)*0.5;
     }
 
-    if (digifiz_parameters.digifiz_options.option_gallons)
+    if (digifiz_parameters.option_gallons.value)
     {
       fuel = getGallonsInTank();
       if (fuel<2)
@@ -246,7 +260,9 @@ ISR(TIMER4_COMPA_vect)
   if (displaySpeedCnt==4) // 2 Hz loop(as on original Digifiz)  
   {
     setSpeedometerData((uint16_t)spd_m_speedometer);
-    current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;
+    //setSpeedometerData(digifiz_parameters.mfaState.value);
+    current_averageSpeed1 += (spd_m_speedometer-current_averageSpeed1)*0.01;
+    current_averageSpeed2 += (spd_m_speedometer-current_averageSpeed2)*0.01;
     displaySpeedCnt = 0;
   }
   if (getBuzzerEnabled())
@@ -303,8 +319,10 @@ void loop()
       newTime = myRTC.now();
       current_hour = newTime.hour();
       current_minute = newTime.minute();
-      sinceStart = newTime - startTime[digifiz_parameters.mfaBlock];
-      digifiz_parameters.duration[digifiz_parameters.mfaBlock] = sinceStart.totalseconds()/60;
+      sinceStart[1] = newTime - startTime[1]; //Not working for two MFAs. TODO fix
+      digifiz_parameters.duration_1.value = sinceStart[1].totalseconds()/60;
+      sinceStart[0] = newTime - startTime[0];
+      digifiz_parameters.duration_0.value = sinceStart[0].totalseconds()/60;
       setClockData(current_hour,current_minute);
     }
     else
@@ -313,16 +331,19 @@ void loop()
     }
 
     if (averageRPM>200)
-      digifiz_parameters.uptime += 1;
+      digifiz_parameters.uptime.value += 1;
     
-    digifiz_parameters.mileage+=spd_m;
-    digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]+=spd_m;
+    digifiz_parameters.mileage.value+=spd_m;
+    digifiz_parameters.daily_mileage_0.value+=spd_m;
+    digifiz_parameters.daily_mileage_1.value+=spd_m;
     #ifdef AVERAGE_CONSUMPTION_L100KM
-      digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] += 0.01f*(getCurrentIntakeFuelConsumption()-digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]);//getFuelConsumption()*digifiz_parameters.tankCapacity;
+      digifiz_parameters.averageConsumption_1.value += 0.01f*(getCurrentIntakeFuelConsumption()-digifiz_parameters.averageConsumption_1.value);
+      digifiz_parameters.averageConsumption_0.value += 0.01f*(getCurrentIntakeFuelConsumption()-digifiz_parameters.averageConsumption_0.value);
     #endif
 
     #ifdef CURRENT_CONSUMPTION_L100KM
-    digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock] = getCurrentIntakeFuelConsumption();//getFuelConsumption()*digifiz_parameters.tankCapacity;
+    digifiz_parameters.averageConsumption_1.value = getCurrentIntakeFuelConsumption();
+    digifiz_parameters.averageConsumption_0.value = getCurrentIntakeFuelConsumption();
     #endif
     
     if (millis()<5000)
@@ -331,38 +352,39 @@ void loop()
     }
     else
     {
-      setMileage(uptimeDisplayEnabled ? (digifiz_parameters.uptime/3600) : (digifiz_parameters.mileage/3600)); //to km
+      setMileage(uptimeDisplayEnabled ? (digifiz_parameters.uptime.value/3600) : (digifiz_parameters.mileage.value/3600)); //to km
     }
     
     #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
-    setDailyMileage((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
+    setDailyMileage((uint16_t)(dailyMileage(digifiz_parameters.mfaBlock.value)/3600));
     #endif
 
     if (millis()>2000)
     {
     #ifndef YELLOW_GREEN_LED
-    setBrightness(digifiz_parameters.autoBrightness ? getBrightnessLevel() : digifiz_parameters.brightnessLevel);
+    setBrightness(digifiz_parameters.autoBrightness.value ? getBrightnessLevel() : digifiz_parameters.brightnessLevel.value);
     #else
-    setBrightness(digifiz_parameters.autoBrightness ? (getBrightnessLevel()+7) : digifiz_parameters.brightnessLevel);
+    setBrightness(digifiz_parameters.autoBrightness.value ? (getBrightnessLevel()+7) : digifiz_parameters.brightnessLevel.value);
     #endif
     }
     saveParametersCounter++;
-    setBacklight(digifiz_parameters.backlight_on ? true : false);
+    setBacklight(digifiz_parameters.backlight_on.value ? true : false);
     //setAudiOptions(0x9);
     if (saveParametersCounter>EEPROM_SAVE_INTERVAL)
     {
-        digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock] = current_averageSpeed;
+        digifiz_parameters.averageSpeed_1.value = current_averageSpeed2;
+        digifiz_parameters.averageSpeed_0.value = current_averageSpeed1;
         saveParameters();
         saveParametersCounter=0;
         //pressMFAMode();
         //setAudiOptions(0x6);
     }
     checkEmergency(rpm);
-    setMFABlock(digifiz_parameters.mfaBlock ? 0 : 1); //in display h
-    displayMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState);
+    setMFABlock(digifiz_parameters.mfaBlock.value ? 0 : 1); //in display h
+    displayMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState.value);
     setDot(false);
   }
-  setMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState);
+  setMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState.value);
   processMFA();
-  protocolParse();
+  //protocolParse();
 }

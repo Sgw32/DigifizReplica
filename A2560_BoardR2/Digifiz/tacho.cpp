@@ -21,7 +21,7 @@ void PCInt20()
     // So mRPMSenseData has a window of 1000000/300 ... 1000000
     uint32_t cur_micros = micros();
     uint32_t delta = (cur_micros-lastMillisRPM);
-    if (delta>digifiz_parameters.rpmMaxThreshold)
+    if (delta>digifiz_parameters.rpmMaxThreshold.value)
     {
         mRPMSenseData = delta;
         lastMillisRPM = micros();

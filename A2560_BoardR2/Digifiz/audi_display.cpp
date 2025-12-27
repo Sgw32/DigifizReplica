@@ -17,7 +17,7 @@ extern DateTime startTime[2];
 extern bool clockRunning;
 int mRPMData = 4000;
 bool floatDot = 0;
-extern TimeSpan sinceStart;
+extern TimeSpan sinceStart[2];
 
 bool checkEngineActive;
 bool backlightStatus;
@@ -99,8 +99,8 @@ void setRPM(int rpmdata)
 void setBacklight(bool onoff)
 {
   backlightStatus = onoff;
-  setMilesKMH((digifiz_parameters.digifiz_options.option_miles) ? 1 : 0);
-  setLBar((digifiz_parameters.digifiz_options.option_lbar) ? 1 : 0);
+  setMilesKMH((digifiz_parameters.option_miles.value) ? 1 : 0);
+  setLBar((digifiz_parameters.option_lbar.value) ? 1 : 0);
   stled.setLED(LEDall, onoff); //always
   stled2.setLED(audiOptions, true);
   stled2.setLED(~audiOptions, false);
@@ -176,26 +176,27 @@ void setCheckEngine(bool onoff)
 
 void displayMFAType(uint8_t mfaType)
 {    
-    switch(digifiz_parameters.mfaState)
+    switch(digifiz_parameters.mfaState.value)
     {
         case MFA_STATE_TRIP_L100KM:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
+            setMFADisplayedNumber((uint16_t)(averageConsumption(digifiz_parameters.mfaBlock.value)*100));
             setFloatDot(true);
             break; 
         case MFA_STATE_TRIP_CURRENT_L100KM:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock]*100));
+            setMFADisplayedNumber((uint16_t)(averageConsumption(digifiz_parameters.mfaBlock.value)*100));
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
-            setMFADisplayedNumber((uint16_t)fabs(digifiz_parameters.averageSpeed[digifiz_parameters.mfaBlock]));
+            setMFADisplayedNumber((uint16_t)fabs(averageSpeed(digifiz_parameters.mfaBlock.value)));
             setFloatDot(false);
             break; 
         case MFA_STATE_TRIP_DISTANCE:
-            setMFADisplayedNumber((uint16_t)(digifiz_parameters.daily_mileage[digifiz_parameters.mfaBlock]/3600));
+            setMFADisplayedNumber((uint16_t)(dailyMileage(digifiz_parameters.mfaBlock.value)/3600));
             setFloatDot(false);
             break;  
         case MFA_STATE_TRIP_DURATION:
-            setMFAClockData(sinceStart.hours(),sinceStart.minutes());
+            setMFAClockData(sinceStart[digifiz_parameters.mfaBlock.value].hours(),
+                            sinceStart[digifiz_parameters.mfaBlock.value].minutes());
             break;
         case MFA_STATE_TRIP_TIME:
             setMFAClockData(clockHoursAudi,clockMinsAudi);

@@ -17,7 +17,7 @@ void PCInt12()
     // So mRPMSenseData has a window of 1000000/600 ... 1000000
     uint32_t cur_micros = micros();
     uint32_t delta = (cur_micros-lastMillis);
-    if (delta>digifiz_parameters.speedMaxThreshold)
+    if (delta>digifiz_parameters.speedMaxThreshold.value)
     {
         mSpdData = (micros()-lastMillis);
         lastMillis = micros();

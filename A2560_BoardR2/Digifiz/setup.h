@@ -53,6 +53,7 @@
 //#define DIGIFIZ_ORIGINAL_DISPLAY
 //#define DIGIFIZ_LCD_DISPLAY
 #define AUDI_DISPLAY
+#define TRANSPORTER
 //#define AUDI_RED_DISPLAY
 
 #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)

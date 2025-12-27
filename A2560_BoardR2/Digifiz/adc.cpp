@@ -97,19 +97,19 @@ extern digifiz_pars digifiz_parameters;
 
 void updateADCSettings()
 {
-    coolantB = digifiz_parameters.coolantThermistorB;
-    oilB = digifiz_parameters.oilThermistorB;
-    airB = digifiz_parameters.airThermistorB;
-    R1_Coolant = digifiz_parameters.coolantThermistorDefRes;
-    R1_Oil = digifiz_parameters.oilThermistorDefRes;
-    R1_Ambient = digifiz_parameters.ambThermistorDefRes;
+    coolantB = digifiz_parameters.coolantThermistorB.value;
+    oilB = digifiz_parameters.oilThermistorB.value;
+    airB = digifiz_parameters.airThermistorB.value;
+    R1_Coolant = digifiz_parameters.coolantThermistorDefRes.value;
+    R1_Oil = digifiz_parameters.oilThermistorDefRes.value;
+    R1_Ambient = digifiz_parameters.ambThermistorDefRes.value;
 
-    tauCoolant = (float)digifiz_parameters.tauCoolant*TAU;
-    tauOil = (float)digifiz_parameters.tauOil*TAU*0.1;
-    tauAir = (float)digifiz_parameters.tauAir*TAU*0.1;
-    tauGasoline = (float)digifiz_parameters.tauTank*TAU*0.03;
-    tauGasolineConsumption = (float)digifiz_parameters.tauTank*TAU*0.01;
-    tankCapacity = digifiz_parameters.tankCapacity;
+    tauCoolant = (float)digifiz_parameters.tauCoolant.value*TAU;
+    tauOil = (float)digifiz_parameters.tauOil.value*TAU*0.1;
+    tauAir = (float)digifiz_parameters.tauAir.value*TAU*0.1;
+    tauGasoline = (float)digifiz_parameters.tauTank.value*TAU*0.03;
+    tauGasolineConsumption = (float)digifiz_parameters.tauTank.value*TAU*0.01;
+    tankCapacity = digifiz_parameters.tankCapacity.value;
 }
 
 void initADC()
@@ -401,13 +401,13 @@ void processGasLevel()
 
     float R2_local = 220.0f * v / denom;
     // clamp to configured tank limits (preserve previous behaviour)
-    R2_local = constrain(R2_local, digifiz_parameters.tankMinResistance, digifiz_parameters.tankMaxResistance);
+    R2_local = constrain(R2_local, digifiz_parameters.tankMinResistance.value, digifiz_parameters.tankMaxResistance.value);
 
     float R2scaled = 0.0f;
-    if (digifiz_parameters.digifiz_options.option_linear_fuel)
+    if (digifiz_parameters.option_linear_fuel.value)
     {
-        R2scaled = ((float)R2_local - digifiz_parameters.tankMinResistance) /
-                   (digifiz_parameters.tankMaxResistance - digifiz_parameters.tankMinResistance);
+        R2scaled = ((float)R2_local - digifiz_parameters.tankMinResistance.value) /
+                   (digifiz_parameters.tankMaxResistance.value - digifiz_parameters.tankMinResistance.value);
     }
     else
     {
@@ -551,11 +551,11 @@ void processFirstGasLevel()
         samples_gas = 0;
         return;
     }
-    float R2_local = constrain(220 * vacc / (1023.0f - vacc), digifiz_parameters.tankMinResistance, digifiz_parameters.tankMaxResistance);
+    float R2_local = constrain(220 * vacc / (1023.0f - vacc), digifiz_parameters.tankMinResistance.value, digifiz_parameters.tankMaxResistance.value);
     float R2scaled = 0.0f;
-    if (digifiz_parameters.digifiz_options.option_linear_fuel)
+    if (digifiz_parameters.option_linear_fuel.value)
     {
-        R2scaled = (((float)R2_local - digifiz_parameters.tankMinResistance) / (digifiz_parameters.tankMaxResistance - digifiz_parameters.tankMinResistance));
+        R2scaled = (((float)R2_local - digifiz_parameters.tankMinResistance.value) / (digifiz_parameters.tankMaxResistance.value - digifiz_parameters.tankMinResistance.value));
     }
     else
     {
@@ -599,11 +599,11 @@ float getRToFuelLevel(float R)
 float getGasLevel()
 {
     V0 = (float)analogRead(gasolinePin);
-    R2 = constrain(220 * V0 / (1023.0f - V0),digifiz_parameters.tankMinResistance,digifiz_parameters.tankMaxResistance); // 330 Ohm in series with fuel sensor
+    R2 = constrain(220 * V0 / (1023.0f - V0),digifiz_parameters.tankMinResistance.value,digifiz_parameters.tankMaxResistance.value); // 330 Ohm in series with fuel sensor
     float R2scaled = 0.0f;
-    if (digifiz_parameters.digifiz_options.option_linear_fuel)
+    if (digifiz_parameters.option_linear_fuel.value)
     {
-        R2scaled = (((float)R2-digifiz_parameters.tankMinResistance) / (digifiz_parameters.tankMaxResistance - digifiz_parameters.tankMinResistance));
+        R2scaled = (((float)R2-digifiz_parameters.tankMinResistance.value) / (digifiz_parameters.tankMaxResistance.value - digifiz_parameters.tankMinResistance.value));
     }
     else
     {
@@ -635,20 +635,20 @@ uint8_t getDisplayedCoolantTemp()  //0..14, 0..16
       return 0;
 #ifdef AUDI_DISPLAY
     //16 LEDs
-    return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance)/
-            (digifiz_parameters.coolantMaxResistance - digifiz_parameters.coolantMinResistance)*16.0f),0,16);
+    return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance.value)/
+            (digifiz_parameters.coolantMaxResistance.value - digifiz_parameters.coolantMinResistance.value)*16.0f),0,16);
 #endif
 #ifdef AUDI_RED_DISPLAY
     //17 LEDs
-    return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance)/
-            (digifiz_parameters.coolantMaxResistance - digifiz_parameters.coolantMinResistance)*17.0f),0,17);
+    return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance.value)/
+            (digifiz_parameters.coolantMaxResistance.value - digifiz_parameters.coolantMinResistance.value)*17.0f),0,17);
 
 #endif
 
 #if !defined(AUDI_RED_DISPLAY) && !defined(AUDI_DISPLAY)
     //14 LEDs
-    return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance)/
-            (digifiz_parameters.coolantMaxResistance - digifiz_parameters.coolantMinResistance)*14.0f),0,14); 
+    return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance.value)/
+            (digifiz_parameters.coolantMaxResistance.value - digifiz_parameters.coolantMinResistance.value)*14.0f),0,14); 
  
 #endif            
 }
@@ -656,8 +656,8 @@ uint8_t getDisplayedCoolantTemp()  //0..14, 0..16
 uint8_t getDisplayedCoolantTempOrig()  //0..14
 {
     //20 LCD segments
-    return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance)/
-            (digifiz_parameters.coolantMaxResistance - digifiz_parameters.coolantMinResistance)*20.0f),0,20); 
+    return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance.value)/
+            (digifiz_parameters.coolantMaxResistance.value - digifiz_parameters.coolantMinResistance.value)*20.0f),0,20); 
 }
 
 
