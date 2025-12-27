@@ -12,6 +12,7 @@
 #include "setup.h"
 #include "audi_display.h"
 #include "audi_red_display.h"
+#include "transporter_display.h"
 
 //#include <DS3231.h>
 #include <RTClib.h>
@@ -301,7 +302,7 @@ void loop()
   processLCDIndicators();
   fireDigifiz();
   #else
-  #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
+  #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY) || defined(TRANSPORTER_DISPLAY)
   fireDigifiz();
   #else
   fireDigifiz();
@@ -355,7 +356,7 @@ void loop()
       setMileage(uptimeDisplayEnabled ? (digifiz_parameters.uptime.value/3600) : (digifiz_parameters.mileage.value/3600)); //to km
     }
     
-    #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
+    #if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY) || defined(TRANSPORTER_DISPLAY)
     setDailyMileage((uint16_t)(dailyMileage(digifiz_parameters.mfaBlock.value)/3600));
     #endif
 

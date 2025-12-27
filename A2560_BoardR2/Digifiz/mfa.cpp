@@ -190,7 +190,7 @@ void pressMFAReset()
             }
             //averageSpeed(digifiz_parameters.mfaBlock.value) = 0;
             break;
-#if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
+#if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY) && !defined(TRANSPORTER_DISPLAY)
         case MFA_STATE_OIL_TEMP:
             //no
             break;

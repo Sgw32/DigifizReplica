@@ -52,17 +52,17 @@
 //#define TESTMODE
 //#define DIGIFIZ_ORIGINAL_DISPLAY
 //#define DIGIFIZ_LCD_DISPLAY
-#define AUDI_DISPLAY
+#define TRANSPORTER_DISPLAY
 #define TRANSPORTER
 //#define AUDI_RED_DISPLAY
 
-#if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
+#if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY) || defined(TRANSPORTER_DISPLAY)
 #ifndef DISABLE_SENSOR_BUTTON
 #define DISABLE_SENSOR_BUTTON
 #endif
 #endif
 
-#if defined(AUDI_DISPLAY)
+#if defined(AUDI_DISPLAY) || defined(TRANSPORTER_DISPLAY)
 #undef BTserial
 #undef UIODserial
 #undef USE_UIOD
