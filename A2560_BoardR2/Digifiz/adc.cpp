@@ -633,7 +633,7 @@ uint8_t getDisplayedCoolantTemp()  //0..14, 0..16
 {
   if (invalid_coolant >= MAX_CONSECUTIVE_INVALID)
       return 0;
-#ifdef AUDI_DISPLAY
+#if defined(AUDI_DISPLAY) || defined(TRANSPORTER_DISPLAY)
     //16 LEDs
     return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance.value)/
             (digifiz_parameters.coolantMaxResistance.value - digifiz_parameters.coolantMinResistance.value)*16.0f),0,16);
@@ -645,7 +645,7 @@ uint8_t getDisplayedCoolantTemp()  //0..14, 0..16
 
 #endif
 
-#if !defined(AUDI_RED_DISPLAY) && !defined(AUDI_DISPLAY)
+#if !defined(AUDI_RED_DISPLAY) && !defined(AUDI_DISPLAY) && !defined(TRANSPORTER_DISPLAY)
     //14 LEDs
     return constrain((int)((coolantT-digifiz_parameters.coolantMinResistance.value)/
             (digifiz_parameters.coolantMaxResistance.value - digifiz_parameters.coolantMinResistance.value)*14.0f),0,14); 

@@ -52,14 +52,14 @@ extern "C" {
 
 #if defined(DIESEL_MODE)
 #define DEFAULT_RPM_COEFFICIENT 400
-#elif !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
+#elif !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY) && !defined(TRANSPORTER_DISPLAY)
 #define DEFAULT_RPM_COEFFICIENT 3000
 #else
 #define DEFAULT_RPM_COEFFICIENT 1500
 #endif
 
 #if defined(RPM_8000)
-#if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
+#if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY) || defined(TRANSPORTER_DISPLAY)
 #define DEFAULT_MAX_RPM 7000
 #else
 #define DEFAULT_MAX_RPM 8000
@@ -68,13 +68,13 @@ extern "C" {
 #define DEFAULT_MAX_RPM 7000
 #endif
 
-#if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
+#if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY) && !defined(TRANSPORTER_DISPLAY)
 #define DEFAULT_RPM_THRESHOLD 3000
 #else
 #define DEFAULT_RPM_THRESHOLD 1500
 #endif
 
-#if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
+#if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY) || defined(TRANSPORTER_DISPLAY)
 #define DEFAULT_TANK_CAPACITY 70
 #else
 #define DEFAULT_TANK_CAPACITY 63
