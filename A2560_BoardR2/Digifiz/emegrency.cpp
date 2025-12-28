@@ -2,6 +2,7 @@
 #include "lcd_display.h"
 #include "audi_display.h"
 #include "audi_red_display.h"
+#include "transporter_display.h"
 
 uint8_t emergency_state = 0;
 uint16_t emergencyRPM = 3000;
