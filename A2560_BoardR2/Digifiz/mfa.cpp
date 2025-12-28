@@ -4,6 +4,7 @@
 #include "lcd_display.h"
 #include "audi_display.h"
 #include "audi_red_display.h"
+#include <RTClib.h>
 
 uint8_t mfaMemorySelected = 0;
 uint8_t prevMFAMode = HIGH;
