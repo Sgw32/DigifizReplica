@@ -610,8 +610,22 @@ void processGasLevel() {
     //R2 = constrain(220 * V0 / (ADC_UPPER_BOUND - V0),digifiz_parameters.tankMinResistance.value,digifiz_parameters.tankMaxResistance.value); // 220 Ohm in series with fuel sensor
     R2 = 220.0f * V0 / (ADC_UPPER_BOUND - V0);
 
+    float tankMin = digifiz_parameters.tankMinResistance.value;
+    float tankMax = digifiz_parameters.tankMaxResistance.value;
+    float tankRange = tankMax - tankMin;
+    const float faultRatio = 0.05f; // allow 5% tolerance before marking as faulty
+    if (tankRange <= 0.0f)
+    {
+        if (faulty_status.fuel_faulty < 255)
+            faulty_status.fuel_faulty += 1;
+        return;
+    }
+    float faultSpacing = tankRange * faultRatio;
+    float lowerFaultBound = tankMin - faultSpacing;
+    float upperFaultBound = tankMax + faultSpacing;
+
     //TODO do not set faulty immediately
-    if (R2>digifiz_parameters.tankMaxResistance.value)
+    if (R2 > upperFaultBound)
     {
         if (faulty_status.fuel_faulty < 255)
             faulty_status.fuel_faulty += 1;
@@ -619,7 +633,7 @@ void processGasLevel() {
     }
 
     //TODO do not set faulty immediately
-    if (R2<digifiz_parameters.tankMinResistance.value)
+    if (R2 < lowerFaultBound)
     {
         if (faulty_status.fuel_faulty < 255)
             faulty_status.fuel_faulty += 1;
@@ -629,17 +643,18 @@ void processGasLevel() {
     faulty_status.fuel_faulty = 0;
 
     float R2scaled = 0.0f;
+    float boundedR2 = R2;
+    boundedR2 = fminf(fmaxf(boundedR2, tankMin), tankMax);
+
     if (digifiz_parameters.option_linear_fuel.value)
     {
-        R2scaled = (((float)R2-
-                    digifiz_parameters.tankMinResistance.value)/(digifiz_parameters.tankMaxResistance.value-
-                                                        digifiz_parameters.tankMinResistance.value));
+        R2scaled = ((boundedR2 - tankMin) / tankRange);
     }
     else
     {
         //This formula is valid only for range tankMinResistance/tankMaxResistance 35/265
         //So if range is different, adjust R2 accordingly
-        R2 = R2 - digifiz_parameters.tankMinResistance.value; //0-230 Range
+        R2 = boundedR2 - digifiz_parameters.tankMinResistance.value; //0-230 Range
         //Adjust for new range:
         //equals 1 if they are 265/35, otherwise adjusted for range 265/35:
         R2 *= (265.0f-35.0f)/(digifiz_parameters.tankMaxResistance.value-digifiz_parameters.tankMinResistance.value);

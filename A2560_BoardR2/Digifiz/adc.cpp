@@ -55,6 +55,7 @@ uint32_t consumptionCounter;
 #define ADC_MAX_VALID 1021
 #define ADC_DENOM_EPS 1e-3f
 #define STARTUP_SAMPLES 40
+#define FUEL_FAULT_TOLERANCE_RATIO 0.05f
 
 static uint16_t samples_coolant = 0;
 static uint16_t samples_oil = 0;
@@ -399,19 +400,34 @@ void processGasLevel()
         return;
     }
 
+    float tankMin = digifiz_parameters.tankMinResistance.value;
+    float tankMax = digifiz_parameters.tankMaxResistance.value;
+    float tankRange = tankMax - tankMin;
+    if (tankRange <= 0.0f) {
+        samples_gas = 0;
+        invalid_gas++;
+        return;
+    }
+    float faultSpacing = tankRange * FUEL_FAULT_TOLERANCE_RATIO;
+    float lowerFaultBound = tankMin - faultSpacing;
+    float upperFaultBound = tankMax + faultSpacing;
+
     float R2_local = 220.0f * v / denom;
-    // clamp to configured tank limits (preserve previous behaviour)
-    R2_local = constrain(R2_local, digifiz_parameters.tankMinResistance.value, digifiz_parameters.tankMaxResistance.value);
+    if (R2_local > upperFaultBound || R2_local < lowerFaultBound) {
+        samples_gas = 0;
+        invalid_gas++;
+        return;
+    }
+    float boundedR2 = constrain(R2_local, tankMin, tankMax);
 
     float R2scaled = 0.0f;
     if (digifiz_parameters.option_linear_fuel.value)
     {
-        R2scaled = ((float)R2_local - digifiz_parameters.tankMinResistance.value) /
-                   (digifiz_parameters.tankMaxResistance.value - digifiz_parameters.tankMinResistance.value);
+        R2scaled = ((float)boundedR2 - tankMin) / tankRange;
     }
     else
     {
-        R2scaled = 1.0f - (1300.0f - 10.3f * R2_local + 0.0206f * R2_local * R2_local) / 1000.0f;
+        R2scaled = 1.0f - (1300.0f - 10.3f * boundedR2 + 0.0206f * boundedR2 * boundedR2) / 1000.0f;
     }
 
     if (!isfinite(R2scaled)) {
@@ -551,11 +567,29 @@ void processFirstGasLevel()
         samples_gas = 0;
         return;
     }
-    float R2_local = constrain(220 * vacc / (1023.0f - vacc), digifiz_parameters.tankMinResistance.value, digifiz_parameters.tankMaxResistance.value);
+    float tankMin = digifiz_parameters.tankMinResistance.value;
+    float tankMax = digifiz_parameters.tankMaxResistance.value;
+    float tankRange = tankMax - tankMin;
+    if (tankRange <= 0.0f) {
+        samples_gas = 0;
+        invalid_gas++;
+        return;
+    }
+    float faultSpacing = tankRange * FUEL_FAULT_TOLERANCE_RATIO;
+    float lowerFaultBound = tankMin - faultSpacing;
+    float upperFaultBound = tankMax + faultSpacing;
+
+    float R2_local = 220.0f * vacc / (1023.0f - vacc);
+    if (R2_local > upperFaultBound || R2_local < lowerFaultBound) {
+        samples_gas = 0;
+        invalid_gas++;
+        return;
+    }
+    R2_local = constrain(R2_local, tankMin, tankMax);
     float R2scaled = 0.0f;
     if (digifiz_parameters.option_linear_fuel.value)
     {
-        R2scaled = (((float)R2_local - digifiz_parameters.tankMinResistance.value) / (digifiz_parameters.tankMaxResistance.value - digifiz_parameters.tankMinResistance.value));
+        R2scaled = (((float)R2_local - tankMin) / tankRange);
     }
     else
     {
