@@ -283,6 +283,10 @@ ISR(TIMER4_COMPA_vect)
 
   setFuel(fuel);
 
+  #if defined(TRANSPORTER_DISPLAY)
+    setBarData(getDisplayedOilTemp());
+  #endif
+
   #if !defined(DIGIFIZ_ORIGINAL_DISPLAY) && !defined(DIGIFIZ_LCD_DISPLAY)
     setCoolantData(coolant_segments);
   #else
