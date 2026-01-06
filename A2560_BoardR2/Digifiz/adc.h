@@ -17,6 +17,7 @@ uint16_t getRawLightLevel();
 uint8_t getLitresInTank(); //0..99
 uint8_t getGallonsInTank(); //0..99
 uint8_t getDisplayedCoolantTemp(); //0..14
+uint8_t getDisplayedOilTemp(); //0..16
 uint8_t getDisplayedCoolantTempOrig(); //0..20
 
 

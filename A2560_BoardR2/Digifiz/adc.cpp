@@ -660,6 +660,30 @@ uint8_t getDisplayedCoolantTempOrig()  //0..14
             (digifiz_parameters.coolantMaxResistance.value - digifiz_parameters.coolantMinResistance.value)*20.0f),0,20); 
 }
 
+uint8_t getDisplayedOilTemp()  //0..14, 0..16
+{
+    if (invalid_oil >= MAX_CONSECUTIVE_INVALID)
+        return 0;
+#if defined(AUDI_DISPLAY) || defined(TRANSPORTER_DISPLAY)
+    //16 LEDs
+    return constrain((int)((oilT-digifiz_parameters.coolantMinResistance.value)/
+            (digifiz_parameters.coolantMaxResistance.value - digifiz_parameters.coolantMinResistance.value)*16.0f),0,16);
+#endif
+#ifdef AUDI_RED_DISPLAY
+    //17 LEDs
+    return constrain((int)((oilT-digifiz_parameters.coolantMinResistance.value)/
+            (digifiz_parameters.coolantMaxResistance.value - digifiz_parameters.coolantMinResistance.value)*17.0f),0,17);
+
+#endif
+
+#if !defined(AUDI_RED_DISPLAY) && !defined(AUDI_DISPLAY) && !defined(TRANSPORTER_DISPLAY)
+    //14 LEDs
+    return constrain((int)((oilT-digifiz_parameters.coolantMinResistance.value)/
+            (digifiz_parameters.coolantMaxResistance.value - digifiz_parameters.coolantMinResistance.value)*14.0f),0,14); 
+ 
+#endif            
+}
+
 
 float getAmbientTemperature()
 {

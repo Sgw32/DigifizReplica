@@ -107,6 +107,7 @@ void setServiceDisplayData(uint8_t data);
 void setMilesKMH(bool onoff);
 void setLBar(bool onoff);
 void setAudiOptions(uint8_t options);
+void setBarData(uint8_t data);
 
 void fireDigifiz();
 #endif
