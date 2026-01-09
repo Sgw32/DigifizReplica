@@ -208,6 +208,12 @@ void displayMFAType(uint8_t mfaType)
 
 void setMFAType(uint8_t type)
 {
+  // #define MFA_STATE_TRIP_L100KM   0
+  // #define MFA_STATE_TRIP_CURRENT_L100KM   1
+  // #define MFA_STATE_TRIP_MEAN_SPEED 2
+  // #define MFA_STATE_TRIP_DISTANCE 3
+  // #define MFA_STATE_TRIP_DURATION 4
+  // #define MFA_STATE_TRIP_TIME 5
   if (type>5)
   {
       mx.setColumn(0,0);

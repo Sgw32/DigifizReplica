@@ -182,10 +182,6 @@ void displayMFAType(uint8_t mfaType)
             setMFADisplayedNumber((uint16_t)(averageConsumption(digifiz_parameters.mfaBlock.value)*100));
             setFloatDot(true);
             break; 
-        case MFA_STATE_TRIP_CURRENT_L100KM:
-            setMFADisplayedNumber((uint16_t)(averageConsumption(digifiz_parameters.mfaBlock.value)*100));
-            setFloatDot(true);
-            break;
         case MFA_STATE_TRIP_MEAN_SPEED:
             setMFADisplayedNumber((uint16_t)fabs(averageSpeed(digifiz_parameters.mfaBlock.value)));
             setFloatDot(false);
@@ -198,6 +194,40 @@ void displayMFAType(uint8_t mfaType)
             setMFAClockData(sinceStart[digifiz_parameters.mfaBlock.value].hours(),
                             sinceStart[digifiz_parameters.mfaBlock.value].minutes());
             break;
+        case MFA_STATE_OIL_TEMP:
+            if (digifiz_parameters.option_fahrenheit.value)
+            {
+              setMFADisplayedNumber((int16_t)getOilTemperatureFahrenheit());
+              setFloatDot(false);
+            }
+            else if (digifiz_parameters.option_kelvin.value)
+            {
+              setMFADisplayedNumber((int16_t)(getOilTemperature()+273.15f));
+              setFloatDot(false);
+            }
+            else
+            {
+              setMFADisplayedNumber((int16_t)(getOilTemperature()));
+              setFloatDot(true);
+            }
+            break;
+        case MFA_STATE_AIR_TEMP:
+            if (digifiz_parameters.option_fahrenheit.value)
+            {
+              setMFADisplayedNumber((int16_t)getAmbientTemperatureFahrenheit());
+              setFloatDot(false);
+            }
+            else if (digifiz_parameters.option_kelvin.value)
+            { 
+              setMFADisplayedNumber((int16_t)(getAmbientTemperature()+273.15f));
+              setFloatDot(false);
+            }
+            else
+            {
+              setMFADisplayedNumber((int16_t)getAmbientTemperature());
+              setFloatDot(true);
+            }
+            break;
         case MFA_STATE_TRIP_TIME:
             setMFAClockData(clockHoursAudi,clockMinsAudi);
             break;
@@ -208,14 +238,30 @@ void displayMFAType(uint8_t mfaType)
 
 void setMFAType(uint8_t type)
 {
-  if (type>5)
+  // #define MFA_STATE_TRIP_L100KM   0
+  // #define MFA_STATE_TRIP_MEAN_SPEED 1
+  // #define MFA_STATE_AIR_TEMP 2
+  // #define MFA_STATE_OIL_TEMP 3
+  // #define MFA_STATE_TRIP_DISTANCE 4
+  // #define MFA_STATE_TRIP_DURATION 5
+  // #define MFA_STATE_TRIP_TIME 6
+
+    // #define MFA_STATE_TRIP_L100KM   0
+  // #define MFA_STATE_TRIP_CURRENT_L100KM   1
+  // #define MFA_STATE_TRIP_MEAN_SPEED 2
+  // #define MFA_STATE_TRIP_DISTANCE 3
+  // #define MFA_STATE_TRIP_DURATION 4
+  // #define MFA_STATE_TRIP_TIME 5
+  if (type>MFA_STATE_MAX)
   {
       mx.setColumn(0,0);
       mx.setColumn(1,0);
       return;
   }
-    uint8_t mfa1_led[6]={0b00000010,0b00001110,0b0110000,0b11000001,0b00000000,0b00000000};
-    uint8_t mfa2_led[6]={0b0,0b0,0b0,0b0,0b00001010,0b00000010};
+  //uint8_t mfa1_led[6]={0b00000010,0b00001110,0b0110000,0b11000001,0b00000000,0b00000000};
+  //uint8_t mfa2_led[6]={0b0,0b0,0b0,0b0,0b00001010,0b00000010};
+  uint8_t mfa1_led[7]={0b00001110,0b00110000,0b01000000,0b10000001,0b00000000,0b00000000,0b00000000};
+  uint8_t mfa2_led[7]={0b00000000,0b00000000,0b00000000,0b00000000,0b00001000,0b00001010,0b00000010};
   mx.setColumn(0, mfa1_led[type]);
   if (backlightStatus)
     mx.setColumn(1, backlight1|mfa2_led[type]);

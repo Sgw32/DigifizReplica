@@ -40,7 +40,7 @@ uint8_t processOilPressure(int mRPM)
         emergency_state = 1;
     }
 
-#if (!defined(EMERGENCY_DISABLE_SENSOR_CHECK) && !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)) || defined(TRANSPORTER)
+#if (!defined(EMERGENCY_DISABLE_SENSOR_CHECK) && !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)) || defined(TRANSPORTER_DISPLAY)
     //Audi Digifiz also does not have 1.8 bar sensor
     if (((last_emergency_state==0))&&
         (digitalRead(OIL_1_8BAR_PIN)==HIGH)

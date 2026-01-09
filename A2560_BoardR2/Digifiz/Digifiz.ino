@@ -391,5 +391,5 @@ void loop()
   }
   setMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState.value);
   processMFA();
-  //protocolParse();
+  protocolParse();
 }

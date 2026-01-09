@@ -122,17 +122,13 @@ void pressMFASensorSuperSuperLong()
 
 void pressMFAMode()
 {
-digifiz_parameters.mfaState.value+=1;  
-#ifdef AUDI_RED_DISPLAY
-    if (digifiz_parameters.mfaState.value>6) // 0 1 2 3 4 5 6
-        digifiz_parameters.mfaState.value = 0;
-#else
-    if (digifiz_parameters.mfaState.value>5) // 0 1 2 3 4 5
-        digifiz_parameters.mfaState.value = 0;
-#endif
-#ifdef SAVE_BY_MFA_MODE
-    saveParameters();
-#endif
+  digifiz_parameters.mfaState.value+=1;  
+  if (digifiz_parameters.mfaState.value>MFA_STATE_MAX) // 0 1 2 3 .. MFA_STATE_MAX
+    digifiz_parameters.mfaState.value = 0;
+
+  #ifdef SAVE_BY_MFA_MODE
+      saveParameters();
+  #endif
 }
 
 void pressMFABlock()
