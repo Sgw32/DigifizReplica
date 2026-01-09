@@ -1,0 +1,1 @@
+avrdude -c usbasp -p m2560 -U eeprom:r:eeprom_dump.hex:i
