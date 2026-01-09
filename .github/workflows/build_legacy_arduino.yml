@@ -34,6 +34,14 @@ jobs:
         run: |
           arduino-cli core update-index
           arduino-cli core install arduino:avr
+      - name: Prepare Flash Scripts
+        run: |
+          AVRDUDE_CONF=$(find ~/.arduino15/packages/arduino/tools/avrdude -name avrdude.conf | head -n 1)
+          if [ -z "$AVRDUDE_CONF" ]; then
+            echo "avrdude.conf not found."
+            exit 1
+          fi
+          cp "$AVRDUDE_CONF" flash_scripts/avrdude.conf
       # --- Configure Arduino CLI ---
       - name: Create Arduino CLI Configuration
         run: |
@@ -76,6 +84,7 @@ jobs:
             echo "Building $VARIANT..."
             cp A2560_BoardR2/Digifiz/${VARIANT}.h A2560_BoardR2/Digifiz/setup.h
             arduino-cli compile --fqbn arduino:avr:mega A2560_BoardR2/Digifiz/ --output-dir build/$VARIANT
+            cp flash_scripts/* build/$VARIANT/
           done
 
       # --- Upload All Arduino Variants as Artifacts ---
