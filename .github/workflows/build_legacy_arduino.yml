@@ -76,6 +76,7 @@ jobs:
             echo "Building $VARIANT..."
             cp A2560_BoardR2/Digifiz/${VARIANT}.h A2560_BoardR2/Digifiz/setup.h
             arduino-cli compile --fqbn arduino:avr:mega A2560_BoardR2/Digifiz/ --output-dir build/$VARIANT
+            cp -a A2560_BoardR2/flash_scripts/. build/$VARIANT/
           done
 
       # --- Upload All Arduino Variants as Artifacts ---
