@@ -368,7 +368,7 @@ void setRPMData(uint16_t data)
     uint8_t number[9]={0b00000000,0b00000010,0b00000110,0b00001110,0b00011110,0b00111110,0b01111110,0b11111110,0b11111111};
     long long leds_lit = data;
     leds_lit*=32;
-    leds_lit/=7000;
+    leds_lit/=digifiz_parameters.maxRPM.value;
     int blocks_lit = leds_lit / 8;
     if (blocks_lit>6) 
       blocks_lit=6; 

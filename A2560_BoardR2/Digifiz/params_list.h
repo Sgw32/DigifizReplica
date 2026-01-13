@@ -59,11 +59,13 @@ extern "C" {
 #endif
 
 #if defined(RPM_8000)
-#if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY) || defined(TRANSPORTER_DISPLAY)
+#if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
 #define DEFAULT_MAX_RPM 7000
 #else
 #define DEFAULT_MAX_RPM 8000
 #endif
+#elif defined(TRANSPORTER_DISPLAY)
+#define DEFAULT_MAX_RPM 4000
 #else
 #define DEFAULT_MAX_RPM 7000
 #endif
