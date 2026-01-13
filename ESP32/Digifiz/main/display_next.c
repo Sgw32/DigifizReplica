@@ -7,6 +7,7 @@
 #include "digifiz_ws_server.h"
 #include "params.h"
 #include "led_effects.h"
+#include "millis.h"
 
 #define TAG "display_next"
 #define SCRIPT_KEY "display_next_script"
@@ -30,12 +31,27 @@ typedef struct
     bool initialized;
 } indicator_filter_t;
 
+typedef struct
+{
+    uint32_t last_active_ms;
+    bool seen;
+} turn_signal_latch_t;
+
 static indicator_filter_t brakes_indicator_filter;
 static indicator_filter_t foglight1_indicator_filter;
 static indicator_filter_t foglight2_indicator_filter;
 static indicator_filter_t glassheat_indicator_filter;
 static indicator_filter_t left_turn_indicator_filter;
 static indicator_filter_t right_turn_indicator_filter;
+static turn_signal_latch_t left_turn_latch;
+static turn_signal_latch_t right_turn_latch;
+
+#define TURN_BLINK_PERIOD_MS 500
+#define TURN_BLINK_INPUT_HOLD_MS 600
+
+static uint8_t turn_blink_state = 0;
+static uint32_t turn_blink_last_toggle_ms = 0;
+static bool turn_blink_initialized = false;
 
 static uint8_t apply_indicator_filter(indicator_filter_t *filter, uint8_t new_value, uint16_t required_cycles)
 {
@@ -106,6 +122,40 @@ static void reset_indicator_filters(void)
     reset_indicator_filter(&glassheat_indicator_filter, display.glassheat_ind);
     reset_indicator_filter(&left_turn_indicator_filter, display.left_turn_ind);
     reset_indicator_filter(&right_turn_indicator_filter, display.right_turn_ind);
+}
+
+static void update_turn_blink_state(uint32_t now)
+{
+    if (!turn_blink_initialized)
+    {
+        turn_blink_state = 1;
+        turn_blink_last_toggle_ms = now;
+        turn_blink_initialized = true;
+        return;
+    }
+
+    if ((now - turn_blink_last_toggle_ms) >= TURN_BLINK_PERIOD_MS)
+    {
+        turn_blink_state = turn_blink_state ? 0 : 1;
+        turn_blink_last_toggle_ms = now;
+    }
+}
+
+static uint8_t is_turn_signal_active(turn_signal_latch_t *latch, uint8_t raw_active, uint32_t now)
+{
+    if (raw_active)
+    {
+        latch->last_active_ms = now;
+        latch->seen = true;
+        return 1;
+    }
+
+    if (!latch->seen)
+    {
+        return 0;
+    }
+
+    return (now - latch->last_active_ms) <= TURN_BLINK_INPUT_HOLD_MS ? 1 : 0;
 }
 
 static uint8_t maincolor_r;
@@ -1099,8 +1149,22 @@ void processIndicators()
         }
     }
 
-    display.left_turn_ind = filter_turn_indicator(&left_turn_indicator_filter, left_raw);
-    display.right_turn_ind = filter_turn_indicator(&right_turn_indicator_filter, right_raw);
+    if (digifiz_parameters.signalOptions_enable_firmware_blinkers.value)
+    {
+        uint32_t now = millis();
+        update_turn_blink_state(now);
+
+        uint8_t left_active = is_turn_signal_active(&left_turn_latch, left_raw, now);
+        uint8_t right_active = is_turn_signal_active(&right_turn_latch, right_raw, now);
+
+        display.left_turn_ind = left_active ? turn_blink_state : 0;
+        display.right_turn_ind = right_active ? turn_blink_state : 0;
+    }
+    else
+    {
+        display.left_turn_ind = filter_turn_indicator(&left_turn_indicator_filter, left_raw);
+        display.right_turn_ind = filter_turn_indicator(&right_turn_indicator_filter, right_raw);
+    }
 
     uint8_t brakes_raw = digifiz_reg_in.brakesInd ? 0 : 1;
     uint8_t foglight2_raw = digifiz_reg_in.lightsHeatInd ? 0 : 1;
