@@ -519,6 +519,7 @@ void processData(int parameter,long value)
         digifiz_parameters.signalOptions_enable_touch_sensor.value = value&2;
         digifiz_parameters.signalOptions_invert_light_input.value = value&4;
         digifiz_parameters.signalOptions_enable_consumption_sensor.value = value&8;
+        digifiz_parameters.signalOptions_enable_firmware_blinkers.value = value&16;
         break;
       case PARAMETER_PULLUP_RESISTANCE_COOLANT:
         printLnCString("PARAMETER_PULLUP_RESISTANCE_COOLANT\n");

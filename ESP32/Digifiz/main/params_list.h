@@ -187,6 +187,14 @@ extern "C" {
     ) \
     PARAM(  \
         U8, \
+        signalOptions_enable_firmware_blinkers, \
+        .p_name = "Firmware blinkers", \
+        .p_info = "Blink turn indicators in firmware (0.5s period)",\
+        .value = 0, \
+        .max = 1, \
+    ) \
+    PARAM(  \
+        U8, \
         signalOptions_enable_touch_sensor, \
         .p_name = "Touch sensor option", \
         .p_info = "Enable wireless touch sensor",\
