@@ -48,10 +48,18 @@ static turn_signal_latch_t right_turn_latch;
 
 #define TURN_BLINK_PERIOD_MS 500
 #define TURN_BLINK_INPUT_HOLD_MS 600
+#define CHECK_ENGINE_BLINK_PERIOD_MS 1000
+#define CHECK_ENGINE_ACTION_NONE 0
+#define CHECK_ENGINE_ACTION_TEMP_BLINK 1
+#define CHECK_ENGINE_ACTION_SPEED_BLINK 2
 
 static uint8_t turn_blink_state = 0;
 static uint32_t turn_blink_last_toggle_ms = 0;
 static bool turn_blink_initialized = false;
+static bool check_engine_active = false;
+static uint32_t check_engine_last_toggle_ms = 0;
+static bool check_engine_blink_state = true;
+static bool check_engine_speed_override_active = false;
 
 static uint8_t apply_indicator_filter(indicator_filter_t *filter, uint8_t new_value, uint16_t required_cycles)
 {
@@ -138,6 +146,22 @@ static void update_turn_blink_state(uint32_t now)
     {
         turn_blink_state = turn_blink_state ? 0 : 1;
         turn_blink_last_toggle_ms = now;
+    }
+}
+
+static void update_check_engine_blink_state(uint32_t now)
+{
+    if (!check_engine_last_toggle_ms)
+    {
+        check_engine_last_toggle_ms = now;
+        check_engine_blink_state = true;
+        return;
+    }
+
+    if ((now - check_engine_last_toggle_ms) >= CHECK_ENGINE_BLINK_PERIOD_MS)
+    {
+        check_engine_blink_state = !check_engine_blink_state;
+        check_engine_last_toggle_ms = now;
     }
 }
 
@@ -727,6 +751,7 @@ void setRPMData(uint16_t inp_d) {
 
 // Set the speedometer data
 void setSpeedometerData(uint16_t data) {
+    last_speed_value = data;
     uint8_t number_spd[10]={DIGIT_NUMBER_0,
                             DIGIT_NUMBER_1,
                             DIGIT_NUMBER_2,
@@ -815,6 +840,7 @@ void setCoolantData(uint16_t data) {
     {
         display.coolant_value&=~(1<<i);
     }
+    last_coolant_value = display.coolant_value;
 }
 
 // Set the dot status
@@ -1088,7 +1114,62 @@ void setRefuelGear(int8_t gear) {
 
 // Set the check engine sign status
 void setCheckEngine(bool onoff) {
-    // Implementation placeholder
+    if (check_engine_active == onoff) {
+        return;
+    }
+
+    check_engine_active = onoff;
+    check_engine_last_toggle_ms = millis();
+    check_engine_blink_state = true;
+    if (!check_engine_active && check_engine_speed_override_active) {
+        refresh_speed_digit_colors(last_speed_value);
+        check_engine_speed_override_active = false;
+    }
+}
+
+void applyCheckEngineAction(void)
+{
+    uint8_t action = digifiz_parameters.checkEngineAction.value;
+
+    if (!check_engine_active || action == CHECK_ENGINE_ACTION_NONE)
+    {
+        if (check_engine_speed_override_active)
+        {
+            refresh_speed_digit_colors(last_speed_value);
+            check_engine_speed_override_active = false;
+        }
+        return;
+    }
+
+    update_check_engine_blink_state(millis());
+
+    if (action == CHECK_ENGINE_ACTION_TEMP_BLINK)
+    {
+        display.coolant_value = check_engine_blink_state ? last_coolant_value : 0;
+        if (check_engine_speed_override_active)
+        {
+            refresh_speed_digit_colors(last_speed_value);
+            check_engine_speed_override_active = false;
+        }
+    }
+    else if (action == CHECK_ENGINE_ACTION_SPEED_BLINK)
+    {
+        if (check_engine_blink_state)
+        {
+            apply_speed_digit_override_color(255, 0, 0);
+            check_engine_speed_override_active = true;
+        }
+        else
+        {
+            refresh_speed_digit_colors(last_speed_value);
+            check_engine_speed_override_active = false;
+        }
+    }
+    else if (check_engine_speed_override_active)
+    {
+        refresh_speed_digit_colors(last_speed_value);
+        check_engine_speed_override_active = false;
+    }
 }
 
 // Set the backlight status
@@ -1245,6 +1326,9 @@ static uint8_t r_colors_active[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LED
 static uint8_t g_colors_active[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
 static uint8_t b_colors_active[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
 
+static uint16_t last_speed_value = 0;
+static uint16_t last_coolant_value = 0;
+
 static void restore_speed_digit_colors(void)
 {
     for (uint16_t led = SPEED_DIGITS_FIRST_SEGMENT; led <= SPEED_DIGITS_LAST_SEGMENT; ++led) {
@@ -1265,12 +1349,10 @@ static void apply_speed_alert_colors(uint8_t r, uint8_t g, uint8_t b)
     speed_alert_color_active = true;
 }
 
-static void update_speed_digit_color_override(uint16_t speed_value)
+static void refresh_speed_digit_colors(uint16_t speed_value)
 {
     if (!digifiz_parameters.speedColorChangeEnable.value) {
-        if (speed_alert_color_active) {
-            restore_speed_digit_colors();
-        }
+        restore_speed_digit_colors();
         return;
     }
 
@@ -1282,8 +1364,22 @@ static void update_speed_digit_color_override(uint16_t speed_value)
             digifiz_parameters.speedAlertColor_r.value,
             digifiz_parameters.speedAlertColor_g.value,
             digifiz_parameters.speedAlertColor_b.value);
-    } else if (speed_alert_color_active) {
+    } else {
         restore_speed_digit_colors();
+    }
+}
+
+static void update_speed_digit_color_override(uint16_t speed_value)
+{
+    refresh_speed_digit_colors(speed_value);
+}
+
+static void apply_speed_digit_override_color(uint8_t r, uint8_t g, uint8_t b)
+{
+    for (uint16_t led = SPEED_DIGITS_FIRST_SEGMENT; led <= SPEED_DIGITS_LAST_SEGMENT; ++led) {
+        r_colors_active[led] = r;
+        g_colors_active[led] = g;
+        b_colors_active[led] = b;
     }
 }
 

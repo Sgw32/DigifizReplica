@@ -179,6 +179,14 @@ extern "C" {
     ) \
     PARAM(  \
         U8, \
+        checkEngineAction, \
+        .p_name = "Check engine action", \
+        .p_info = "0 = no action, 1 = blink temperature indicator (1s), 2 = blink speedometer red (1s)",\
+        .value = 0, \
+        .max = 2, \
+    ) \
+    PARAM(  \
+        U8, \
         signalOptions_use_blink_alt_in, \
         .p_name = "Other blink", \
         .p_info = "Use alternative separate blinker inputs",\
