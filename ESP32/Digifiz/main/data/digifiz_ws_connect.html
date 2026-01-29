@@ -408,6 +408,13 @@
 			display: flex;
 			gap: 10px; /* Adjust the space between buttons as needed */
 		}
+		.ws-status {
+			align-items: center;
+			justify-content: center;
+		}
+		.ws-status span {
+			line-height: 1.2;
+		}
 
         .cl1 {
             float: left;
@@ -484,6 +491,13 @@
 
 <div id="Control" class="tabcontent" >
 	<div class="tci">
+		<div class="cl1">
+			<div class="mfa-buttons ws-status">
+				<span class="ldot ybg" id="wsStatusDot" aria-hidden="true"></span>
+				<span id="wsStatusText">WebSocket: Connecting</span>
+				<button class="cl01" type="button" id="wsRefreshButton" style="display: none;">Refresh page</button>
+			</div>
+		</div>
 		<div class="cl1">
             <label class="cl01" for="digifizConsole">Send command</label>
         </div>
@@ -1043,21 +1057,40 @@ document.getElementById("defaultTab").click();
     </script>
 
     <script> // основной старт скрипта, открыть сокет
+        const wsStatusDot = document.getElementById("wsStatusDot");
+        const wsStatusText = document.getElementById("wsStatusText");
+        const wsRefreshButton = document.getElementById("wsRefreshButton");
+
+        function setWsStatus(statusText, isConnected, dotClass) {
+            wsStatusText.textContent = `WebSocket: ${statusText}`;
+            wsStatusDot.classList.remove("gbg", "rbg", "ybg");
+            wsStatusDot.classList.add(dotClass);
+            wsRefreshButton.style.display = isConnected ? "none" : "inline-block";
+        }
+
+        wsRefreshButton.addEventListener("click", function () {
+            location.reload();
+        });
+
         // создать сокет по адресу
         let wsHostStr = "ws://" + document.location.host + document.location.pathname;
         wsHostStr += (document.location.pathname == '/') ? "ws" : "/ws";
         var socket = new WebSocket(wsHostStr);
+        setWsStatus("Connecting", false, "ybg");
     </script>
 
     <script> // события WS
         socket.onopen = function () {
             console.log("connect");
+            setWsStatus("Connected", true, "gbg");
         };
         socket.onclose = function (event) {
             console.log("close");
+            setWsStatus("Disconnected", false, "rbg");
         };
         socket.onerror = function () {
             console.log("error");
+            setWsStatus("Error", false, "rbg");
         };
         socket.onmessage = function (event) {
             receiveWsData(event.data);
