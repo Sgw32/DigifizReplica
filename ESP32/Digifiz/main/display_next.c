@@ -23,6 +23,12 @@ static led_strip_handle_t led_strip;
 float brightnessFiltered = 6.0f;
 static led_effect_state_t effect_state;
 
+static uint16_t l_spd_m = 0;
+static uint16_t last_coolant_value = 0;
+
+static void refresh_speed_digit_colors(uint16_t speed_value);
+static void apply_speed_digit_override_color(uint8_t r, uint8_t g, uint8_t b);
+
 typedef struct
 {
     uint8_t output;
@@ -751,7 +757,7 @@ void setRPMData(uint16_t inp_d) {
 
 // Set the speedometer data
 void setSpeedometerData(uint16_t data) {
-    last_speed_value = data;
+    l_spd_m = data;
     uint8_t number_spd[10]={DIGIT_NUMBER_0,
                             DIGIT_NUMBER_1,
                             DIGIT_NUMBER_2,
@@ -1122,7 +1128,7 @@ void setCheckEngine(bool onoff) {
     check_engine_last_toggle_ms = millis();
     check_engine_blink_state = true;
     if (!check_engine_active && check_engine_speed_override_active) {
-        refresh_speed_digit_colors(last_speed_value);
+        refresh_speed_digit_colors(l_spd_m);
         check_engine_speed_override_active = false;
     }
 }
@@ -1135,7 +1141,7 @@ void applyCheckEngineAction(void)
     {
         if (check_engine_speed_override_active)
         {
-            refresh_speed_digit_colors(last_speed_value);
+            refresh_speed_digit_colors(l_spd_m);
             check_engine_speed_override_active = false;
         }
         return;
@@ -1148,7 +1154,7 @@ void applyCheckEngineAction(void)
         display.coolant_value = check_engine_blink_state ? last_coolant_value : 0;
         if (check_engine_speed_override_active)
         {
-            refresh_speed_digit_colors(last_speed_value);
+            refresh_speed_digit_colors(l_spd_m);
             check_engine_speed_override_active = false;
         }
     }
@@ -1161,13 +1167,13 @@ void applyCheckEngineAction(void)
         }
         else
         {
-            refresh_speed_digit_colors(last_speed_value);
+            refresh_speed_digit_colors(l_spd_m);
             check_engine_speed_override_active = false;
         }
     }
     else if (check_engine_speed_override_active)
     {
-        refresh_speed_digit_colors(last_speed_value);
+        refresh_speed_digit_colors(l_spd_m);
         check_engine_speed_override_active = false;
     }
 }
@@ -1325,9 +1331,6 @@ static uint8_t b_colors_default[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LE
 static uint8_t r_colors_active[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
 static uint8_t g_colors_active[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
 static uint8_t b_colors_active[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
-
-static uint16_t last_speed_value = 0;
-static uint16_t last_coolant_value = 0;
 
 static void restore_speed_digit_colors(void)
 {

@@ -12,7 +12,7 @@
 void digifiz_ws_connect(void);
 esp_err_t digifiz_register_uri_handler(httpd_handle_t server);
 
-#define MDNS
+//#define MDNS
 #ifdef MDNS
 #include "mdns.h"
 #include "lwip/apps/netbiosns.h"
