@@ -283,12 +283,13 @@ static const httpd_uri_t params_get = {
 
 static esp_err_t get_handler(httpd_req_t *req)
 {
-    extern const unsigned char digifiz_ws_connect_html_start[] asm("_binary_digifiz_ws_connect_html_start");
-    extern const unsigned char digifiz_ws_connect_html_end[] asm("_binary_digifiz_ws_connect_html_end");
-    const size_t digifiz_ws_connect_html_size = (digifiz_ws_connect_html_end - digifiz_ws_connect_html_start);
+    extern const unsigned char digifiz_ws_connect_html_gz_start[] asm("_binary_digifiz_ws_connect_html_gz_start");
+    extern const unsigned char digifiz_ws_connect_html_gz_end[] asm("_binary_digifiz_ws_connect_html_gz_end");
+    const size_t digifiz_ws_connect_html_gz_size = (digifiz_ws_connect_html_gz_end - digifiz_ws_connect_html_gz_start);
 
-    httpd_resp_send_chunk(req, (const char *)digifiz_ws_connect_html_start, digifiz_ws_connect_html_size);
-    httpd_resp_sendstr_chunk(req, NULL);
+    httpd_resp_set_type(req, "text/html");
+    httpd_resp_set_hdr(req, "Content-Encoding", "gzip");
+    httpd_resp_send(req, (const char *)digifiz_ws_connect_html_gz_start, digifiz_ws_connect_html_gz_size);
     return ESP_OK;
 }
 static const httpd_uri_t example_gh = {
@@ -575,4 +576,3 @@ esp_err_t digifiz_register_uri_handler(httpd_handle_t server)
 _ret:
     return ret;
 }
-
