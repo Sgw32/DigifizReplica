@@ -180,6 +180,7 @@ void resetBrightness();
 void setRefuelSign(bool onoff);
 void setRefuelGear(int8_t gear);
 void setCheckEngine(bool onoff);
+void applyCheckEngineAction(void);
 void setBacklight(bool onoff);
 void setServiceDisplayData(uint8_t data);
 

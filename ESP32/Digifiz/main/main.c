@@ -468,6 +468,7 @@ void displayUpdate(void *pvParameters) {
         }
 
         setRPMData(averageRPM);
+        applyCheckEngineAction();
         fireDigifiz();
         setMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState.value);
         processMFA();
