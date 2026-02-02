@@ -851,7 +851,24 @@ void setCoolantData(uint16_t data) {
 
 // Set the dot status
 void setDot(bool value) {
-    // Implementation placeholder
+    if (!digifiz_parameters.displayDot.value)
+    {
+        display.clock_dot = 0b11;
+        return;
+    }
+
+    display.clock_dot = value ? 0b11 : 0b00;
+    if (digifiz_parameters.mfaState.value == MFA_STATE_TRIP_DURATION)
+    {
+        if (value)
+        {
+            display.mfa_dots |= 0b11;
+        }
+        else
+        {
+            display.mfa_dots &= ~0b11;
+        }
+    }
 }
 
 // Set the floating dot status

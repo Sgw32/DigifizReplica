@@ -246,9 +246,12 @@ void digifizLoop(void *pvParameters) {
 void displayUpdate(void *pvParameters) {
     TickType_t lastWakeTime;
     const TickType_t rateCalculationPeriod = pdMS_TO_TICKS(DISPLAY_UPDATE_DELAY_MS);
+    static bool clock_dot_visible = false;
+    static uint32_t clock_dot_last_toggle_ms = 0;
     while(1) {
         lastWakeTime = xTaskGetTickCount();
         xSemaphoreTake(displayMutex, portMAX_DELAY); // Take the mutex
+        uint32_t now_ms = millis();
         spd_m = readLastSpeed();
         if (spd_m>0)
         {
@@ -458,6 +461,25 @@ void displayUpdate(void *pvParameters) {
         setFuel(fuel);
         setCoolantData(getDisplayedCoolantTemp());
         processIndicators();
+        if (!digifiz_parameters.displayDot.value)
+        {
+            clock_dot_visible = true;
+            clock_dot_last_toggle_ms = now_ms;
+            setDot(true);
+        }
+        else
+        {
+            if (clock_dot_last_toggle_ms == 0)
+            {
+                clock_dot_last_toggle_ms = now_ms;
+            }
+            if ((now_ms - clock_dot_last_toggle_ms) >= 500)
+            {
+                clock_dot_visible = !clock_dot_visible;
+                clock_dot_last_toggle_ms = now_ms;
+            }
+            setDot(clock_dot_visible);
+        }
         if (millis()>2000)
         {
             setBrightness(digifiz_parameters.autoBrightness.value ? getBrightnessLevel() : digifiz_parameters.brightnessLevel.value);
