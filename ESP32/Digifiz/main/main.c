@@ -30,6 +30,7 @@
 #include "tacho.h"
 #include "adc.h"
 #include "speedometer.h"
+#include "oscilloscope.h"
 #include "device_sleep.h"
 #include "reg_inout.h"
 #include "buzzer.h"
@@ -154,6 +155,7 @@ void shutdown_handler(void)
     deinit_leds();
     deinit_tacho_gpio();
     deinit_gptimer();
+    oscilloscope_deinit();
     // Disconnect and deinitialize Wi-Fi
     ESP_ERROR_CHECK(esp_wifi_stop());
     ESP_ERROR_CHECK(esp_wifi_deinit());
@@ -595,6 +597,7 @@ void on_cpu_1(void *pvParameters)
     gpio_install_isr_service(0);
     initSpeedometer();
     initTacho();
+    oscilloscope_init();
     initDeviceSleep();
     initRegInOut();
     //CRUCIAL! without it power is not set
