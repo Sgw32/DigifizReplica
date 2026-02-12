@@ -37,7 +37,7 @@ static inline void set_sample_bit(uint32_t *words, uint32_t sample_idx, bool lev
     }
 }
 
-static void IRAM_ATTR oscilloscope_sample_cb(void *arg)
+static void oscilloscope_sample_cb(void *arg)
 {
     (void)arg;
 
@@ -45,7 +45,7 @@ static void IRAM_ATTR oscilloscope_sample_cb(void *arg)
     const bool rpm_level = gpio_get_level(RPM_PIN) != 0;
     const bool speed_level = gpio_get_level(SPD_M_PIN) != 0;
 
-    portENTER_CRITICAL_ISR(&osc_mux);
+    portENTER_CRITICAL(&osc_mux);
     set_sample_bit(rpm_words, idx, rpm_level);
     set_sample_bit(speed_words, idx, speed_level);
 
@@ -54,7 +54,7 @@ static void IRAM_ATTR oscilloscope_sample_cb(void *arg)
         write_index = 0;
         wrapped = 1U;
     }
-    portEXIT_CRITICAL_ISR(&osc_mux);
+    portEXIT_CRITICAL(&osc_mux);
 }
 
 void oscilloscope_init(void)
@@ -67,7 +67,7 @@ void oscilloscope_init(void)
     const esp_timer_create_args_t args = {
         .callback = &oscilloscope_sample_cb,
         .arg = NULL,
-        .dispatch_method = ESP_TIMER_ISR,
+        .dispatch_method = ESP_TIMER_TASK,
         .name = "osc_sampler"
     };
 
