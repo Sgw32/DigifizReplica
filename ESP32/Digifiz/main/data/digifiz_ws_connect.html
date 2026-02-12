@@ -528,6 +528,9 @@
 			<button class="cl01" type="button" id="setTimeButton">Set Time</button>
 		</div>
 		<div class="cl1">
+			<button class="cl01" type="button" id="oscDumpButton">Download oscilloscope dump</button>
+		</div>
+		<div class="cl1">
 			<button class="cl01" type="button" id="fResetButton">Factory reset</button>
 		</div>
 	</div>
@@ -1038,6 +1041,15 @@ document.getElementById("defaultTab").click();
         }
     }
 });
+
+	document.getElementById('oscDumpButton').addEventListener('click', function () {
+		const link = document.createElement('a');
+		link.href = '/oscilloscope_dump';
+		link.download = 'oscilloscope_dump.bin';
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+	});
 	function receiveWsData(data) {
 		//console.log(data);
 		try {

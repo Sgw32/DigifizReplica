@@ -29,6 +29,7 @@ idf_component_register(
     "main.c"
     "tacho.c"
     "speedometer.c"
+    "oscilloscope.c"
     "kline.c"
     "gear_estimator.c"
     INCLUDE_DIRS "."

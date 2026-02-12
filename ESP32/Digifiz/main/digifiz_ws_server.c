@@ -17,6 +17,7 @@
 #include "nvs_wifi_connect.h"
 #include "protocol.h"
 #include "params.h"
+#include "oscilloscope.h"
 #include <sys/param.h>
 #include <string.h>
 #include "display_next.h"
@@ -30,6 +31,7 @@ esp_err_t digifiz_register_uri_handler(httpd_handle_t server);
 esp_err_t update_post_handler(httpd_req_t *req);
 static esp_err_t echo_handler(httpd_req_t *req);
 static esp_err_t params_get_handler(httpd_req_t *req);
+static esp_err_t oscilloscope_dump_handler(httpd_req_t *req);
 /*
  * This handler echos back the received ws data
  * and triggers an async send if certain message received
@@ -279,6 +281,30 @@ static const httpd_uri_t params_get = {
     .handler  = params_get_handler,
     .user_ctx = NULL
 };
+
+static const httpd_uri_t oscilloscope_dump = {
+    .uri      = "/oscilloscope_dump",
+    .method   = HTTP_GET,
+    .handler  = oscilloscope_dump_handler,
+    .user_ctx = NULL
+};
+
+static esp_err_t oscilloscope_dump_handler(httpd_req_t *req)
+{
+    uint8_t *payload = NULL;
+    size_t payload_size = 0;
+    esp_err_t ret = oscilloscope_build_dump(&payload, &payload_size);
+    if (ret != ESP_OK) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to build oscilloscope dump");
+        return ret;
+    }
+
+    httpd_resp_set_type(req, "application/octet-stream");
+    httpd_resp_set_hdr(req, "Content-Disposition", "attachment; filename=oscilloscope_dump.bin");
+    ret = httpd_resp_send(req, (const char *)payload, payload_size);
+    free(payload);
+    return ret;
+}
 
 
 static esp_err_t get_handler(httpd_req_t *req)
@@ -571,6 +597,9 @@ esp_err_t digifiz_register_uri_handler(httpd_handle_t server)
     if (ret)
         goto _ret;
     ret = httpd_register_uri_handler(server, &set_color_scheme);
+    if (ret)
+        goto _ret;
+    ret = httpd_register_uri_handler(server, &oscilloscope_dump);
     if (ret)
         goto _ret;
 _ret:
