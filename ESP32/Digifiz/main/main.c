@@ -38,10 +38,13 @@
 #include "vehicle_data.h"
 #include "kline.c"
 #include "gear_estimator.h"
+#include "protocol.h"
 
 #include "millis.h"
 
 #include "nvs_wifi_connect.h"
+
+#include "soc/rtc.h"
 
 int i = 0;
 int saveParametersCounter = 0;
@@ -567,9 +570,23 @@ void initGearEstimator(void) {
     gear_estimator_set_coefficients(coefficients, MAX_GEARS);
 }
 
+void initAndCheckRTC(void)
+{
+    const uint32_t cal_cycles = 3000;   
+    uint32_t cal = rtc_clk_cal(RTC_CAL_32K_XTAL, cal_cycles);
+    if (cal == 0) {
+        setRTCAlive(false);
+        ESP_LOGE(TAG, "XTAL32K calibration failed (returned 0) -> crystal not running / not selected");
+        return;
+    }
+    ESP_LOGI(TAG, "XTAL32K calibration OK: cal=%" PRIu32, cal);
+    setRTCAlive(true);
+}
+
 void on_cpu_1(void *pvParameters)
 {
     displayMutex = xSemaphoreCreateMutex(); // Create the mutex
+    initAndCheckRTC();
     initEEPROM(); //Start memory container
     initGearEstimator();
     initADC();

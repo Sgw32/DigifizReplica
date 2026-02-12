@@ -21,6 +21,13 @@ char cmd_buffer[128];
 char cmd_buffer_par[64];
 char cmd_buffer_val[64];
 
+static uint8_t rtc_alive = 0;
+
+void setRTCAlive(uint8_t alive)
+{
+  rtc_alive = alive;
+}
+
 // Mapping array
 static const ParameterMap parameter_map[] = {
     {"PARAMETER_ZERO_RESERVED", PARAMETER_ZERO_RESERVED},
@@ -214,6 +221,10 @@ static void printHelp()
     printLnCString("Liters\n");
   printLnUINT32(digifiz_parameters.maxRPM.value);
   printLnCString(" RPM\n");
+  if (rtc_alive)
+    printLnCString("RTC OK\n");
+  else
+    printLnCString("RTC NOT OK\n");
 }
 
 // Function to map parameter name to enum value

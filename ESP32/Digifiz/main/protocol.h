@@ -119,6 +119,8 @@ void printLnFloat(float val);
 
 void clearProtocolBuffer(void);
 
+void setRTCAlive(uint8_t alive);
+
 extern char ws_data_send[];
 
 #endif

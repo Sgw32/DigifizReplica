@@ -528,6 +528,7 @@ void initDisplay() {
     display.mfa1_ind = 0;
     display.mfa2_ind = 0;
     display.coolant_backlight = 1;
+    display.vdo_backlight = 1;
     // display.clock_digit_1 = 0b1111111;
     setClockData(00,00);
     setMFADisplayedNumber(-99);
