@@ -23,3 +23,14 @@ jobs:
         esp_idf_version: v5.2.1
         target: esp32s3
         path: 'ESP32/Digifiz/'
+    - name: Collect Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware
+        compression-level: 0  # Adjust for speed vs. size (0 = fastest, 9 = smallest)
+        if-no-files-found: error  # Fails if no firmware is generated
+        path: |
+          ESP32/Digifiz/build/*.bin
+          ESP32/Digifiz/build/bootloader/*.bin
+          ESP32/Digifiz/build/partition_table/*.bin
+          ESP32/Digifiz/build/*.elf
