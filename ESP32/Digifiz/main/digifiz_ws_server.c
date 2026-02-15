@@ -571,12 +571,12 @@ static esp_err_t set_color_scheme_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-static const httpd_uri_t set_color_scheme = {
-    .uri      = "/set_color_scheme",
-    .method   = HTTP_POST,
-    .handler  = set_color_scheme_handler,
-    .user_ctx = NULL
-};
+//static const httpd_uri_t set_color_scheme = {
+//    .uri      = "/set_color_scheme",
+//    .method   = HTTP_POST,
+//    .handler  = set_color_scheme_handler,
+//    .user_ctx = NULL
+//};
 
 esp_err_t digifiz_register_uri_handler(httpd_handle_t server)
 {
