@@ -531,6 +531,15 @@
 			<button class="cl01" type="button" id="oscDumpButton">Download oscilloscope dump</button>
 		</div>
 		<div class="cl1">
+			<div class="hdr">Online Oscilloscope</div>
+			<canvas id="oscOnlineCanvas" width="1200" height="260" style="width:100%;background:#111;border:1px solid #444;"></canvas>
+			<div class="mfa-buttons">
+				<button class="cl01" type="button" id="oscOnlineStartButton">Start online viewer</button>
+				<button class="cl01" type="button" id="oscOnlineStopButton">Stop online viewer</button>
+			</div>
+			<div class="cl01" id="oscOnlineStatus">Online viewer: idle</div>
+		</div>
+		<div class="cl1">
 			<button class="cl01" type="button" id="fResetButton">Factory reset</button>
 		</div>
 	</div>
@@ -1041,6 +1050,111 @@ document.getElementById("defaultTab").click();
         }
     }
 });
+
+	const oscCanvas = document.getElementById('oscOnlineCanvas');
+	const oscCtx = oscCanvas.getContext('2d');
+	const oscStatus = document.getElementById('oscOnlineStatus');
+	let oscOnlineTimer = null;
+	let oscOnlineBusy = false;
+
+	function getPackedBit(words, sampleIdx) {
+		const word = words[Math.floor(sampleIdx / 32)];
+		return (word >>> (sampleIdx % 32)) & 1;
+	}
+
+	function drawOscilloscopeFrame(rpmWords, speedWords, sampleCount, writeIndex, wrapped) {
+		const w = oscCanvas.width;
+		const h = oscCanvas.height;
+		oscCtx.fillStyle = '#111';
+		oscCtx.fillRect(0, 0, w, h);
+
+		oscCtx.strokeStyle = '#333';
+		oscCtx.lineWidth = 1;
+		oscCtx.beginPath();
+		for (let i = 0; i <= 10; i++) {
+			const y = Math.floor((h * i) / 10);
+			oscCtx.moveTo(0, y);
+			oscCtx.lineTo(w, y);
+		}
+		oscCtx.stroke();
+
+		const rpmHigh = h * 0.28;
+		const rpmLow = h * 0.46;
+		const speedHigh = h * 0.62;
+		const speedLow = h * 0.80;
+
+		function drawChannel(words, highY, lowY, color) {
+			oscCtx.strokeStyle = color;
+			oscCtx.lineWidth = 2;
+			oscCtx.beginPath();
+			for (let x = 0; x < w; x++) {
+				const logicalIdx = Math.floor((x * sampleCount) / w);
+				const sampleIdx = wrapped ? ((writeIndex + logicalIdx) % sampleCount) : logicalIdx;
+				const level = getPackedBit(words, sampleIdx);
+				const y = level ? highY : lowY;
+				if (x === 0) {
+					oscCtx.moveTo(x, y);
+				} else {
+					oscCtx.lineTo(x, y);
+				}
+			}
+			oscCtx.stroke();
+		}
+
+		drawChannel(rpmWords, rpmHigh, rpmLow, '#59ff59');
+		drawChannel(speedWords, speedHigh, speedLow, '#59b6ff');
+
+		oscCtx.fillStyle = '#59ff59';
+		oscCtx.font = '14px Arial';
+		oscCtx.fillText('Tachometer GPIO', 10, 18);
+		oscCtx.fillStyle = '#59b6ff';
+		oscCtx.fillText('Speedometer GPIO', 10, 36);
+	}
+
+	async function updateOnlineOscilloscope() {
+		if (oscOnlineBusy) return;
+		oscOnlineBusy = true;
+		try {
+			const response = await fetch('/oscilloscope_dump', { cache: 'no-store' });
+			if (!response.ok) throw new Error('HTTP ' + response.status);
+			const buffer = await response.arrayBuffer();
+			const view = new DataView(buffer);
+			if (buffer.byteLength < 28) throw new Error('Dump too small');
+			const magic = view.getUint32(0, true);
+			if (magic !== 0x43534F44) throw new Error('Invalid dump magic');
+			const sampleCount = view.getUint32(12, true);
+			const packedWords = view.getUint32(16, true);
+			const writeIndex = view.getUint32(20, true);
+			const wrapped = view.getUint32(24, true) !== 0;
+			const headerSize = 28;
+			const wordsBytes = packedWords * 4;
+			const expected = headerSize + wordsBytes * 2;
+			if (buffer.byteLength < expected) throw new Error('Truncated dump');
+			const rpmWords = new Uint32Array(buffer, headerSize, packedWords);
+			const speedWords = new Uint32Array(buffer, headerSize + wordsBytes, packedWords);
+			drawOscilloscopeFrame(rpmWords, speedWords, sampleCount, writeIndex, wrapped);
+			oscStatus.textContent = `Online viewer: running, samples=${sampleCount}`;
+		} catch (err) {
+			oscStatus.textContent = 'Online viewer error: ' + err.message;
+		} finally {
+			oscOnlineBusy = false;
+		}
+	}
+
+	document.getElementById('oscOnlineStartButton').addEventListener('click', function () {
+		if (oscOnlineTimer) return;
+		oscStatus.textContent = 'Online viewer: starting...';
+		updateOnlineOscilloscope();
+		oscOnlineTimer = setInterval(updateOnlineOscilloscope, 250);
+	});
+
+	document.getElementById('oscOnlineStopButton').addEventListener('click', function () {
+		if (oscOnlineTimer) {
+			clearInterval(oscOnlineTimer);
+			oscOnlineTimer = null;
+		}
+		oscStatus.textContent = 'Online viewer: stopped';
+	});
 
 	document.getElementById('oscDumpButton').addEventListener('click', function () {
 		const link = document.createElement('a');
