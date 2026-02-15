@@ -57,6 +57,10 @@ def main() -> None:
     plt.figure(figsize=(12, 4))
     plt.step(time_axis, rpm + 1.2, where="post", label="RPM input (GPIO35)")
     plt.step(time_axis, speed, where="post", label="Speed input (GPIO39)")
+    # Sample dots (overlay)
+    plt.plot(time_axis, rpm + 1.2, marker='o', linestyle='None')
+    plt.plot(time_axis, speed, marker='o', linestyle='None')
+
     plt.yticks([0, 1.2], ["Speed", "RPM"])
     plt.xlabel("Time, s")
     plt.ylabel("Digital level")
