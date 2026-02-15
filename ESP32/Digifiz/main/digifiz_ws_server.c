@@ -596,9 +596,9 @@ esp_err_t digifiz_register_uri_handler(httpd_handle_t server)
     ret = httpd_register_uri_handler(server, &set_param_post);
     if (ret)
         goto _ret;
-    ret = httpd_register_uri_handler(server, &set_color_scheme);
-    if (ret)
-        goto _ret;
+    //ret = httpd_register_uri_handler(server, &set_color_scheme);
+    //if (ret)
+    //    goto _ret;
     ret = httpd_register_uri_handler(server, &oscilloscope_dump);
     if (ret)
         goto _ret;
