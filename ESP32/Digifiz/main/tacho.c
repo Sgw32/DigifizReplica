@@ -16,6 +16,7 @@ static volatile uint8_t rpm_cnt = 0;
 static gptimer_handle_t gptimer = 0;
 static uint32_t average_intv_q = 0;
 static uint32_t buf_intv_q = 0;
+static uint32_t rpm_debounce_ticks = DEBOUNCE_TICKS;
 
 CircularBuffer rpm_buffer;
 
@@ -63,51 +64,51 @@ int median_filter(CircularBuffer *buffer, int new_value) {
 }
 
 
-static void IRAM_ATTR gpio_isr_handler(void* arg) {    
+static void IRAM_ATTR gpio_isr_handler_stable(void* arg) {
+    uint64_t current_time;
+    uint32_t intv_q;
+
+    gptimer_get_raw_count(gptimer, &current_time);
+    uint32_t current_gpio_level = gpio_get_level(RPM_PIN);
+    if (current_gpio_level == 1) {
+        //Rising
+        if ((current_time - last_time_falling) > rpm_debounce_ticks) {
+            interval = current_time - last_time_rising;
+        }
+        last_time_rising = current_time;
+        intv_q = (uint32_t) interval;
+        rpm_cnt++;
+        if (rpm_cnt % 10) {
+            xQueueSendFromISR(gpio_evt_queue, &intv_q, NULL);
+        }
+    } else {
+        //Falling
+        last_time_falling = current_time;
+    }
+}
+
+static void IRAM_ATTR gpio_isr_handler_legacy(void* arg) {
     uint64_t current_time;
     uint32_t intv_q = 0;
 
     gptimer_get_raw_count(gptimer, &current_time);
     uint32_t current_gpio_level = gpio_get_level(RPM_PIN);
-    if (current_gpio_level==1)
-    {
-      if (digifiz_parameters.stable_rpm_input.value)
-      {
-        //Rising
-        if ((current_time - last_time_falling)>DEBOUNCE_TICKS)
-        {
-          interval = current_time - last_time_rising;
-        }
-        last_time_rising = current_time;
-        uint32_t intv_q = (uint32_t) interval;
-        rpm_cnt++;
-        if (rpm_cnt%10)
-        {
-          xQueueSendFromISR(gpio_evt_queue, &intv_q, NULL);
-        }
-      }
-      else
-      {
-        if ((last_time_falling-current_time)>DEBOUNCE_TICKS)
-        {
-          interval = current_time - last_time_rising;
+    if (current_gpio_level == 1) {
+        if ((last_time_falling - current_time) > rpm_debounce_ticks) {
+            interval = current_time - last_time_rising;
         }
         last_time_rising = current_time;
         intv_q = (uint32_t) interval;
         average_intv_q += intv_q;
         rpm_cnt++;
-        if ((rpm_cnt%8)==0)
-        {
-          buf_intv_q = average_intv_q>>3;//median_filter(&rpm_buffer, average_intv_q>>4);
-          average_intv_q = 0;
-          xQueueSendFromISR(gpio_evt_queue, &buf_intv_q, NULL);
+        if ((rpm_cnt % 8) == 0) {
+            buf_intv_q = average_intv_q >> 3; //median_filter(&rpm_buffer, average_intv_q>>4);
+            average_intv_q = 0;
+            xQueueSendFromISR(gpio_evt_queue, &buf_intv_q, NULL);
         }
-      }
-    }
-    else
-    {
-      //Falling
-      last_time_falling = current_time;
+    } else {
+        //Falling
+        last_time_falling = current_time;
     }
 }
 
@@ -138,28 +139,32 @@ void deinit_gptimer(void)
     ESP_LOGI(TAG, "GPTimer deinitialized.");
 }
 
-static void frequency_task(void* arg) {
+static void frequency_task_stable(void* arg) {
+    uint64_t intv = 0;
+
+    while (1) {
+        if (xQueueReceive(gpio_evt_queue, &intv, portMAX_DELAY)) {
+            uint32_t rpm = 1000000 / intv;
+            if (rpm < digifiz_parameters.rpm_sanity_check.value) {
+                mRPMSenseData = rpm;
+                last_rpm_value_millis = millis();
+            }
+        }
+    }
+}
+
+static void frequency_task_legacy(void* arg) {
     uint64_t intv = 0;
     uint32_t rpm_sense = 0;
+
     while (1) {
-       if (xQueueReceive(gpio_evt_queue, &intv, portMAX_DELAY)) {
-            if (digifiz_parameters.stable_rpm_input.value) {
-                // Direct processing for stable signals
-                uint32_t rpm = 1000000/intv;
-                if (rpm < 12000) { // Basic sanity check
-                    mRPMSenseData = rpm;
-                    last_rpm_value_millis = millis();
-                }
-            } else {
-                // Original processing for unstable signals
-                rpm_sense = median_filter(&rpm_buffer, 1000000/intv);
-                if (rpm_sense < 1200)
-                {
-                    mRPMSenseData = rpm_sense;
-                    last_rpm_value_millis = millis();
-                }
+        if (xQueueReceive(gpio_evt_queue, &intv, portMAX_DELAY)) {
+            rpm_sense = median_filter(&rpm_buffer, 1000000 / intv);
+            if (rpm_sense < digifiz_parameters.rpm_sanity_check.value) {
+                mRPMSenseData = rpm_sense;
+                last_rpm_value_millis = millis();
             }
-       }
+        }
     }
 }
 
@@ -173,7 +178,11 @@ static void tacho_gpio_init() {
     gpio_config(&io_conf);
 
     //gpio_install_isr_service(ESP_INTR_FLAG_EDGE);
-    gpio_isr_handler_add(RPM_PIN, gpio_isr_handler, (void*) RPM_PIN);
+    if (digifiz_parameters.rpm_algorithm.value) {
+        gpio_isr_handler_add(RPM_PIN, gpio_isr_handler_stable, (void*) RPM_PIN);
+    } else {
+        gpio_isr_handler_add(RPM_PIN, gpio_isr_handler_legacy, (void*) RPM_PIN);
+    }
 }
 
 void deinit_tacho_gpio(void)
@@ -204,11 +213,19 @@ void initTacho()
     init_buffer(&rpm_buffer);
     last_rpm_value_millis = millis();
     mRPMSenseData = 0;
+    rpm_debounce_ticks = digifiz_parameters.rpm_debounce_ticks.value;
+    if (rpm_debounce_ticks == 0) {
+        rpm_debounce_ticks = DEBOUNCE_TICKS;
+    }
     gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
     tacho_timer_init();
     tacho_gpio_init();
     // task takes ownership of allocated memory
-    xTaskCreatePinnedToCore(frequency_task, "rpm_count_task", 2048, NULL, 10, NULL, 1);
+    if (digifiz_parameters.rpm_algorithm.value) {
+        xTaskCreatePinnedToCore(frequency_task_stable, "rpm_count_task_stable", 2048, NULL, 10, NULL, 1);
+    } else {
+        xTaskCreatePinnedToCore(frequency_task_legacy, "rpm_count_task_legacy", 2048, NULL, 10, NULL, 1);
+    }
     ESP_LOGI(TAG, "initTacho ended");
 }
 
