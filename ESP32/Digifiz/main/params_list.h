@@ -665,9 +665,9 @@ extern "C" {
         U8, \
         rpm_algorithm, \
         .p_name = "RPM algorithm", \
-        .p_info = "RPM handling algorithm: 0 = legacy/unstable, 1 = stable input", \
+        .p_info = "RPM handling algorithm: 0 = legacy/unstable, 1 = stable input, 2 = glitch-filtered input", \
         .value = 0, \
-        .max = 1, \
+        .max = 2, \
     ) \
     PARAM(  \
         U16, \
