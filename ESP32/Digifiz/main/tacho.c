@@ -77,14 +77,14 @@ static void IRAM_ATTR gpio_isr_handler_stable(void* arg) {
     gptimer_get_raw_count(gptimer, &current_time);
     if (gpio_get_level(RPM_PIN) == 1) {
         // Rising
-        if ((last_time_falling != 0) && ((current_time - last_time_falling) < rpm_debounce_ticks)) {
+        if ((last_time_falling != 0) && ((current_time - last_time_falling) < digifiz_parameters.rpm_debounce_ticks.value)) {
             return;
         }
 
         if (last_time_valid_rising != 0) {
             interval = current_time - last_time_valid_rising;
             uint32_t intv_q = (uint32_t)interval;
-            if (intv_q >= rpm_debounce_ticks) {
+            if (intv_q >= digifiz_parameters.rpm_debounce_ticks.value) {
                 xQueueSendFromISR(gpio_evt_queue, &intv_q, NULL);
             }
         }
@@ -102,14 +102,14 @@ static void IRAM_ATTR gpio_isr_handler_legacy(void* arg) {
 
     gptimer_get_raw_count(gptimer, &current_time);
     if (gpio_get_level(RPM_PIN) == 1) {
-        if ((last_time_falling != 0) && ((current_time - last_time_falling) < rpm_debounce_ticks)) {
+        if ((last_time_falling != 0) && ((current_time - last_time_falling) < digifiz_parameters.rpm_debounce_ticks.value)) {
             return;
         }
 
         if (last_time_valid_rising != 0) {
             interval = current_time - last_time_valid_rising;
             uint32_t intv_q = (uint32_t) interval;
-            if (intv_q >= rpm_debounce_ticks) {
+            if (intv_q >= digifiz_parameters.rpm_debounce_ticks.value) {
                 average_intv_q += intv_q;
                 rpm_cnt++;
                 if ((rpm_cnt & 0x07u) == 0u) {
@@ -134,13 +134,13 @@ static void IRAM_ATTR gpio_isr_handler_glitch(void* arg) {
     gptimer_get_raw_count(gptimer, &current_time);
     if (gpio_get_level(RPM_PIN) == 1) {
         // Rising
-        if ((last_time_falling != 0) && ((current_time - last_time_falling) < rpm_debounce_ticks)) {
+        if ((last_time_falling != 0) && ((current_time - last_time_falling) < digifiz_parameters.rpm_debounce_ticks.value)) {
             return;
         }
 
         if (last_time_falling != 0) {
             uint32_t low_us = (uint32_t)(current_time - last_time_falling);
-            if (low_us < rpm_min_low_us) {
+            if (low_us < digifiz_parameters.rpm_min_low_us.value) {
                 return;
             }
         }
@@ -155,13 +155,13 @@ static void IRAM_ATTR gpio_isr_handler_glitch(void* arg) {
         }
 
         uint32_t high_us = (uint32_t)(current_time - last_time_rising);
-        if (high_us < rpm_min_high_us) {
+        if (high_us < digifiz_parameters.rpm_min_high_us.value) {
             return;
         }
 
         if (last_time_valid_rising != 0) {
             uint32_t period_us = (uint32_t)(last_time_rising - last_time_valid_rising);
-            if (period_us >= rpm_debounce_ticks) {
+            if (period_us >= digifiz_parameters.rpm_debounce_ticks.value) {
                 xQueueSendFromISR(gpio_evt_queue, &period_us, NULL);
             }
         }
