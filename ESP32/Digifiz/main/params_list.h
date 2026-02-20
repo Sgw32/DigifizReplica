@@ -663,11 +663,25 @@ extern "C" {
     ) \
     PARAM(  \
         U8, \
-        stable_rpm_input, \
-        .p_name = "Stable RPM input", \
-        .p_info = "Enable for modern ECUs with stable RPM signal", \
+        rpm_algorithm, \
+        .p_name = "RPM algorithm", \
+        .p_info = "RPM handling algorithm: 0 = legacy/unstable, 1 = stable input, 2 = glitch-filtered input", \
         .value = 0, \
-        .max = 1, \
+        .max = 2, \
+    ) \
+    PARAM(  \
+        U16, \
+        rpm_sanity_check, \
+        .p_name = "RPM sanity check", \
+        .p_info = "Maximum valid RPM value used as sanity threshold", \
+        .value = 3000, \
+    ) \
+    PARAM(  \
+        U16, \
+        rpm_debounce_ticks, \
+        .p_name = "RPM debounce ticks", \
+        .p_info = "Debounce threshold in timer ticks for RPM edge filtering", \
+        .value = 50, \
     ) \
     PARAM(  \
         U32, \
