@@ -10,8 +10,8 @@ uint32_t mRPMSenseData;
 #define RPM_ALGORITHM_LEGACY 0u
 #define RPM_ALGORITHM_STABLE 1u
 #define RPM_ALGORITHM_GLITCH 2u
-#define RPM_MIN_LOW_US 100u
-#define RPM_MIN_HIGH_US 100u
+#define RPM_MIN_LOW_US_DEFAULT 100u
+#define RPM_MIN_HIGH_US_DEFAULT 100u
 
 static QueueHandle_t gpio_evt_queue = NULL;
 static volatile uint64_t last_time_rising = 0;
@@ -23,6 +23,8 @@ static volatile uint8_t rpm_cnt = 0;
 static gptimer_handle_t gptimer = 0;
 static uint32_t average_intv_q = 0;
 static uint32_t rpm_debounce_ticks = DEBOUNCE_TICKS;
+static uint32_t rpm_min_low_us = RPM_MIN_LOW_US_DEFAULT;
+static uint32_t rpm_min_high_us = RPM_MIN_HIGH_US_DEFAULT;
 
 CircularBuffer rpm_buffer;
 
@@ -138,7 +140,7 @@ static void IRAM_ATTR gpio_isr_handler_glitch(void* arg) {
 
         if (last_time_falling != 0) {
             uint32_t low_us = (uint32_t)(current_time - last_time_falling);
-            if (low_us < RPM_MIN_LOW_US) {
+            if (low_us < rpm_min_low_us) {
                 return;
             }
         }
@@ -153,7 +155,7 @@ static void IRAM_ATTR gpio_isr_handler_glitch(void* arg) {
         }
 
         uint32_t high_us = (uint32_t)(current_time - last_time_rising);
-        if (high_us < RPM_MIN_HIGH_US) {
+        if (high_us < rpm_min_high_us) {
             return;
         }
 
@@ -293,6 +295,14 @@ void initTacho()
     rpm_debounce_ticks = digifiz_parameters.rpm_debounce_ticks.value;
     if (rpm_debounce_ticks == 0) {
         rpm_debounce_ticks = DEBOUNCE_TICKS;
+    }
+    rpm_min_low_us = digifiz_parameters.rpm_min_low_us.value;
+    if (rpm_min_low_us == 0) {
+        rpm_min_low_us = RPM_MIN_LOW_US_DEFAULT;
+    }
+    rpm_min_high_us = digifiz_parameters.rpm_min_high_us.value;
+    if (rpm_min_high_us == 0) {
+        rpm_min_high_us = RPM_MIN_HIGH_US_DEFAULT;
     }
     gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
     tacho_timer_init();
