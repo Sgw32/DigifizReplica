@@ -684,6 +684,20 @@ extern "C" {
         .value = 50, \
     ) \
     PARAM(  \
+        U16, \
+        rpm_min_low_us, \
+        .p_name = "RPM min low us", \
+        .p_info = "Minimum low pulse width in microseconds for glitch-filtered RPM input", \
+        .value = 100, \
+    ) \
+    PARAM(  \
+        U16, \
+        rpm_min_high_us, \
+        .p_name = "RPM min high us", \
+        .p_info = "Minimum high pulse width in microseconds for glitch-filtered RPM input", \
+        .value = 100, \
+    ) \
+    PARAM(  \
         U32, \
         r_gear_coefficient, \
         .p_name = "Rear gear coefficient", \
