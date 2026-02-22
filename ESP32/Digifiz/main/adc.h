@@ -79,6 +79,15 @@ float getIntakePressure();
 float getCurrentIntakeFuelConsumption();
 float getIntakeVoltage();
 
+float getFuelPressure();
+float getBarometerPressure();
+float getWidebandLambdaAFR();
+
+void processFuelPressure();
+void processBarometer();
+void processWidebandLambda();
+void processConsumptionSensor();
+
 float getOilTemperatureFahrenheit(); //F
 float getAmbientTemperatureFahrenheit(); //F
 

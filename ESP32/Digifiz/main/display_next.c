@@ -992,10 +992,16 @@ void displayMFAType(uint8_t mfaType) {
             setMFADisplayedNumber((uint16_t)(digifiz_status.daily_mileage[digifiz_parameters.mfaBlock.value]/3600));
             setFloatDot(false);
             break;
-        case MFA_STATE_TRIP_L100KM:
+        case MFA_STATE_SENSOR:
             display.mfa_dots&=0b00;
-            setMFADisplayedNumber((uint16_t)(digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]*100));
-            //setMFADisplayedNumber((uint16_t)(getCurrentIntakeFuelConsumption()*100.0f));
+            if (digifiz_parameters.mfa_sensor.value == 2)
+            {
+                setMFADisplayedNumber((int16_t)(getMFASensorValue()*10.0f));
+            }
+            else
+            {
+                setMFADisplayedNumber((int16_t)(getMFASensorValue()*100.0f));
+            }
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
