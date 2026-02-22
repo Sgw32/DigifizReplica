@@ -49,6 +49,9 @@ float V0;
 float gasolineLevel,gasolineLevelFiltered,gasolineLevelFiltered05hour;
 float tauCoolant, tauGasoline, tauAir, tauOil,tauGasolineConsumption;
 float consumptionLevel;
+float fuelPressure = 0.0f;
+float barometerPressure = 0.0f;
+float widebandLambdaAFR = 0.0f;
 
 static DeviceSensorsFaulty faulty_status = {.fault_status = 0};
 
@@ -282,9 +285,10 @@ void processADC()
     processOilTemperature();
     processAmbientTemperature();
     processBrightnessLevel();
-    #ifdef FUEL_PRESSURE_SENSOR
+    processConsumptionSensor();
     processFuelPressure();
-    #endif
+    processBarometer();
+    processWidebandLambda();
     //ESP_LOGI(LOG_TAG, "process ADC ended");
 }
 
@@ -694,6 +698,74 @@ void processAmbientTemperature() {
             faulty_status.air_faulty += 1;
     }
     //printf("ADC AMBT: %f %f\n",V0, temp1);
+}
+
+
+void processConsumptionSensor() {
+    float raw = (float)adc_raw.intakePressRawADCVal;
+    if (digifiz_parameters.mfa_sensor.value == 2)
+    {
+        raw = ADC_UPPER_BOUND / 2.0f;
+    }
+    consumptionLevel += 0.1f * ((raw / ADC_UPPER_BOUND) - consumptionLevel);
+}
+
+void processFuelPressure() {
+    float raw = (float)adc_raw.fuelPressRawADCVal;
+    if (digifiz_parameters.mfa_sensor.value == 1)
+    {
+        raw = ADC_UPPER_BOUND / 2.0f;
+    }
+    float voltage = (raw / ADC_UPPER_BOUND) * 3.3f;
+    fuelPressure += 0.2f * (constrain(voltage * (10.0f / 3.3f), 0.0f, 10.0f) - fuelPressure);
+}
+
+void processBarometer() {
+    float raw = (float)adc_raw.fuelPressRawADCVal;
+    float voltage = (raw / ADC_UPPER_BOUND) * 3.3f;
+
+    float vLow = digifiz_parameters.Vblow.value;
+    float vHigh = digifiz_parameters.Vbhigh.value;
+    float bLow = digifiz_parameters.Blow.value;
+    float bHigh = digifiz_parameters.Bhigh.value;
+
+    float pressure = bLow;
+    if (fabsf(vHigh - vLow) > 0.0001f)
+    {
+        pressure = bLow + (voltage - vLow) * (bHigh - bLow) / (vHigh - vLow);
+    }
+    pressure = constrain(pressure, -20.0f, 20.0f);
+    barometerPressure += 0.2f * (pressure - barometerPressure);
+}
+
+void processWidebandLambda() {
+    float raw = (float)adc_raw.intakePressRawADCVal;
+    float voltage = (raw / ADC_UPPER_BOUND) * 3.3f;
+
+    float vLow = digifiz_parameters.Vllow.value;
+    float vHigh = digifiz_parameters.Vlhigh.value;
+    float aLow = digifiz_parameters.AFRlow.value;
+    float aHigh = digifiz_parameters.AFRhigh.value;
+
+    float afr = aLow;
+    if (fabsf(vHigh - vLow) > 0.0001f)
+    {
+        afr = aLow + (voltage - vLow) * (aHigh - aLow) / (vHigh - vLow);
+    }
+    afr = constrain(afr, 0.0f, 40.0f);
+    widebandLambdaAFR += 0.2f * (afr - widebandLambdaAFR);
+}
+
+float getFuelPressure() {
+    return fuelPressure;
+}
+
+float getBarometerPressure() {
+    return barometerPressure;
+}
+
+float getWidebandLambdaAFR() {
+    return widebandLambdaAFR;
 }
 
 // Process brightness level data

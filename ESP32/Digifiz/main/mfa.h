@@ -10,7 +10,7 @@ extern "C" {
 #if !defined(AUDI_DISPLAY) && !defined(AUDI_RED_DISPLAY)
 #define MFA_STATE_TRIP_DURATION 0
 #define MFA_STATE_TRIP_DISTANCE 1
-#define MFA_STATE_TRIP_L100KM   2
+#define MFA_STATE_SENSOR   2
 #define MFA_STATE_TRIP_MEAN_SPEED 3
 #define MFA_STATE_OIL_TEMP 4
 #define MFA_STATE_AIR_TEMP 5
@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 #ifdef AUDI_DISPLAY
-#define MFA_STATE_TRIP_L100KM   0
+#define MFA_STATE_SENSOR   0
 #define MFA_STATE_TRIP_CURRENT_L100KM   1
 #define MFA_STATE_TRIP_MEAN_SPEED 2
 #define MFA_STATE_TRIP_DISTANCE 3
@@ -28,7 +28,7 @@ extern "C" {
 
 #ifdef AUDI_RED_DISPLAY
 #define MFA_STATE_TRIP_MEAN_SPEED   0
-#define MFA_STATE_TRIP_L100KM   1
+#define MFA_STATE_SENSOR   1
 #define MFA_STATE_TRIP_FUEL 2
 #define MFA_STATE_TRIP_MPG 3
 #define MFA_STATE_TRIP_MEAN_MPH 4
@@ -47,6 +47,8 @@ void pressMFASensorShort();
 void pressMFASensorLong();
 void pressMFASensorSuperLong();
 void pressMFASensorSuperSuperLong();
+
+float getMFASensorValue();
 
 extern uint8_t uptimeDisplayEnabled;
 

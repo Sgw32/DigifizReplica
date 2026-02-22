@@ -5,13 +5,9 @@ extern "C" {
 #endif
 #include "setup.h"
 #include <stdint.h>
-
+#include "adc.h"
 
 void initFuelPressureSensor();
-
-void processFuelPressure();
-float getFuelPressure();
-float getFuelPressureVoltage();
 
 #ifdef __cplusplus
 }

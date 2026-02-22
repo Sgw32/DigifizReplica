@@ -3,6 +3,7 @@
 #include "millis.h"
 #include "reg_inout.h"
 #include "driver/gpio.h"
+#include "adc.h"
 #include <time.h>
 
 uint8_t uptimeDisplayEnabled = 0;
@@ -157,7 +158,7 @@ void pressMFAReset() {
         case MFA_STATE_TRIP_DISTANCE:
             digifiz_status.daily_mileage[digifiz_parameters.mfaBlock.value] = 0;
             break;
-        case MFA_STATE_TRIP_L100KM:
+        case MFA_STATE_SENSOR:
             digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value] = 0;
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
@@ -199,4 +200,19 @@ void pressMFASensorSuperSuperLong() {
         uptimeDisplayEnabled=1;
     else  
         uptimeDisplayEnabled=0;
+}
+
+
+float getMFASensorValue() {
+    switch (digifiz_parameters.mfa_sensor.value) {
+        case 1:
+            return getBarometerPressure();
+        case 2:
+            return getWidebandLambdaAFR();
+        case 3:
+            return getFuelPressure();
+        case 0:
+        default:
+            return getFuelConsumption();
+    }
 }

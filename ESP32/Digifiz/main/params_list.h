@@ -439,6 +439,86 @@ extern "C" {
     ) \
     PARAM(  \
         U8, \
+        mfa_sensor, \
+        .p_name = "MFA sensor type", \
+        .p_info = "0=consumption, 1=barometer, 2=wideband lambda, 3=fuel pressure",\
+        .value = 0, \
+        .max = 3, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        Vblow, \
+        .p_name = "Barometer V low", \
+        .p_info = "Low voltage calibration point for barometer",\
+        .value = 0.25f, \
+        .min = 0.0f, \
+        .max = 3.3f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        Vbhigh, \
+        .p_name = "Barometer V high", \
+        .p_info = "High voltage calibration point for barometer",\
+        .value = 2.25f, \
+        .min = 0.0f, \
+        .max = 3.3f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        Blow, \
+        .p_name = "Barometer low", \
+        .p_info = "Pressure at low voltage point",\
+        .value = 0.0f, \
+        .min = -20.0f, \
+        .max = 20.0f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        Bhigh, \
+        .p_name = "Barometer high", \
+        .p_info = "Pressure at high voltage point",\
+        .value = 8.0f, \
+        .min = -20.0f, \
+        .max = 20.0f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        Vllow, \
+        .p_name = "Lambda V low", \
+        .p_info = "Low voltage calibration point for wideband lambda",\
+        .value = 0.0f, \
+        .min = 0.0f, \
+        .max = 3.3f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        Vlhigh, \
+        .p_name = "Lambda V high", \
+        .p_info = "High voltage calibration point for wideband lambda",\
+        .value = 4.5f, \
+        .min = 0.0f, \
+        .max = 5.0f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        AFRlow, \
+        .p_name = "Lambda AFR low", \
+        .p_info = "AFR at low voltage point",\
+        .value = 10.0f, \
+        .min = 0.0f, \
+        .max = 40.0f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        AFRhigh, \
+        .p_name = "Lambda AFR high", \
+        .p_info = "AFR at high voltage point",\
+        .value = 20.0f, \
+        .min = 0.0f, \
+        .max = 40.0f, \
+    ) \
+    PARAM(  \
+        U8, \
         mfaState, \
         .p_name = "MFA function state", \
         .p_info = "Selected MFA function",\
