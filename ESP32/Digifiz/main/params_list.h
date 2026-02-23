@@ -446,6 +446,14 @@ extern "C" {
         .max = 3, \
     ) \
     PARAM(  \
+        U8, \
+        mfa_clock_sensor, \
+        .p_name = "MFA clock sensor type", \
+        .p_info = "0=clock, 1=barometer, 2=wideband lambda, 3=fuel pressure",\
+        .value = 0, \
+        .max = 3, \
+    ) \
+    PARAM(  \
         FLOAT, \
         Vblow, \
         .p_name = "Barometer V low", \

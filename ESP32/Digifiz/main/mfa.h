@@ -36,6 +36,16 @@ extern "C" {
 #define MFA_STATE_TRIP_DURATION 6
 #endif
 
+#define MFA_CLOCK_SENSOR_CLOCK 0
+#define MFA_CLOCK_SENSOR_BAROMETER 1
+#define MFA_CLOCK_SENSOR_LAMBDA_AFR 2
+#define MFA_CLOCK_SENSOR_FUEL_PRESSURE 3
+
+#define MFA_SENSOR_CONSUMPTION 0
+#define MFA_SENSOR_BAROMETER 1
+#define MFA_SENSOR_LAMBDA_AFR 2
+#define MFA_SENSOR_FUEL_PRESSURE 3
+
 #define TOUCH_PIN 38
 
 void initMFA();
@@ -49,6 +59,7 @@ void pressMFASensorSuperLong();
 void pressMFASensorSuperSuperLong();
 
 float getMFASensorValue();
+float getMFAClockSensorValue();
 
 extern uint8_t uptimeDisplayEnabled;
 

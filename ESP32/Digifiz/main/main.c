@@ -226,6 +226,7 @@ void digifizLoop(void *pvParameters) {
         }
         checkEmergency(rpm);
         setMFABlock(digifiz_parameters.mfaBlock.value ? 0 : 1); //in display h
+        displayMFAClock();
         displayMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState.value);
         setDot(false);
         //printf("Reg in: %u %u %u\n", digifiz_reg_in.bytes[0], digifiz_reg_in.bytes[1], digifiz_reg_in.mfaReset);

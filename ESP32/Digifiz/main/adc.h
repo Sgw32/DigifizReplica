@@ -22,6 +22,7 @@ extern "C" {
 #define AMB_TEMP_INTAKE_MODEL_LOWER_VAL -20.0f
 #define AMB_TEMP_INTAKE_MODEL_UPPER_VAL 30.0f
 
+
 typedef struct {
     int coolantRawADCVal;
     int fuelRawADCVal;

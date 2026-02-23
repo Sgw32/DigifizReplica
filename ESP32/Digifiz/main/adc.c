@@ -703,19 +703,19 @@ void processAmbientTemperature() {
 
 void processConsumptionSensor() {
     float raw = (float)adc_raw.intakePressRawADCVal;
-    if (digifiz_parameters.mfa_sensor.value == 2)
-    {
-        raw = ADC_UPPER_BOUND / 2.0f;
-    }
+    // if (digifiz_parameters.mfa_sensor.value == 2)
+    // {
+    //     raw = ADC_UPPER_BOUND / 2.0f;
+    // }
     consumptionLevel += 0.1f * ((raw / ADC_UPPER_BOUND) - consumptionLevel);
 }
 
 void processFuelPressure() {
     float raw = (float)adc_raw.fuelPressRawADCVal;
-    if (digifiz_parameters.mfa_sensor.value == 1)
-    {
-        raw = ADC_UPPER_BOUND / 2.0f;
-    }
+    // if (digifiz_parameters.mfa_sensor.value == 1)
+    // {
+    //     raw = ADC_UPPER_BOUND / 2.0f;
+    // }
     float voltage = (raw / ADC_UPPER_BOUND) * 3.3f;
     fuelPressure += 0.2f * (constrain(voltage * (10.0f / 3.3f), 0.0f, 10.0f) - fuelPressure);
 }
@@ -734,7 +734,7 @@ void processBarometer() {
     {
         pressure = bLow + (voltage - vLow) * (bHigh - bLow) / (vHigh - vLow);
     }
-    pressure = constrain(pressure, -20.0f, 20.0f);
+    pressure = constrain(pressure, bHigh, bLow);
     barometerPressure += 0.2f * (pressure - barometerPressure);
 }
 

@@ -204,15 +204,31 @@ void pressMFASensorSuperSuperLong() {
 
 
 float getMFASensorValue() {
-    switch (digifiz_parameters.mfa_sensor.value) {
-        case 1:
+   switch (digifiz_parameters.mfa_sensor.value) {
+        case MFA_SENSOR_CONSUMPTION:
+            return getFuelConsumption();
+        case MFA_SENSOR_BAROMETER:
             return getBarometerPressure();
-        case 2:
+        case MFA_SENSOR_LAMBDA_AFR:
             return getWidebandLambdaAFR();
-        case 3:
+        case MFA_SENSOR_FUEL_PRESSURE:
             return getFuelPressure();
-        case 0:
         default:
             return getFuelConsumption();
+    }
+}
+
+float getMFAClockSensorValue() {
+    switch (digifiz_parameters.mfa_clock_sensor.value) {
+        case MFA_CLOCK_SENSOR_CLOCK:
+            return 0;
+        case MFA_CLOCK_SENSOR_BAROMETER:
+            return getBarometerPressure();
+        case MFA_CLOCK_SENSOR_LAMBDA_AFR:
+            return getWidebandLambdaAFR();
+        case MFA_CLOCK_SENSOR_FUEL_PRESSURE:
+            return getFuelPressure();
+        default:
+            return 0;
     }
 }

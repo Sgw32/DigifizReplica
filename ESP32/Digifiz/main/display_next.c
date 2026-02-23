@@ -67,6 +67,9 @@ static uint32_t check_engine_last_toggle_ms = 0;
 static bool check_engine_blink_state = true;
 static bool check_engine_speed_override_active = false;
 
+static uint8_t d_clock_hours = 0;
+static uint8_t d_clock_minutes = 0;
+
 static uint8_t apply_indicator_filter(indicator_filter_t *filter, uint8_t new_value, uint16_t required_cycles)
 {
     uint8_t sanitized_value = new_value ? 1 : 0;
@@ -580,33 +583,10 @@ void setRPM(uint32_t rpmdata) {
 }
 
 // Set the clock data
-void setClockData(uint8_t clock_hours, uint8_t clock_minutes) {
-    // Implementation placeholder
-
-    uint8_t number_clock[10]={DIGIT_NUMBER_0,
-                            DIGIT_NUMBER_1,
-                            DIGIT_NUMBER_2,
-                            DIGIT_NUMBER_3,
-                            DIGIT_NUMBER_4,
-                            DIGIT_NUMBER_5,
-                            DIGIT_NUMBER_6,
-                            DIGIT_NUMBER_7,
-                            DIGIT_NUMBER_8,
-                            DIGIT_NUMBER_9};
-    if (((clock_hours / 10) % 10)!=0)
-    {
-        display.clock_digit_1 = number_clock[(clock_hours / 10) % 10];
-        display.clock_digit_2 = number_clock[(clock_hours / 1) % 10];
-        display.clock_digit_3 = number_clock[(clock_minutes / 10) % 10];
-        display.clock_digit_4 = number_clock[(clock_minutes / 1) % 10];
-    }
-    else
-    {
-        display.clock_digit_1 = DIGIT_NUMBER_0;
-        display.clock_digit_2 = number_clock[(clock_hours / 1) % 10];
-        display.clock_digit_3 = number_clock[(clock_minutes / 10) % 10];
-        display.clock_digit_4 = number_clock[(clock_minutes / 1) % 10];
-    }
+void setClockData(uint8_t clock_hours, uint8_t clock_minutes) 
+{
+    d_clock_hours = clock_hours;
+    d_clock_minutes = clock_minutes;
 }
 
 // Set the MFA clock data
@@ -979,6 +959,82 @@ void setMFAType(uint8_t mfaType) {
 extern int sinceStart_hours;
 extern int sinceStart_minutes;
 
+void displayMFAClock()
+{
+    uint8_t number_clock[10]={DIGIT_NUMBER_0,
+                            DIGIT_NUMBER_1,
+                            DIGIT_NUMBER_2,
+                            DIGIT_NUMBER_3,
+                            DIGIT_NUMBER_4,
+                            DIGIT_NUMBER_5,
+                            DIGIT_NUMBER_6,
+                            DIGIT_NUMBER_7,
+                            DIGIT_NUMBER_8,
+                            DIGIT_NUMBER_9};
+    if (digifiz_parameters.mfa_clock_sensor.value == MFA_CLOCK_SENSOR_CLOCK)
+    {
+        if (((d_clock_hours / 10) % 10)!=0)
+        {
+            display.clock_digit_1 = number_clock[(d_clock_hours / 10) % 10];
+            display.clock_digit_2 = number_clock[(d_clock_hours / 1) % 10];
+            display.clock_digit_3 = number_clock[(d_clock_minutes / 10) % 10];
+            display.clock_digit_4 = number_clock[(d_clock_minutes / 1) % 10];
+        }
+        else
+        {
+            display.clock_digit_1 = DIGIT_NUMBER_0;
+            display.clock_digit_2 = number_clock[(d_clock_hours / 1) % 10];
+            display.clock_digit_3 = number_clock[(d_clock_minutes / 10) % 10];
+            display.clock_digit_4 = number_clock[(d_clock_minutes / 1) % 10];
+        }
+        display.clock_dot = 0b11;
+        return;
+    }
+
+    display.clock_dot = 0b10;
+    int16_t sensorValue = getMFAClockSensorValue()*100.0f;
+    if (sensorValue>=0)
+    {
+      if (((sensorValue / 1000) % 10)!=0)
+      {
+        display.clock_digit_1 = number_clock[(sensorValue / 1000) % 10];
+        display.clock_digit_2 = number_clock[(sensorValue / 100) % 10];
+      }
+      else
+      {
+        display.clock_digit_1 = DIGIT_NUMBER_EMPTY;
+        display.clock_digit_2 = number_clock[(sensorValue / 100) % 10];
+      }
+      display.clock_digit_3 = number_clock[(sensorValue / 10) % 10];
+      display.clock_digit_4 = number_clock[(sensorValue / 1) % 10];
+    }
+    else
+    {
+      //minus values
+      if (((-sensorValue / 1000) % 10)!=0)
+      {
+        display.clock_digit_1 = number_clock[(-sensorValue / 1000) % 10];
+        display.clock_digit_2 = number_clock[(-sensorValue / 100) % 10];
+      }
+      else
+      {
+        if (((-sensorValue / 100) % 10)!=0)
+        {
+            display.clock_digit_1 = DIGIT_NUMBER_MINUS;
+            display.clock_digit_2 = number_clock[(-sensorValue / 100) % 10];
+        }
+        else
+        {
+            display.clock_digit_1 = DIGIT_NUMBER_EMPTY;
+            display.clock_digit_2 = DIGIT_NUMBER_MINUS;
+        }        
+      }
+      display.clock_digit_3 = number_clock[(-sensorValue / 10) % 10];
+      display.clock_digit_3 = number_clock[(-sensorValue / 1) % 10];
+    }
+    
+}
+
 // Display the MFA type
 void displayMFAType(uint8_t mfaType) {
     switch(mfaType)
@@ -994,14 +1050,7 @@ void displayMFAType(uint8_t mfaType) {
             break;
         case MFA_STATE_SENSOR:
             display.mfa_dots&=0b00;
-            if (digifiz_parameters.mfa_sensor.value == 2)
-            {
-                setMFADisplayedNumber((int16_t)(getMFASensorValue()*10.0f));
-            }
-            else
-            {
-                setMFADisplayedNumber((int16_t)(getMFASensorValue()*100.0f));
-            }
+            setMFADisplayedNumber((int16_t)(getMFASensorValue()*100.0f));
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:

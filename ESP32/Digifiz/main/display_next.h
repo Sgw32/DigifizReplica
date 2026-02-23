@@ -174,6 +174,7 @@ void setFloatDot(bool value);
 void setMileage(uint32_t mileage);
 void setMFAType(uint8_t mfaType);
 void displayMFAType(uint8_t mfaType);
+void displayMFAClock();
 void setMFABlock(uint8_t block);
 void setBrightness(uint8_t levels);
 void resetBrightness();
