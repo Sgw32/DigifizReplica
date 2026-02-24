@@ -707,7 +707,7 @@ void processConsumptionSensor() {
     // {
     //     raw = ADC_UPPER_BOUND / 2.0f;
     // }
-    consumptionLevel += 0.1f * ((raw / ADC_UPPER_BOUND) - consumptionLevel);
+    consumptionLevel += 0.05f * ((raw / ADC_UPPER_BOUND) - consumptionLevel);
 }
 
 void processFuelPressure() {
@@ -717,25 +717,27 @@ void processFuelPressure() {
     //     raw = ADC_UPPER_BOUND / 2.0f;
     // }
     float voltage = (raw / ADC_UPPER_BOUND) * 3.3f;
-    fuelPressure += 0.2f * (constrain(voltage * (10.0f / 3.3f), 0.0f, 10.0f) - fuelPressure);
+    fuelPressure += 0.05f * (constrain(voltage * (10.0f / 3.3f), 0.0f, 10.0f) - fuelPressure);
 }
 
 void processBarometer() {
     float raw = (float)adc_raw.fuelPressRawADCVal;
     float voltage = (raw / ADC_UPPER_BOUND) * 3.3f;
 
-    float vLow = digifiz_parameters.Vblow.value;
-    float vHigh = digifiz_parameters.Vbhigh.value;
-    float bLow = digifiz_parameters.Blow.value;
-    float bHigh = digifiz_parameters.Bhigh.value;
+    // float vLow = digifiz_parameters.Vblow.value;
+    // float vHigh = digifiz_parameters.Vbhigh.value;
+    // float bLow = digifiz_parameters.Blow.value;
+    // float bHigh = digifiz_parameters.Bhigh.value;
 
-    float pressure = bLow;
-    if (fabsf(vHigh - vLow) > 0.0001f)
-    {
-        pressure = bLow + (voltage - vLow) * (bHigh - bLow) / (vHigh - vLow);
-    }
-    pressure = constrain(pressure, bHigh, bLow);
-    barometerPressure += 0.2f * (pressure - barometerPressure);
+    // float pressure = bLow;
+    // if (fabsf(vHigh - vLow) > 0.0001f)
+    // {
+    //     pressure = bLow + (voltage - vLow) * (bHigh - bLow) / (vHigh - vLow);
+    // }
+    // pressure = constrain(pressure, bHigh, bLow);
+    // barometerPressure += 0.001f * (pressure - barometerPressure);
+
+    barometerPressure += 0.05f * (constrain((voltage - 0.045f) * 8.0f / (0.409f - 0.045f), 0.0f, 8.0f) - barometerPressure);
 }
 
 void processWidebandLambda() {
@@ -753,7 +755,7 @@ void processWidebandLambda() {
         afr = aLow + (voltage - vLow) * (aHigh - aLow) / (vHigh - vLow);
     }
     afr = constrain(afr, 0.0f, 40.0f);
-    widebandLambdaAFR += 0.2f * (afr - widebandLambdaAFR);
+    widebandLambdaAFR += 0.05f * (afr - widebandLambdaAFR);
 }
 
 float getFuelPressure() {
