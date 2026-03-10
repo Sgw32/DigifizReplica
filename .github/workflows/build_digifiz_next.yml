@@ -1,0 +1,39 @@
+name: build_digifiz_next
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - name: Select dr_next setup
+      run: |
+        cp ESP32/Digifiz/main/setup_dr_next.h ESP32/Digifiz/main/setup.h
+    - name: Set VERSION from tag or commit
+      run: |
+        git fetch --tags
+        export VERSION=$(git describe --tags --always --dirty=-dev)
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "Using build version: $VERSION"
+    - name: Replace BUILD_VERSION with version
+      run: |
+        sed -i "s/BUILD_VERSION/${VERSION}/g" ESP32/Digifiz/main/data/digifiz_ws_connect.html
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@v1.1.0
+      with:
+        esp_idf_version: v5.2.1
+        target: esp32s3
+        path: 'ESP32/Digifiz/'
+    - name: Collect Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware-digifiz-next
+        compression-level: 0
+        if-no-files-found: error
+        path: |
+          ESP32/Digifiz/build/*.bin
+          ESP32/Digifiz/build/bootloader/*.bin
+          ESP32/Digifiz/build/partition_table/*.bin
+          ESP32/Digifiz/build/*.elf
