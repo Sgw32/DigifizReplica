@@ -26,6 +26,7 @@ idf_component_register(
     "adc.c"
     "led_effects.c"
     "display_next.c"
+    "display_refiz.c"
     "main.c"
     "tacho.c"
     "speedometer.c"

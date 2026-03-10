@@ -1,4 +1,4 @@
-name: Build Digifiz Next
+name: Build ReFIZ
 on: push
 jobs:
   build:
@@ -8,6 +8,9 @@ jobs:
       uses: actions/checkout@v2
       with:
         submodules: 'recursive'
+    - name: Select refiz setup
+      run: |
+        cp ESP32/Digifiz/main/setup_refiz.h ESP32/Digifiz/main/setup.h
     - name: Set VERSION from tag or commit
       run: |
         git fetch --tags
@@ -26,9 +29,9 @@ jobs:
     - name: Collect Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: firmware
-        compression-level: 0  # Adjust for speed vs. size (0 = fastest, 9 = smallest)
-        if-no-files-found: error  # Fails if no firmware is generated
+        name: firmware-refiz
+        compression-level: 0
+        if-no-files-found: error
         path: |
           ESP32/Digifiz/build/*.bin
           ESP32/Digifiz/build/bootloader/*.bin
