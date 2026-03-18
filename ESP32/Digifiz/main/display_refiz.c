@@ -1,5 +1,5 @@
-#ifdef DIGIFIZ_REFIZ_DISPLAY
 #include "display_next.h"
+#ifdef DIGIFIZ_REFIZ_DISPLAY
 #include "reg_inout.h"
 #include "esp_log.h"
 //#include "mjs.h"
