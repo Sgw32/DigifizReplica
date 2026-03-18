@@ -1,5 +1,5 @@
 #include "display_next.h"
-#ifdef DIGIFIZ_NEXT_DISPLAY
+#ifdef DIGIFIZ_REFIZ_DISPLAY
 #include "reg_inout.h"
 #include "esp_log.h"
 //#include "mjs.h"
@@ -10,8 +10,8 @@
 #include "led_effects.h"
 #include "millis.h"
 
-#define TAG "display_next"
-#define SCRIPT_KEY "display_next_script"
+#define TAG "display_refiz"
+#define SCRIPT_KEY "display_refiz_script"
 
 uint8_t selectedBrightness = 20;
 uint32_t mRPMData = 4000;
@@ -1513,79 +1513,35 @@ void compileColorScheme(void)
 
 // Fire up the Digifiz system
 void fireDigifiz() {
-    led_num = 0;
-
-    uint8_t *ptr = (uint8_t*)&display;
     effect_state.effect = digifiz_parameters.ledEffect_type.value;
     if (effect_state.effect != LED_EFFECT_NONE)
     {
         effect_state.hue = digifiz_parameters.ledEffect_hue.value;
         effect_state.saturation = digifiz_parameters.ledEffect_saturation.value;
         effect_state.value = digifiz_parameters.ledEffect_value.value;
-        for (uint16_t i = 0; i != sizeof(DigifizNextDisplay); i++)
+        for (uint16_t i = 0; i < (DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS); i++)
         {
-            for (uint16_t j = 0; j != 8; j++)
-            {
-                uint8_t bit = (ptr[i] >> j) & 1;
-                led_rgb_t col = led_effect_compute(&effect_state, led_num);
-                
-                if (get_update_in_progress())
-                    bit=0;
-                //led_strip_set_pixel(led_strip, led_num, 10,10,10);
-                if (bit)
-                {
-                    led_strip_set_pixel(led_strip, led_num,
-                        ((uint32_t)col.r*((uint32_t)backlightLevel))/100,
-                        ((uint32_t)col.g*((uint32_t)backlightLevel))/100,
-                        ((uint32_t)col.b*((uint32_t)backlightLevel))/100);
-                }
-                else
-                {
-                    led_strip_set_pixel(led_strip, led_num, 0,0,0);
-                }
-                led_num+=1;
-                if (led_num>(DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1))
-                {
-                    led_num=DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1;
-                    break;
-                }
-            }
+            led_rgb_t col = led_effect_compute(&effect_state, i);
+            led_strip_set_pixel(led_strip, i,
+                ((uint32_t)col.r * (uint32_t)backlightLevel) / 100,
+                ((uint32_t)col.g * (uint32_t)backlightLevel) / 100,
+                ((uint32_t)col.b * (uint32_t)backlightLevel) / 100);
         }
     }
     else
     {
-        for (uint16_t i = 0; i != sizeof(DigifizNextDisplay); i++)
+        for (uint16_t i = 0; i < (DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS); i++)
         {
-            for (uint16_t j = 0; j != 8; j++)
-            {
-                uint8_t bit = (ptr[i] >> j) & 1;
-                uint8_t r = r_colors_active[led_num];
-                uint8_t g = g_colors_active[led_num];
-                uint8_t b = b_colors_active[led_num];
-
-                if (get_update_in_progress())
-                    bit=0;
-                //led_strip_set_pixel(led_strip, led_num, 10,10,10);
-                if (bit)
-                {
-                    led_strip_set_pixel(led_strip, led_num, ((uint32_t)r*((uint32_t)backlightLevel))/100,
-                        ((uint32_t)g*((uint32_t)backlightLevel))/100,
-                        ((uint32_t)b*((uint32_t)backlightLevel))/100);
-                }
-                else
-                {
-                    led_strip_set_pixel(led_strip, led_num, 0,0,0);
-                }
-                led_num+=1;
-                if (led_num>(DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1))
-                {
-                    led_num=DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1;
-                    break;
-                }
-            }
+            uint8_t r = r_colors_active[i];
+            uint8_t g = g_colors_active[i];
+            uint8_t b = b_colors_active[i];
+            led_strip_set_pixel(led_strip, i,
+                ((uint32_t)r * (uint32_t)backlightLevel) / 100,
+                ((uint32_t)g * (uint32_t)backlightLevel) / 100,
+                ((uint32_t)b * (uint32_t)backlightLevel) / 100);
         }
     }
-    
+
     led_strip_refresh(led_strip);
     led_effect_step(&effect_state, 1.0f);
 }

@@ -14,7 +14,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#ifdef DIGIFIZ_NEXT_DISPLAY
+#if defined(DIGIFIZ_NEXT_DISPLAY) || defined(DIGIFIZ_REFIZ_DISPLAY)
 
 #include "adc.h"
 #include "mfa.h"
