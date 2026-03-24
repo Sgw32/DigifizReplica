@@ -1050,7 +1050,14 @@ void displayMFAType(uint8_t mfaType) {
             break;
         case MFA_STATE_SENSOR:
             display.mfa_dots&=0b00;
-            setMFADisplayedNumber((int16_t)(getMFASensorValue()*100.0f));
+            if (digifiz_parameters.mfa_sensor.value == MFA_SENSOR_CONSUMPTION)
+            {
+                setMFADisplayedNumber((uint16_t)(digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]*100));
+            }
+            else
+            {
+                setMFADisplayedNumber((int16_t)(getMFASensorValue()*100.0f));
+            }
             setFloatDot(true);
             break;
         case MFA_STATE_TRIP_MEAN_SPEED:
