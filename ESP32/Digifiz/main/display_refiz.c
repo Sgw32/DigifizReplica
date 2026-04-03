@@ -2,6 +2,7 @@
 #ifdef DIGIFIZ_REFIZ_DISPLAY
 #include "reg_inout.h"
 #include "esp_log.h"
+#include "driver/gptimer.h"
 //#include "mjs.h"
 #include <cJSON.h>
 //If updating, do not display anything
@@ -23,6 +24,12 @@ DigifizNextDisplay display;
 static led_strip_handle_t led_strip;
 float brightnessFiltered = 6.0f;
 static led_effect_state_t effect_state;
+static gptimer_handle_t refiz_display_timer = NULL;
+static bool refiz_display_timer_initialized = false;
+static volatile uint8_t refiz_tr_status = 0x20;
+static volatile uint16_t refiz_data_cnt = 0;
+static volatile uint8_t refiz_timer_divider = 0;
+static volatile uint8_t refiz_strobe_level = 1;
 
 static uint16_t l_spd_m = 0;
 static uint16_t last_coolant_value = 0;
@@ -509,9 +516,127 @@ static void configure_led(void)
     led_strip_clear(led_strip);
 }
 
+#define REFIZ_STROBE_CLOCK_GPIO GPIO_NUM_41
+#define REFIZ_TIMER_RESOLUTION_HZ 8000000
+#define REFIZ_TIMER_INTERRUPT_HZ 64000
+#define REFIZ_TIMER_ALARM_COUNT (REFIZ_TIMER_RESOLUTION_HZ / REFIZ_TIMER_INTERRUPT_HZ)
+#define REFIZ_STROBE_CLOCK_HZ (REFIZ_TIMER_INTERRUPT_HZ / 4)
+
+static bool refiz_display_timer_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
+{
+    (void)timer;
+    (void)edata;
+    (void)user_ctx;
+
+    refiz_timer_divider ^= 1;
+    if (refiz_timer_divider == 0)
+    {
+        refiz_strobe_level ^= 1;
+        gpio_set_level(REFIZ_STROBE_CLOCK_GPIO, refiz_strobe_level);
+    }
+
+    /*
+     * REFIZ timer ISR pseudocode translated from the AVR TIMER1_COMPA flow:
+     *
+     * if ((tr_status & 0x40) == 0) {
+     *     // "clock edge" phase:
+     *     // - keep the strobe line high between low pulses
+     *     // - handle the extra clock/data transitions from the original AVR logic
+     *     // - if a transmission is active, prepare data_cnt==3 / data_cnt==515 transitions
+     * } else {
+     *     // "middle transition for strobe" phase:
+     *     // - when tr_status & 0x80 indicates an active transfer, pull the strobe low
+     *     // - shift/update payload bits around data_cnt
+     *     // - advance data_cnt and terminate the frame at 516 bits
+     * }
+     * tr_status ^= 0x40;
+     *
+     * On ESP32 we currently generate the required 16 kHz strobe by consuming four
+     * 64 kHz ISR ticks per full output period (toggle every second interrupt).
+     * The tr_status/data_cnt state is kept here so the
+     * full AVR transmission sequence can be extended in this ISR path later.
+     */
+    refiz_tr_status ^= 0x40;
+    if ((refiz_tr_status & 0x80) != 0)
+    {
+        refiz_data_cnt++;
+        if (refiz_data_cnt >= 516)
+        {
+            refiz_data_cnt = 0;
+            refiz_tr_status &= (uint8_t)~0x80;
+        }
+    }
+
+    return false;
+}
+
+static void configure_refiz_timer_output(void)
+{
+    if (refiz_display_timer_initialized)
+    {
+        return;
+    }
+
+    gpio_config_t strobe_gpio_config = {
+        .pin_bit_mask = BIT64(REFIZ_STROBE_CLOCK_GPIO),
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&strobe_gpio_config));
+
+    refiz_strobe_level = 1;
+    refiz_timer_divider = 0;
+    refiz_tr_status = 0x20;
+    refiz_data_cnt = 0;
+    ESP_ERROR_CHECK(gpio_set_level(REFIZ_STROBE_CLOCK_GPIO, refiz_strobe_level));
+
+    gptimer_config_t timer_config = {
+        .clk_src = GPTIMER_CLK_SRC_DEFAULT,
+        .direction = GPTIMER_COUNT_UP,
+        .resolution_hz = REFIZ_TIMER_RESOLUTION_HZ,
+    };
+    ESP_ERROR_CHECK(gptimer_new_timer(&timer_config, &refiz_display_timer));
+
+    gptimer_event_callbacks_t callbacks = {
+        .on_alarm = refiz_display_timer_alarm_cb,
+    };
+    ESP_ERROR_CHECK(gptimer_register_event_callbacks(refiz_display_timer, &callbacks, NULL));
+
+    gptimer_alarm_config_t alarm_config = {
+        .reload_count = 0,
+        .alarm_count = REFIZ_TIMER_ALARM_COUNT,
+        .flags.auto_reload_on_alarm = true,
+    };
+    ESP_ERROR_CHECK(gptimer_set_alarm_action(refiz_display_timer, &alarm_config));
+    ESP_ERROR_CHECK(gptimer_enable(refiz_display_timer));
+    ESP_ERROR_CHECK(gptimer_start(refiz_display_timer));
+
+    refiz_display_timer_initialized = true;
+    ESP_LOGI(LOG_TAG, "REFIZ timer interrupt enabled on GPIO %d at %d Hz ISR / %d Hz strobe", REFIZ_STROBE_CLOCK_GPIO, REFIZ_TIMER_INTERRUPT_HZ, REFIZ_STROBE_CLOCK_HZ);
+}
+
+static void deinit_refiz_timer_output(void)
+{
+    if (!refiz_display_timer_initialized)
+    {
+        return;
+    }
+
+    ESP_ERROR_CHECK(gptimer_stop(refiz_display_timer));
+    ESP_ERROR_CHECK(gptimer_disable(refiz_display_timer));
+    ESP_ERROR_CHECK(gptimer_del_timer(refiz_display_timer));
+    refiz_display_timer = NULL;
+    refiz_display_timer_initialized = false;
+    refiz_strobe_level = 1;
+    ESP_ERROR_CHECK(gpio_set_level(REFIZ_STROBE_CLOCK_GPIO, refiz_strobe_level));
+}
+
 void deinit_leds(void)
 {
     ESP_LOGI(LOG_TAG, "Deinitializing WS2812 LED.");
+    deinit_refiz_timer_output();
 
     // Clear the LED strip to turn off all LEDs
     ESP_ERROR_CHECK(led_strip_clear(led_strip));
@@ -562,6 +687,7 @@ void initDisplay() {
     }
     //display.rpm_padding = 0xF;
     //display.rpm[0] = 0xFF;
+    configure_refiz_timer_output();
     setFuel(99);
     configure_led();
     setMileage(123456);

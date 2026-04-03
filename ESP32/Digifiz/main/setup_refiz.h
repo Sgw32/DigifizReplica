@@ -25,8 +25,6 @@ extern "C" {
 #define TEMPERATURE_FAULTY_PERIOD 1000
 //#define DEBUG_SLEEP_DISABLE
 
-extern const char TAG[];
-
 //#define GALLONS
 //#define MILES
 //#define FAHRENHEIT  

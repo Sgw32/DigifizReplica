@@ -23,9 +23,7 @@ extern "C" {
 
 #define TEMPERATURE_ALARM_PERIOD 250
 #define TEMPERATURE_FAULTY_PERIOD 1000
-//#define DEBUG_SLEEP_DISABLE
-
-extern const char TAG[];
+#define DEBUG_SLEEP_DISABLE
 
 //#define GALLONS
 //#define MILES
@@ -61,7 +59,8 @@ extern const char TAG[];
 
 #define CRC_FRAGMENT_SIZE 84
 
-#define DIGIFIZ_NEXT_DISPLAY
+#define DIGIFIZ_REFIZ_DISPLAY
+#define REFIZ_STUB_DYNAMIC_SEGMENTS
 
 #ifdef __cplusplus
 }

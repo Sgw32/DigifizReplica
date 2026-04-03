@@ -1,4 +1,5 @@
 #include "reg_inout.h"
+#include "setup.h"
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -228,12 +229,15 @@ void initRegInOut(void)
     ESP_LOGI(TAG, "initRegInOut started");
     ESP_LOGI(TAG, "Initializing bus SPI%d...", REG_INOUT_HOST + 1);
 
+#ifndef DIGIFIZ_REFIZ_DISPLAY
+    // GPIO41 is reused by the REFIZ display clock output, so only float it for other display variants.
     gpio_set_level(41, 0);
     gpio_config_t exmosi_cfg_out = {
         .pin_bit_mask = BIT64(41),
         .mode = GPIO_MODE_INPUT,
     };
     gpio_config(&exmosi_cfg_out);
+#endif
 
     //Initialize the SPI bus
     ret = spi_bus_initialize(REG_INOUT_HOST, &buscfg, SPI_DMA_CH_AUTO);
@@ -244,4 +248,3 @@ void initRegInOut(void)
     ESP_ERROR_CHECK(ret);
     ESP_LOGI(TAG, "initRegInOut ended");
 }
-
