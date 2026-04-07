@@ -187,6 +187,27 @@ static void printADC()
   printLnFloat((float)getFuelPressRawADCVal());
 }
 
+static void printDailyMileageRaw()
+{
+  printLnCString("DAILY_MILEAGE_RAW_0:\n");
+  printLnUINT32(digifiz_status.daily_mileage[0]);
+  printLnCString("DAILY_MILEAGE_RAW_1:\n");
+  printLnUINT32(digifiz_status.daily_mileage[1]);
+}
+
+static void printNTCResistances()
+{
+  printLnCString("NTC_RESISTANCES_OHM:\n");
+  printLnCString("Ambient:\n");
+  printLnFloat(getAmbientResistance());
+  printLnCString("Oil:\n");
+  printLnFloat(getOilResistance());
+  printLnCString("Coolant:\n");
+  printLnFloat(getCoolantResistance());
+  printLnCString("FuelLevel:\n");
+  printLnFloat(getFuelLevelResistance());
+}
+
 static void printStatusJSON()
 {
   update_json_string();
@@ -225,6 +246,7 @@ static void printHelp()
     printLnCString("RTC OK\n");
   else
     printLnCString("RTC NOT OK\n");
+  printLnCString("Extra commands: adc 0, daily_raw 0, ntc_r 0\n");
 }
 
 // Function to map parameter name to enum value
@@ -1001,6 +1023,14 @@ void protocolParse(char* buf, uint8_t len)
                 else if (strcmp(cmd_buffer_par,"adc")==0)
                 {
                     printADC();
+                }
+                else if (strcmp(cmd_buffer_par,"daily_raw")==0)
+                {
+                    printDailyMileageRaw();
+                }
+                else if (strcmp(cmd_buffer_par,"ntc_r")==0)
+                {
+                    printNTCResistances();
                 }
                 else if (strcmp(cmd_buffer_par,"reset_colors")==0)
                 {

@@ -116,6 +116,10 @@ int getAmbTempRawADCVal(void);
 int getOilTempRawADCVal(void);
 int getIntakePressRawADCVal(void);
 int getFuelPressRawADCVal(void);
+float getCoolantResistance(void);
+float getOilResistance(void);
+float getAmbientResistance(void);
+float getFuelLevelResistance(void);
 
 void read_initial_adc_values();
 void log_sensor_data();

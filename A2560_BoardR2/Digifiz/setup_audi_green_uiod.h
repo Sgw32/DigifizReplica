@@ -69,12 +69,11 @@
 #undef UIOD_PARSE_INPUT
 
 //DEFAULT for miniUIOD if ONLY mUIOD is installed!!!
-#define BTserial Serial
+#define BTserial Serial1
 #define UIODserial Serial1
 
-#define USE_BTSERIAL
-//#define USE_UIOD
-//#define UIOD_PARSE_INPUT //default for UIOD
+#define USE_UIOD
+#define UIOD_PARSE_INPUT //default for UIOD
 
 #endif
 

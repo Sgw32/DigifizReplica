@@ -85,6 +85,26 @@ adc_cali_handle_t adc1_cali_chan5_handle = NULL;
 adc_cali_handle_t adc1_cali_chan6_handle = NULL;
 static DigifizSensorData adc_raw;
 
+static float calculateDividerResistance(float raw_adc, float pullup_resistance, float series_resistance)
+{
+    if ((raw_adc <= 0.0f) || (raw_adc >= ADC_NTC_INCORRECT_UPPER_BOUND)) {
+        return NAN;
+    }
+
+    float denominator = ADC_UPPER_BOUND - raw_adc;
+    if (denominator <= 0.0f) {
+        return NAN;
+    }
+
+    float measured_total = pullup_resistance * raw_adc / denominator;
+    float sensor_resistance = measured_total - series_resistance;
+    if (sensor_resistance <= 0.0f) {
+        return NAN;
+    }
+
+    return sensor_resistance;
+}
+
 // Read ADC values from multiple pins
 void read_adc_values() {
     ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, lightSensorChannel, &adc_raw.lightRawADCVal));
@@ -912,4 +932,20 @@ int getIntakePressRawADCVal(void) {
 
 int getFuelPressRawADCVal(void) {
     return adc_raw.fuelPressRawADCVal;
+}
+
+float getCoolantResistance(void) {
+    return calculateDividerResistance((float)adc_raw.coolantRawADCVal, R2_Coolant, 0.0f);
+}
+
+float getOilResistance(void) {
+    return calculateDividerResistance((float)adc_raw.oilTempRawADCVal, R2_Oil, Rseries_Oil);
+}
+
+float getAmbientResistance(void) {
+    return calculateDividerResistance((float)adc_raw.ambTempRawADCVal, R2_Ambient, 0.0f);
+}
+
+float getFuelLevelResistance(void) {
+    return calculateDividerResistance((float)adc_raw.fuelRawADCVal, 220.0f, 0.0f);
 }
