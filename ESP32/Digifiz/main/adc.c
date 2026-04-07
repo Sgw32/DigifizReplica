@@ -505,8 +505,22 @@ float getIntakePressure() {
 #ifdef FUEL_CONSUMPTION_TESTMODE
    intp = 512;
 #endif
-   
-    return 84749.0f-20152.0f*intp/ADC_UPPER_BOUND*5.0f;
+
+    float voltage = intp / ADC_UPPER_BOUND * 3.3f;
+    float vLow = digifiz_parameters.Viplow.value;
+    float vHigh = digifiz_parameters.Viphigh.value;
+    float pLow = digifiz_parameters.IPlow.value;
+    float pHigh = digifiz_parameters.IPhigh.value;
+
+    float pressure = pLow;
+    if (fabsf(vHigh - vLow) > 0.0001f)
+    {
+        pressure = pLow + (voltage - vLow) * (pHigh - pLow) / (vHigh - vLow);
+    }
+
+    float pressureMin = fminf(pLow, pHigh);
+    float pressureMax = fmaxf(pLow, pHigh);
+    return constrain(pressure, pressureMin, pressureMax);
 }
 
 // Get the current intake fuel consumption
@@ -743,7 +757,22 @@ void processFuelPressure() {
     //     raw = ADC_UPPER_BOUND / 2.0f;
     // }
     float voltage = (raw / ADC_UPPER_BOUND) * 3.3f;
-    fuelPressure += 0.05f * (constrain(voltage * (10.0f / 3.3f), 0.0f, 10.0f) - fuelPressure);
+
+    float vLow = digifiz_parameters.Vfplow.value;
+    float vHigh = digifiz_parameters.Vfphigh.value;
+    float pLow = digifiz_parameters.FPlow.value;
+    float pHigh = digifiz_parameters.FPhigh.value;
+
+    float pressure = pLow;
+    if (fabsf(vHigh - vLow) > 0.0001f)
+    {
+        pressure = pLow + (voltage - vLow) * (pHigh - pLow) / (vHigh - vLow);
+    }
+
+    float pressureMin = fminf(pLow, pHigh);
+    float pressureMax = fmaxf(pLow, pHigh);
+    pressure = constrain(pressure, pressureMin, pressureMax);
+    fuelPressure += 0.05f * (pressure - fuelPressure);
 }
 
 void processBarometer() {
