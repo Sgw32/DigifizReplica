@@ -204,7 +204,8 @@ void digifizLoop(void *pvParameters) {
         digifiz_status.mileage+=spd_m;
         digifiz_status.daily_mileage[digifiz_parameters.mfaBlock.value]+=spd_m;
 #ifdef AVERAGE_CONSUMPTION_L100KM
-        digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value] += 0.01f*(getCurrentIntakeFuelConsumption()-digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]);//getFuelConsumption()*digifiz_parameters.tankCapacity;
+        digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value] += 
+                0.01f*(getCurrentIntakeFuelConsumption()-digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]);//getFuelConsumption()*digifiz_parameters.tankCapacity;
 #endif
 #ifdef CURRENT_CONSUMPTION_L100KM
         digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock.value] = getCurrentIntakeFuelConsumption();//getFuelConsumption()*digifiz_parameters.tankCapacity;
@@ -600,6 +601,7 @@ void on_cpu_1(void *pvParameters)
     initRegInOut();
     //CRUCIAL! without it power is not set
     device_sleep_dump();
+    device_power_enable(true);
     // Check if MFA MODE button is held during startup for factory reset
     {
         regin_read(digifiz_reg_in.bytes);
@@ -623,6 +625,8 @@ void on_cpu_1(void *pvParameters)
             }
         }
     }
+    device_sleep_dump();
+
     initVehicleJSON();
     ble_module_init();
     //initKline();

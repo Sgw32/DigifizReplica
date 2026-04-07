@@ -31,6 +31,13 @@ bool device_sleep_check();
  */
 void device_sleep_dump();
 
+/**
+ * @brief Enable or disable device power. For 
+ * 
+ * @param enable 
+ */
+void device_power_enable(bool enable);
+
 #ifdef __cplusplus
 }
 #endif

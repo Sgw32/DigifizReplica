@@ -117,6 +117,18 @@ bool device_sleep_check() {
     return sleepMode;
 }
 
+void device_power_enable(bool enable)
+{
+    if (enable)
+    {
+        gpio_set_level(POWER_OUT_PIN, 1);
+    }
+    else
+    {
+        gpio_set_level(POWER_OUT_PIN, 0);
+    }
+}
+
 void device_sleep_dump() {
     printf("Sleep pin state: %s\n", device_sleep_check() ? "Sleep" : "Not sleep");
 }

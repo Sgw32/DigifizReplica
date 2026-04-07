@@ -31,7 +31,7 @@ typedef struct {
     int oilTempRawADCVal;
     int intakePressRawADCVal;
     int fuelPressRawADCVal;
-} DigifizSensorData;
+} DigifizSensorData;s
 
 
 // Define struct with union inside
@@ -87,7 +87,6 @@ float getWidebandLambdaAFR();
 void processFuelPressure();
 void processBarometer();
 void processWidebandLambda();
-void processConsumptionSensor();
 
 float getOilTemperatureFahrenheit(); //F
 float getAmbientTemperatureFahrenheit(); //F
