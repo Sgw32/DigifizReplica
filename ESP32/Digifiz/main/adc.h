@@ -31,7 +31,7 @@ typedef struct {
     int oilTempRawADCVal;
     int intakePressRawADCVal;
     int fuelPressRawADCVal;
-} DigifizSensorData;s
+} DigifizSensorData;
 
 
 // Define struct with union inside
