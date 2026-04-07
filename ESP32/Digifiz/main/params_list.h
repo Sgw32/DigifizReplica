@@ -491,6 +491,78 @@ extern "C" {
     ) \
     PARAM(  \
         FLOAT, \
+        Vfplow, \
+        .p_name = "Fuel pressure V low", \
+        .p_info = "Low voltage calibration point for fuel pressure",\
+        .value = 0.0f, \
+        .min = 0.0f, \
+        .max = 3.3f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        Vfphigh, \
+        .p_name = "Fuel pressure V high", \
+        .p_info = "High voltage calibration point for fuel pressure",\
+        .value = 3.3f, \
+        .min = 0.0f, \
+        .max = 3.3f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        FPlow, \
+        .p_name = "Fuel pressure low", \
+        .p_info = "Pressure at low voltage point",\
+        .value = 0.0f, \
+        .min = -20.0f, \
+        .max = 20.0f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        FPhigh, \
+        .p_name = "Fuel pressure high", \
+        .p_info = "Pressure at high voltage point",\
+        .value = 10.0f, \
+        .min = -20.0f, \
+        .max = 20.0f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        Viplow, \
+        .p_name = "Intake pressure V low", \
+        .p_info = "Low voltage calibration point for intake pressure",\
+        .value = 0.0f, \
+        .min = 0.0f, \
+        .max = 3.3f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        Viphigh, \
+        .p_name = "Intake pressure V high", \
+        .p_info = "High voltage calibration point for intake pressure",\
+        .value = 3.3f, \
+        .min = 0.0f, \
+        .max = 3.3f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        IPlow, \
+        .p_name = "Intake pressure low", \
+        .p_info = "Pressure at low voltage point",\
+        .value = 84749.0f, \
+        .min = -20000.0f, \
+        .max = 120000.0f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
+        IPhigh, \
+        .p_name = "Intake pressure high", \
+        .p_info = "Pressure at high voltage point",\
+        .value = 18247.4f, \
+        .min = -20000.0f, \
+        .max = 120000.0f, \
+    ) \
+    PARAM(  \
+        FLOAT, \
         Vllow, \
         .p_name = "Lambda V low", \
         .p_info = "Low voltage calibration point for wideband lambda",\
