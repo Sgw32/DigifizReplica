@@ -789,7 +789,7 @@ void processBarometer() {
     {
         pressure = bLow + (voltage - vLow) * (bHigh - bLow) / (vHigh - vLow);
     }
-    pressure = constrain(pressure, bHigh, bLow);
+    pressure = constrain(pressure, bLow, bHigh);
     barometerPressure += 0.05f * (pressure - barometerPressure);
 
     //barometerPressure += 0.05f * (constrain((voltage - 0.045f) * 8.0f / (0.409f - 0.045f), 0.0f, 8.0f) - barometerPressure);

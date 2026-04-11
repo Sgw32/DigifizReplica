@@ -443,7 +443,7 @@ extern "C" {
         .p_name = "MFA sensor type", \
         .p_info = "0=consumption, 1=barometer, 2=wideband lambda, 3=fuel pressure",\
         .value = 0, \
-        .max = 3, \
+        .max = 5, \
     ) \
     PARAM(  \
         U8, \
@@ -451,7 +451,7 @@ extern "C" {
         .p_name = "MFA clock sensor type", \
         .p_info = "0=clock, 1=barometer, 2=wideband lambda, 3=fuel pressure",\
         .value = 0, \
-        .max = 3, \
+        .max = 5, \
     ) \
     PARAM(  \
         FLOAT, \
@@ -550,7 +550,7 @@ extern "C" {
         .p_info = "Pressure at low voltage point",\
         .value = 84749.0f, \
         .min = -20000.0f, \
-        .max = 120000.0f, \
+        .max = 250000.0f, \
     ) \
     PARAM(  \
         FLOAT, \
@@ -559,7 +559,7 @@ extern "C" {
         .p_info = "Pressure at high voltage point",\
         .value = 18247.4f, \
         .min = -20000.0f, \
-        .max = 120000.0f, \
+        .max = 250000.0f, \
     ) \
     PARAM(  \
         FLOAT, \

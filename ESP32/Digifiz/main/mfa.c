@@ -4,6 +4,7 @@
 #include "reg_inout.h"
 #include "driver/gpio.h"
 #include "adc.h"
+#include "gear_estimator.h"
 #include <time.h>
 
 uint8_t uptimeDisplayEnabled = 0;
@@ -213,6 +214,10 @@ float getMFASensorValue() {
             return getWidebandLambdaAFR();
         case MFA_SENSOR_FUEL_PRESSURE:
             return getFuelPressure();
+        case MFA_SENSOR_MANIFOLD_PRESSURE:
+            return getIntakePressure()/1000.0f;
+        case MFA_SENSOR_CURRENT_GEAR:
+            return gear_estimator_get_current_gear()/100.0f;
         default:
             return getFuelConsumption();
     }
@@ -228,6 +233,10 @@ float getMFAClockSensorValue() {
             return getWidebandLambdaAFR();
         case MFA_CLOCK_SENSOR_FUEL_PRESSURE:
             return getFuelPressure();
+        case MFA_CLOCK_SENSOR_MANIFOLD_PRESSURE:
+            return getIntakePressure()/1000.0f;
+        case MFA_CLOCK_SENSOR_CURRENT_GEAR:
+            return gear_estimator_get_current_gear()/100.0f;
         default:
             return 0;
     }
