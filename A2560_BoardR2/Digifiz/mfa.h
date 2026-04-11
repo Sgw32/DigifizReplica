@@ -57,14 +57,49 @@
 #endif
 
 
+/**
+ * @brief Initializes MFA inputs, state machine, and persisted settings.
+ */
 void initMFA();
+
+/**
+ * @brief Processes MFA button/sensor state and updates active display mode.
+ */
 void processMFA();
+
+/**
+ * @brief Handles a short press on MFA mode button.
+ */
 void pressMFAMode();
+
+/**
+ * @brief Handles a short press on MFA block button.
+ */
 void pressMFABlock();
+
+/**
+ * @brief Handles a press on MFA reset button.
+ */
 void pressMFAReset();
+
+/**
+ * @brief Handles short touch-sensor interaction.
+ */
 void pressMFASensorShort();
+
+/**
+ * @brief Handles long touch-sensor interaction.
+ */
 void pressMFASensorLong();
+
+/**
+ * @brief Handles extra-long touch-sensor interaction.
+ */
 void pressMFASensorSuperLong();
+
+/**
+ * @brief Handles maximum-duration touch-sensor interaction.
+ */
 void pressMFASensorSuperSuperLong();
 
 #endif

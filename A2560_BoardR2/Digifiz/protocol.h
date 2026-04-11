@@ -7,10 +7,18 @@
 #include "ext_eeprom.h"
 #include "setup.h"
 
-//0..64 normal parameters
-//128...128+64 read parameters
-//223..225 execute commands
+/**
+ * @file protocol.h
+ * @brief Serial/BLE command protocol declarations for Digifiz A2560 firmware.
+ */
 
+/// 0..64 normal parameters
+/// 128...128+64 read parameters
+/// 223..225 execute commands
+
+/**
+ * @brief Protocol parameter and command identifiers.
+ */
 typedef enum {
     PARAMETER_ZERO_RESERVED,       // 0
     PARAMETER_SPEEDCOEEFICIENT,     // 1
@@ -92,12 +100,44 @@ typedef enum {
     PARAMETER_TOGGLE_TOUCH_SENSOR = 229,
 } DigifizProtocol;
 
+/**
+ * @brief Initializes communication protocol parsers and command handlers.
+ */
 void initComProtocol();
+
+/**
+ * @brief Applies a persisted BLE name change command, if requested.
+ */
 void changeBLEName();
+
+/**
+ * @brief Parses inbound protocol frames and dispatches commands.
+ */
 void protocolParse();
+
+/**
+ * @brief Handles a single parameter write/command.
+ *
+ * @param par Protocol parameter identifier.
+ * @param value Value associated with the identifier.
+ */
 void processData(int par, long value);
+
+/**
+ * @brief Applies packed GPIO output bit values received over protocol.
+ *
+ * @param value Encoded GPIO state payload.
+ */
 void processGPIOPinsValue(long value);
+
+/**
+ * @brief Prints command help text to the active serial output.
+ */
 void printHelp();
+
+/**
+ * @brief Prints firmware/about information to the active serial output.
+ */
 void printAbout();
 
 #endif
