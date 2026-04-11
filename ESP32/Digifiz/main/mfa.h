@@ -4,6 +4,11 @@
 extern "C" {
 #endif
 
+/**
+ * @file mfa.h
+ * @brief Multi-function display (MFA) user interaction and state API.
+ */
+
 #include "params.h"
 #include "setup.h"
 
@@ -52,19 +57,66 @@ extern "C" {
 
 #define TOUCH_PIN 38
 
+/**
+ * @brief Initialize MFA module resources and default state.
+ */
 void initMFA();
+
+/**
+ * @brief Run periodic MFA processing.
+ */
 void processMFA();
+
+/**
+ * @brief Handle MFA mode button press event.
+ */
 void pressMFAMode();
+
+/**
+ * @brief Handle MFA block/select button press event.
+ */
 void pressMFABlock();
+
+/**
+ * @brief Handle MFA reset button press event.
+ */
 void pressMFAReset();
+
+/**
+ * @brief Handle short sensor button press event.
+ */
 void pressMFASensorShort();
+
+/**
+ * @brief Handle long sensor button press event.
+ */
 void pressMFASensorLong();
+
+/**
+ * @brief Handle very long sensor button press event.
+ */
 void pressMFASensorSuperLong();
+
+/**
+ * @brief Handle extra-long sensor button press event.
+ */
 void pressMFASensorSuperSuperLong();
 
+/**
+ * @brief Get active MFA sensor value for current display page.
+ *
+ * @return float Current sensor value.
+ */
 float getMFASensorValue();
+
+/**
+ * @brief Get active MFA clock-sensor overlay value.
+ *
+ * @return float Current clock sensor value.
+ */
 float getMFAClockSensorValue();
 
+/** @brief Enables temporary uptime display page when non-zero. */
 extern uint8_t uptimeDisplayEnabled;
 
 #ifdef __cplusplus

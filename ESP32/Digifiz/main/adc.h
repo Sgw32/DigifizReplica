@@ -4,6 +4,11 @@
 extern "C" {
 #endif
 
+/**
+ * @file adc.h
+ * @brief ADC acquisition and sensor conversion helpers.
+ */
+
 #include <stdint.h>
 #include <math.h>
 #include "esp_adc/adc_oneshot.h"
@@ -49,27 +54,42 @@ typedef struct DeviceSensorsFaulty{
     };
 } DeviceSensorsFaulty;
 
+/**
+ * @brief Clamp input value into inclusive range.
+ */
 float constrain(float input, float min, float max);
 
+/** @brief Initialize ADC channels and calibration. */
 void initADC();
+/** @brief Run periodic ADC sampling and filtering pipeline. */
 void processADC();
+/** @brief Refresh ADC-related settings from parameter storage. */
 void updateADCSettings();
+/** @brief Read raw ADC values into sensor cache. */
 void read_adc_values();
 
-//RAW values 0..1024
+/** @name Raw values (scaled 0..1024)
+ *  @{
+ */
 uint16_t getRawCoolantTemperature();
 uint16_t getRawOilTemperature();
 uint16_t getRawGasLevel();
 uint16_t getRawAmbientTemperature();
+/** @} */
 
-//Display helpers
+/** @name Display-oriented helper values
+ *  @{
+ */
 uint8_t getLitresInTank(); //0..99
 uint8_t getGallonsInTank(); //0..99
 uint8_t getDisplayedCoolantTemp(); //0..14
 uint8_t getDisplayedCoolantTempOrig(); //0..20
+/** @} */
 
 
-//Physical data values
+/** @name Physical units getters
+ *  @{
+ */
 float getCoolantTemperature(); //celsius
 float getOilTemperature(); //celsius
 float getRToFuelLevel(float R);
@@ -83,9 +103,13 @@ float getIntakeVoltage();
 float getFuelPressure();
 float getBarometerPressure();
 float getWidebandLambdaAFR();
+/** @} */
 
+/** @brief Update filtered fuel pressure value from ADC channel. */
 void processFuelPressure();
+/** @brief Update barometer pressure estimate from ADC channel. */
 void processBarometer();
+/** @brief Update wideband lambda AFR estimate from ADC channel. */
 void processWidebandLambda();
 
 float getOilTemperatureFahrenheit(); //F
@@ -105,10 +129,12 @@ void processFirstOilTemperature();
 void processFirstGasLevel();
 void processFirstAmbientTemperature();
 
-//Errata for PCBs
+/** @brief Apply board-specific workaround for oil ADC channel routing. */
 void reconfigOilChannel();
 
-// Function declarations
+/** @name Raw ADC cache accessors
+ *  @{
+ */
 int getCoolantRawADCVal(void);
 int getFuelRawADCVal(void);
 int getLightRawADCVal(void);
@@ -116,14 +142,23 @@ int getAmbTempRawADCVal(void);
 int getOilTempRawADCVal(void);
 int getIntakePressRawADCVal(void);
 int getFuelPressRawADCVal(void);
+/** @} */
+
+/** @name Derived sensor resistances
+ *  @{
+ */
 float getCoolantResistance(void);
 float getOilResistance(void);
 float getAmbientResistance(void);
 float getFuelLevelResistance(void);
+/** @} */
 
+/** @brief Prime filters by reading first ADC sample set. */
 void read_initial_adc_values();
+/** @brief Log currently sampled sensor data for diagnostics. */
 void log_sensor_data();
 
+/** @brief Get bitmask indicating currently detected faulty sensors. */
 DeviceSensorsFaulty getFaultyMask();
 
 #ifdef __cplusplus
