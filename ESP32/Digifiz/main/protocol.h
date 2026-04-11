@@ -1,6 +1,11 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
+/**
+ * @file protocol.h
+ * @brief Serial/BLE command protocol declarations for Digifiz.
+ */
+
 #include "params.h"
 #include "setup.h"
 
@@ -106,21 +111,80 @@ typedef struct {
     DigifizProtocol value;
 } ParameterMap;
 
+/**
+ * @brief Initialize communication protocol state and command map.
+ */
 void initComProtocol();
+
+/**
+ * @brief Apply current settings to BLE advertising/device name.
+ */
 void changeBLEName();
+
+/**
+ * @brief Parse incoming protocol payload and dispatch command handlers.
+ *
+ * @param buf Input message buffer.
+ * @param len Number of bytes available in @p buf.
+ */
 void protocolParse(char* buf, uint8_t len);
+
+/**
+ * @brief Process a single protocol parameter/value command pair.
+ *
+ * @param par Protocol parameter identifier.
+ * @param value Parameter value associated with @p par.
+ */
 void processData(int par, long value);
+
+/**
+ * @brief Decode and apply GPIO output bitfield received from protocol.
+ *
+ * @param value Encoded GPIO pin state bitmap.
+ */
 void processGPIOPinsValue(long value);
 
+/**
+ * @brief Send a string line over the active protocol transport.
+ *
+ * @param data Zero-terminated string to transmit.
+ */
 void printLnCString(char* data);
+
+/**
+ * @brief Send an unsigned 8-bit integer formatted as a line.
+ *
+ * @param val Value to transmit.
+ */
 void printLnUINT8(uint8_t val);
+
+/**
+ * @brief Send an unsigned 32-bit integer formatted as a line.
+ *
+ * @param val Value to transmit.
+ */
 void printLnUINT32(uint32_t val);
+
+/**
+ * @brief Send floating-point value formatted as a line.
+ *
+ * @param val Value to transmit.
+ */
 void printLnFloat(float val);
 
+/**
+ * @brief Clear pending outbound protocol buffer contents.
+ */
 void clearProtocolBuffer(void);
 
+/**
+ * @brief Update heartbeat/alive status used by RTC-related protocol actions.
+ *
+ * @param alive Non-zero if RTC is considered alive.
+ */
 void setRTCAlive(uint8_t alive);
 
+/** @brief Shared websocket response buffer used by protocol code. */
 extern char ws_data_send[];
 
 #endif

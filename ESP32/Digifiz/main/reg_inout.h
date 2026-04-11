@@ -1,5 +1,11 @@
 #ifndef REG_INOUT_H
 #define REG_INOUT_H
+
+/**
+ * @file reg_inout.h
+ * @brief Shift-register based GPIO input/output abstraction.
+ */
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
@@ -104,15 +110,55 @@ typedef struct hc165_context_t hc165_context_t;
 typedef struct hc595_context_t* hc595_handle_t;
 typedef struct hc165_context_t* hc165_handle_t;
 
+/**
+ * @brief Initialize register input/output subsystem.
+ */
 void initRegInOut(void);
 
+/**
+ * @brief Initialize SPI devices for 74HC595 output and 74HC165 input chips.
+ *
+ * @param cfg_regout Configuration for HC595 output device.
+ * @param out_ctx_regout Returned HC595 context handle.
+ * @param cfg_regin Configuration for HC165 input device.
+ * @param out_ctx_regin Returned HC165 context handle.
+ * @return esp_err_t ESP_OK on success or an error code.
+ */
 esp_err_t spi_devices_init(const hc595_config_t *cfg_regout, hc595_handle_t* out_ctx_regout,
                              const hc165_config_t *cfg_regin, hc165_handle_t* out_ctx_regin);
 
+/**
+ * @brief Read a byte from HC165 shift register.
+ *
+ * @param handle Initialized HC165 handle.
+ * @param out_data Destination byte pointer.
+ * @return esp_err_t ESP_OK on success or an error code.
+ */
 esp_err_t spi_hc165_read(hc165_handle_t handle, uint8_t* out_data);
+
+/**
+ * @brief Write a byte to HC595 shift register.
+ *
+ * @param handle Initialized HC595 handle.
+ * @param data Byte to shift out.
+ * @return esp_err_t ESP_OK on success or an error code.
+ */
 esp_err_t spi_hc595_write(hc595_handle_t handle, uint8_t data);
 
+/**
+ * @brief Read current state from digital input register chain.
+ *
+ * @param out_data Pointer to output byte buffer.
+ * @return esp_err_t ESP_OK on success or an error code.
+ */
 esp_err_t regin_read(uint8_t* out_data);
+
+/**
+ * @brief Write all digital outputs in one operation.
+ *
+ * @param data Bitfield containing output states.
+ * @return esp_err_t ESP_OK on success or an error code.
+ */
 esp_err_t regout_all(uint16_t data);
 
 extern DigifizOut digifiz_reg_out;
