@@ -1,6 +1,10 @@
 #ifndef AUDI_DISPLAY_H
 #define AUDI_DISPLAY_H
 
+/**
+ * @file audi_display.h
+ * @brief Display module interface for the A2560 Digifiz firmware.
+ */
 #include "setup.h"
 
 #ifdef AUDI_DISPLAY
@@ -80,34 +84,62 @@
 
 #define NBR_OF_DIGIT  6
 
+/** @brief Initialize display hardware and state. */
 void initDisplay();
+/** @brief Update RPM bar/needle animation source. */
 void setRPM(int rpmdata);
+/** @brief Advance primary blink state machine. */
 void blinking();
+/** @brief Advance secondary blink state machine. */
 void blinking2();
+/** @brief Set clock digits shown on display. */
 void setClockData(uint8_t clock_hours,uint8_t clock_minutes);
+/** @brief Set MFA clock digits. */
 void setMFAClockData(uint8_t mfa_clock_hours,uint8_t mfa_clock_minutes);
+/** @brief Set numeric value shown in MFA area. */
 void setMFADisplayedNumber(int16_t data);
+/** @brief Set fuel level indicator in liters. */
 void setFuel(uint8_t litres);
+/** @brief Set numeric RPM value output. */
 void setRPMData(uint16_t data);
+/** @brief Set numeric speed output. */
 void setSpeedometerData(uint16_t data);
+/** @brief Set coolant temperature field. */
 void setCoolantData(uint16_t data);
+/** @brief Enable or disable decimal dot. */
 void setDot(bool value);
+/** @brief Enable or disable floating dot indicator. */
 void setFloatDot(bool value);
+/** @brief Set total mileage value. */
 void setMileage(uint32_t mileage);
+/** @brief Set trip/daily mileage value. */
 void setDailyMileage(uint32_t mileage);
+/** @brief Set auxiliary digit value. */
 void setAuxDigit(uint8_t digit);
+/** @brief Select MFA metric type. */
 void setMFAType(uint8_t mfaType);
+/** @brief Render MFA metric icon/text. */
 void displayMFAType(uint8_t mfaType);
+/** @brief Select MFA block page. */
 void setMFABlock(uint8_t block);
+/** @brief Set display brightness level. */
 void setBrightness(uint8_t levels);
+/** @brief Control refuel warning indicator. */
 void setRefuelSign(bool onoff);
+/** @brief Control check-engine indicator. */
 void setCheckEngine(bool onoff);
+/** @brief Control display backlight output. */
 void setBacklight(bool onoff);
+/** @brief Set service display segment data. */
 void setServiceDisplayData(uint8_t data);
+/** @brief Toggle miles/kmh unit indicator. */
 void setMilesKMH(bool onoff);
+/** @brief Toggle liter/bar labeling indicator. */
 void setLBar(bool onoff);
+/** @brief Apply packed display option bits. */
 void setAudiOptions(uint8_t options);
 
+/** @brief Run startup animation/test pattern. */
 void fireDigifiz();
 #endif
 #endif

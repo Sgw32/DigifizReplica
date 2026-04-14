@@ -1,5 +1,9 @@
 #ifndef LCD_DISPLAY_H
 #define LCD_DISPLAY_H
+/**
+ * @file lcd_display.h
+ * @brief Display module interface for the A2560 Digifiz firmware.
+ */
 #include "setup.h"
 
 #ifdef DIGIFIZ_LCD_DISPLAY
@@ -27,36 +31,65 @@
 
 //#define USE_DISPLAY_LEDS
 
+/** @brief Initialize display hardware and state. */
 void initDisplay();
+/** @brief Initialize Digifiz-specific LCD state. */
 void init_digifiz();
+/** @brief Update RPM bar/needle animation source. */
 void setRPM(int rpmdata);
+/** @brief Advance primary blink state machine. */
 void blinking();
+/** @brief Advance secondary blink state machine. */
 void blinking2();
+/** @brief Set clock digits shown on display. */
 void setClockData(uint8_t clock_hours,uint8_t clock_minutes);
+/** @brief Set MFA clock digits. */
 void setMFAClockData(uint8_t mfa_clock_hours,uint8_t mfa_clock_minutes);
+/** @brief Set numeric value shown in MFA area. */
 void setMFADisplayedNumber(int16_t data);
+/** @brief Set fuel level indicator in liters. */
 void setFuel(uint8_t litres);
+/** @brief Set numeric RPM value output. */
 void setRPMData(uint16_t data);
+/** @brief Set numeric speed output. */
 void setSpeedometerData(uint16_t data);
+/** @brief Set coolant temperature field. */
 void setCoolantData(uint16_t data);
+/** @brief Enable or disable decimal dot. */
 void setDot(bool value);
+/** @brief Enable or disable floating dot indicator. */
 void setFloatDot(bool value);
+/** @brief Set total mileage value. */
 void setMileage(uint32_t mileage);
+/** @brief Select MFA metric type. */
 void setMFAType(uint8_t mfaType);
+/** @brief Render MFA metric icon/text. */
 void displayMFAType(uint8_t mfaType);
+/** @brief Select MFA block page. */
 void setMFABlock(uint8_t block);
+/** @brief Set display brightness level. */
 void setBrightness(uint8_t levels);
+/** @brief Control refuel warning indicator. */
 void setRefuelSign(bool onoff);
+/** @brief Control check-engine indicator. */
 void setCheckEngine(bool onoff);
+/** @brief Control display backlight output. */
 void setBacklight(bool onoff);
+/** @brief Control LCD oil warning indicator. */
 void setLCDOilIndicator(bool onoff);
+/** @brief Refresh LCD indicator outputs. */
 void processLCDIndicators();
 
+/** @brief Control LCD brakes indicator. */
 void setLCDBrakesIndicator(bool onoff);
+/** @brief Control glow-plug/heat-lights indicator. */
 void setLCDHeatLightsIndicator(bool onoff);
+/** @brief Control rear light heater indicator. */
 void setLCDBackLightsHeatIndicator(bool onoff);
+/** @brief Control rear-window heater indicator. */
 void setLCDBackWindowHeatIndicator(bool onoff);
 
+/** @brief Run startup animation/test pattern. */
 void fireDigifiz();
 #endif
 #endif
