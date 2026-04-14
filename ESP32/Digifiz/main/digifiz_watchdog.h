@@ -1,43 +1,54 @@
 #ifndef DIGIFIZ_WATCHDOG_H
 #define DIGIFIZ_WATCHDOG_H
 
+/**
+ * @file digifiz_watchdog.h
+ * @brief Optional watchdog abstraction with no-op fallbacks.
+ */
+
 #include "esp_err.h"
 
-// Define this macro to enable watchdog functionality
+/** @brief Define to compile real watchdog implementation instead of no-op macros. */
 // #define WATCHDOG_ENABLED
 
 #ifdef WATCHDOG_ENABLED
 
-// Initializes the watchdog timer
+/** @brief Initialize watchdog timer resources. */
 esp_err_t watchdog_init(void);
 
-// Checks if the watchdog timer is currently running
+/** @brief Check whether watchdog is currently armed and running. */
 bool watchdog_is_running(void);
 
-// Updates (kicks) the watchdog timer to prevent a reset
+/** @brief Feed watchdog to prevent timeout reset. */
 void watchdog_update(void);
 
-// Deletes the watchdog timer (e.g., before entering deep sleep)
+/** @brief Deinitialize watchdog timer (for example before deep sleep). */
 void watchdog_delete(void);
 
-// Reinitializes the watchdog timer after deep sleep
+/** @brief Reinitialize watchdog after wake-up from deep sleep. */
 esp_err_t watchdog_reinit(void);
 
-// Creates a mutex for watchdog synchronization
+/** @brief Create synchronization primitive for watchdog access. */
 void watchdog_mutex_create(void);
 
-// Deletes the mutex for watchdog synchronization
+/** @brief Delete synchronization primitive created for watchdog access. */
 void watchdog_mutex_delete(void);
 
 #else
 
-// Define empty macros for the watchdog functions when disabled
+/** @brief No-op watchdog init when watchdog feature is disabled. */
 #define watchdog_init() (ESP_OK)
+/** @brief Always report watchdog stopped when feature is disabled. */
 #define watchdog_is_running() (false)
+/** @brief No-op watchdog feed when feature is disabled. */
 #define watchdog_update()
+/** @brief No-op watchdog delete when feature is disabled. */
 #define watchdog_delete()
+/** @brief No-op watchdog reinit when feature is disabled. */
 #define watchdog_reinit() (ESP_OK)
+/** @brief No-op mutex creation when feature is disabled. */
 #define watchdog_mutex_create()
+/** @brief No-op mutex deletion when feature is disabled. */
 #define watchdog_mutex_delete()
 
 #endif // WATCHDOG_ENABLED

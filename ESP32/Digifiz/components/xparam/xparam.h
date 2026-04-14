@@ -20,20 +20,35 @@
 #include <assert.h>
 #include <stdbool.h>
 
+/** @brief Magic marker used in serialized xparam images. */
 #define XPARAM_MAGIC 0xABCD1234
+/** @brief Enable verbose logging inside xparam module when non-zero. */
 #define XPARAM_LOG   1
 
 /* Exported types ------------------------------------------------------------*/
+/**
+ * @brief Supported storage types for xparam values.
+ */
 typedef enum{
+	/** @brief Uninitialized/invalid type marker. */
 	XPARAM_NONE,
+	/** @brief Boolean value (`bool`). */
 	XPARAM_BOOL,
+	/** @brief Signed 8-bit integer value. */
 	XPARAM_I8,
+	/** @brief Unsigned 8-bit integer value. */
 	XPARAM_U8,
+	/** @brief Signed 16-bit integer value. */
 	XPARAM_I16,
+	/** @brief Unsigned 16-bit integer value. */
 	XPARAM_U16,
+	/** @brief Signed 32-bit integer value. */
 	XPARAM_I32,
+	/** @brief Unsigned 32-bit integer value. */
 	XPARAM_U32,
+	/** @brief Floating-point value. */
 	XPARAM_FLOAT,
+	/** @brief Null-terminated C string pointer value. */
 	XPARAM_STRING,
 }xparam_vtype_t;
 
@@ -148,6 +163,11 @@ static_assert(	sizeof(xparam_header_t) == 16,
 static_assert(	sizeof(xparam_store_t)  == 16,
 		"changing xparam_store_t size will break already written parameters");
 
+/**
+ * @brief Compute serialized xparam image size for @p n entries.
+ *
+ * @param n Number of parameters serialized into the image.
+ */
 #define XPARAM_IMAGE_SIZE(n) (sizeof(xparam_img_t) + (n * sizeof(xparam_store_t)))
 
 /* Exported constants --------------------------------------------------------*/
@@ -173,7 +193,9 @@ static_assert(	sizeof(xparam_store_t)  == 16,
  * This macros get applied for each element in parameter list
  * _type can be one of: I8, U8, I16, U16, I32, U32, FLOAT, STRING
  */
+/** @brief Declare one xparam table field from x-macro list entry. */
 #define DECLARE_PARAM(_type, _name, ...) xparam_##_type##_t _name;
+/** @brief Define one xparam table initializer entry from x-macro list entry. */
 #define DEFINE_PARAM(_type, _name, ...) \
 		._name = {\
 			.value_type = XPARAM_##_type, \
@@ -184,6 +206,7 @@ static_assert(	sizeof(xparam_store_t)  == 16,
 /*
  * Macro to get count of parameters in a table
  */
+/** @brief Number of `xparam_t` records in static table object @p T. */
 #define XPARAM_COUNT(T) (sizeof(T) / sizeof(xparam_t))
 
 
@@ -194,16 +217,36 @@ static_assert(	sizeof(xparam_store_t)  == 16,
  * Get data blob from provided table, user needs to free returned pointer.
  * Could return NULL if malloc fails.
  */
+/**
+ * @brief Serialize xparam table to a binary blob.
+ *
+ * @param table Source parameter table.
+ * @return uint8_t* Heap-allocated blob, or NULL on allocation failure.
+ */
 uint8_t* xparam_table_to_blob(xparam_table_t* table);
 
 /*
  * Load table values from data blob.
  * Return 1 if table was found in blob, 0 if no table is found.
  */
+/**
+ * @brief Load xparam values from serialized binary blob.
+ *
+ * @param table Destination table to update.
+ * @param buf Serialized blob returned by storage/backend layer.
+ * @return uint8_t 1 if compatible table found and loaded, 0 otherwise.
+ */
 uint8_t  xparam_table_from_blob(xparam_table_t* table, uint8_t* buf);
 
 /*
  * Copy parameter value converted to string to provided buffer.
+ */
+/**
+ * @brief Convert one parameter value to human-readable string.
+ *
+ * @param param Parameter to convert.
+ * @param buf Destination output buffer.
+ * @return int Number of characters written to @p buf.
  */
 int 	 xparam_stringify(xparam_t* param, char* buf);
 
@@ -211,11 +254,25 @@ int 	 xparam_stringify(xparam_t* param, char* buf);
  * Increment/decrement parameter by number of steps.
  * Returns 0 if change would violate parameter limits and parameter value didn't change.
  */
+/**
+ * @brief Increment/decrement parameter by N steps.
+ *
+ * @param param Parameter to modify.
+ * @param n_steps Signed number of step increments.
+ * @return uint8_t 1 if value changed, 0 when clamped by limits.
+ */
 uint8_t  xparam_step_value(xparam_t* param, int16_t n_steps);
 
 /*
  * Set numeric value
  * Returns 0 if change would violate parameter limits and parameter value didn't change.
+ */
+/**
+ * @brief Set raw numeric value for a parameter.
+ *
+ * @param param Parameter to modify.
+ * @param value New raw value.
+ * @return uint8_t 1 if value accepted, 0 when rejected by limits.
  */
 uint8_t  xparam_set_value(xparam_t* param, uint32_t value);
 
@@ -223,10 +280,23 @@ uint8_t  xparam_set_value(xparam_t* param, uint32_t value);
  * Convert parameter table to json string.
  * User needs to free the returned pointer. Could return NULL if malloc fails.
  */
+/**
+ * @brief Serialize parameter table to JSON string.
+ *
+ * @param table Source table.
+ * @return char* Heap-allocated JSON string, or NULL on failure.
+ */
 char*    xparam_table_to_json(xparam_table_t* table);
 
 /*
  * Find xparam_t from table by name
+ */
+/**
+ * @brief Find parameter by its symbolic field name.
+ *
+ * @param table Table to search.
+ * @param name Field name string to match.
+ * @return xparam_t* Pointer to parameter on success, NULL if not found.
  */
 xparam_t* xparam_find_by_name(xparam_table_t* table, const char* name);
 
