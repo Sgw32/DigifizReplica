@@ -226,23 +226,15 @@ ColoringScheme digifizStandard = {
             .r = 20,
             .g = 20,
             .b = 2,
-            .end_segment = 1,
+            .end_segment = 2,
             .type = COLOR_SCHEME_BACKLIGHT,
             .basecolor_enabled = 2
         },
         {
-            .r = 60,
-            .g = 8,
+            .r = 20,
+            .g = 20,
             .b = 2,
-            .end_segment = 15,
-            .type = COLOR_SCHEME_TEMPERATURE,
-            .basecolor_enabled = 1
-        },
-        { 
-            .r = 60,
-            .g = 80,
-            .b = 2,
-            .end_segment = 16,
+            .end_segment = 4,
             .type = COLOR_SCHEME_BACKLIGHT,
             .basecolor_enabled = 1
         },
@@ -250,7 +242,7 @@ ColoringScheme digifizStandard = {
             .r = 2,
             .g = 240,
             .b = 2,
-            .end_segment = 17,
+            .end_segment = 5,
             .type = COLOR_SCHEME_SIGNAL_MFA1_IND,
             .basecolor_enabled = 0
         },
@@ -258,7 +250,7 @@ ColoringScheme digifizStandard = {
             .r = 2,
             .g = 240,
             .b = 2,
-            .end_segment = 18,
+            .end_segment = 6,
             .type = COLOR_SCHEME_SIGNAL_MFA2_IND,
             .basecolor_enabled = 0
         },
@@ -266,15 +258,23 @@ ColoringScheme digifizStandard = {
             .r = 240,
             .g = 2,
             .b = 2,
-            .end_segment = 19,
+            .end_segment = 7,
             .type = COLOR_SCHEME_SIGNAL_BATTERY_IND,
             .basecolor_enabled = 0
+        },
+        {
+            .r = 20,
+            .g = 20,
+            .b = 2,
+            .end_segment = 8,
+            .type = COLOR_SCHEME_BACKLIGHT,
+            .basecolor_enabled = 1
         },
         { 
             .r = 240,
             .g = 2,
             .b = 2,
-            .end_segment = 20,
+            .end_segment = 9,
             .type = COLOR_SCHEME_SIGNAL_OIL_IND,
             .basecolor_enabled = 0
         },
@@ -282,7 +282,7 @@ ColoringScheme digifizStandard = {
             .r = 240,
             .g = 2,
             .b = 2,
-            .end_segment = 21,
+            .end_segment = 10,
             .type = COLOR_SCHEME_SIGNAL_BRAKES_IND,
             .basecolor_enabled = 0
         },
@@ -290,7 +290,7 @@ ColoringScheme digifizStandard = {
             .r = 2,
             .g = 240,
             .b = 2,
-            .end_segment = 22,
+            .end_segment = 11,
             .type = COLOR_SCHEME_SIGNAL_RIGHT_TURN_IND,
             .basecolor_enabled = 0
         },
@@ -298,7 +298,7 @@ ColoringScheme digifizStandard = {
             .r = 2,
             .g = 240,
             .b = 2,
-            .end_segment = 23,
+            .end_segment = 12,
             .type = COLOR_SCHEME_SIGNAL_LEFT_TURN_IND,
             .basecolor_enabled = 0
         },
@@ -306,7 +306,7 @@ ColoringScheme digifizStandard = {
             .r = 2,
             .g = 2,
             .b = 120,
-            .end_segment = 24,
+            .end_segment = 13,
             .type = COLOR_SCHEME_SIGNAL_FARLIGHT,
             .basecolor_enabled = 0
         },
@@ -314,15 +314,23 @@ ColoringScheme digifizStandard = {
             .r = 60,
             .g = 80,
             .b = 2,
-            .end_segment = 25,
+            .end_segment = 14,
             .type = COLOR_SCHEME_SIGNAL_GLASSHEAT,
             .basecolor_enabled = 0
+        },
+        {
+            .r = 20,
+            .g = 20,
+            .b = 2,
+            .end_segment = 15,
+            .type = COLOR_SCHEME_BACKLIGHT,
+            .basecolor_enabled = 1
         },
         { 
             .r = 60,
             .g = 80,
             .b = 2,
-            .end_segment = 26,
+            .end_segment = 16,
             .type = COLOR_SCHEME_SIGNAL_FOGLIGHTS2,
             .basecolor_enabled = 0
         },
@@ -330,7 +338,7 @@ ColoringScheme digifizStandard = {
             .r = 2,
             .g = 240,
             .b = 2,
-            .end_segment = 27,
+            .end_segment = 17,
             .type = COLOR_SCHEME_SIGNAL_FOGLIGHTS1,
             .basecolor_enabled = 0
         },
@@ -338,113 +346,9 @@ ColoringScheme digifizStandard = {
             .r = 2,
             .g = 80,
             .b = 2,
-            .end_segment = 28,
+            .end_segment = 18,
             .type = COLOR_SCHEME_SIGNAL_LIGHTS,
             .basecolor_enabled = 0
-        },
-        { 
-            .r = 60,
-            .g = 8,
-            .b = 2,
-            .end_segment = COLORING_SCHEME_REDLINING_LIMIT,
-            .type = COLOR_SCHEME_RPM,
-            .basecolor_enabled = 1
-        },
-        { 
-            .r = 120,
-            .g = 8,
-            .b = 2,
-            .end_segment = 77,
-            .type = COLOR_SCHEME_RPM_REDLINE,
-            .basecolor_enabled = 0
-        },
-        { 
-            .r = 20,
-            .g = 20,
-            .b = 2,
-            .end_segment = 95,
-            .type = COLOR_SCHEME_BACKLIGHT_RPM,
-            .basecolor_enabled = 2
-        },
-        { 
-            .r = 60,
-            .g = 80,
-            .b = 2,
-            .end_segment = 137,
-            .type = COLOR_SCHEME_MILEAGE,
-            .basecolor_enabled = 1
-        },
-        { 
-            .r = 60,
-            .g = 80,
-            .b = 2,
-            .end_segment = 138,
-            .type = COLOR_SCHEME_BACKLIGHT,
-            .basecolor_enabled = 1
-        },
-        { 
-            .r = 6,
-            .g = 8,
-            .b = 60,
-            .end_segment = 168,
-            .type = COLOR_SCHEME_TIME,
-            .basecolor_enabled = 1
-        },
-        { 
-            .r = 60,
-            .g = 80,
-            .b = 2,
-            .end_segment = 175,
-            .type = COLOR_SCHEME_SIGNAL_MFA_INDICATORS,
-            .basecolor_enabled = 1
-        },
-        { 
-            .r = 60,
-            .g = 80,
-            .b = 2,
-            .end_segment = 206,
-            .type = COLOR_SCHEME_MFA,
-            .basecolor_enabled = 1
-        },
-        { 
-            .r = 2,
-            .g = 2,
-            .b = 80,
-            .end_segment = 221,
-            .type = COLOR_SCHEME_FUEL,
-            .basecolor_enabled = 1
-        },
-        { 
-            .r = 80,
-            .g = 2,
-            .b = 2,
-            .end_segment = 227,
-            .type = COLOR_SCHEME_REFUEL,
-            .basecolor_enabled = 0
-        },
-        { 
-            .r = 60,
-            .g = 8,
-            .b = 2,
-            .end_segment = 269,
-            .type = COLOR_SCHEME_SPEEDOMETER,
-            .basecolor_enabled = 1
-        },
-        { 
-            .r = 20,
-            .g = 20,
-            .b = 2,
-            .end_segment = 270,
-            .type = COLOR_SCHEME_BACKLIGHT,
-            .basecolor_enabled = 2
-        },
-        { 
-            .r = 60,
-            .g = 80,
-            .b = 2,
-            .end_segment = 302,
-            .type = COLOR_SCHEME_UPPER_BACKLIGHT,
-            .basecolor_enabled = 3
         },
     }
 };

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+import random
 from dataclasses import dataclass
 
 import serial
@@ -63,10 +64,12 @@ class SerialClient:
             b = self.ser.read(1)
             if not b:
                 raise TimeoutError("Timeout waiting for frame")
+
             if b[0] == SOF1:
                 b2 = self.ser.read(1)
                 if not b2:
                     raise TimeoutError("Timeout waiting SOF2")
+
                 if b2[0] == SOF2:
                     break
 
@@ -76,6 +79,7 @@ class SerialClient:
 
         cmd = head[0]
         ln = head[1] | (head[2] << 8)
+
         payload = self.ser.read(ln)
         if len(payload) != ln:
             raise TimeoutError("Timeout waiting payload")
@@ -94,7 +98,9 @@ class SerialClient:
 class MainWindow(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
+
         self.client = SerialClient()
+
         self.setWindowTitle("SLCD_DR_Ctl Payload Sender")
         self.resize(800, 500)
 
@@ -103,10 +109,13 @@ class MainWindow(QtWidgets.QWidget):
         self.connect_btn = QtWidgets.QPushButton("Connect")
 
         self.payload_edit = QtWidgets.QPlainTextEdit()
-        self.payload_edit.setPlaceholderText("Enter payload bytes as 0/1, e.g. 1,0,1,1 or whitespace-separated")
+        self.payload_edit.setPlaceholderText(
+            "Enter payload bytes as 0/1, e.g. 1,0,1,1 or whitespace-separated"
+        )
 
         self.offset_spin = QtWidgets.QSpinBox()
         self.offset_spin.setRange(0, 520)
+
         self.count_spin = QtWidgets.QSpinBox()
         self.count_spin.setRange(1, 520)
 
@@ -114,6 +123,13 @@ class MainWindow(QtWidgets.QWidget):
         self.send_range_btn = QtWidgets.QPushButton("Send SET_RANGE")
         self.info_btn = QtWidgets.QPushButton("GET_INFO")
         self.get_range_btn = QtWidgets.QPushButton("GET_RANGE")
+
+        self.random_range_btn = QtWidgets.QPushButton("Randomize SET_RANGE: OFF")
+        self.random_range_btn.setCheckable(True)
+
+        self.random_timer = QtCore.QTimer(self)
+        self.random_timer.setInterval(1000 // 32)
+        self.random_timer.timeout.connect(self.randomize_send_range)
 
         self.log = QtWidgets.QPlainTextEdit()
         self.log.setReadOnly(True)
@@ -136,6 +152,7 @@ class MainWindow(QtWidgets.QWidget):
         btn_row.addWidget(self.send_range_btn)
         btn_row.addWidget(self.info_btn)
         btn_row.addWidget(self.get_range_btn)
+        btn_row.addWidget(self.random_range_btn)
 
         lay = QtWidgets.QVBoxLayout(self)
         lay.addLayout(top)
@@ -152,6 +169,7 @@ class MainWindow(QtWidgets.QWidget):
         self.send_range_btn.clicked.connect(self.send_range)
         self.info_btn.clicked.connect(self.get_info)
         self.get_range_btn.clicked.connect(self.get_range)
+        self.random_range_btn.toggled.connect(self.toggle_random_range)
 
         self.refresh_ports()
 
@@ -165,6 +183,7 @@ class MainWindow(QtWidgets.QWidget):
 
     def toggle_connect(self):
         if self.client.ser and self.client.ser.is_open:
+            self.random_range_btn.setChecked(False)
             self.client.close()
             self.connect_btn.setText("Connect")
             self.log_msg("Disconnected")
@@ -174,6 +193,7 @@ class MainWindow(QtWidgets.QWidget):
         if not port:
             self.log_msg("No serial port selected")
             return
+
         try:
             self.client.connect(port, 115200)
             self.connect_btn.setText("Disconnect")
@@ -184,11 +204,13 @@ class MainWindow(QtWidgets.QWidget):
     def parse_payload_text(self) -> bytes:
         text = self.payload_edit.toPlainText().replace(",", " ").split()
         out = []
+
         for token in text:
             v = int(token, 0)
             if v not in (0, 1):
                 raise ValueError("Only 0 or 1 payload values are allowed")
             out.append(v)
+
         return bytes(out)
 
     def transact(self, cmd: int, payload: bytes = b"") -> Frame:
@@ -201,10 +223,12 @@ class MainWindow(QtWidgets.QWidget):
         try:
             payload = self.parse_payload_text()
             fr = self.transact(CMD_SET_ALL, payload)
+
             if fr.cmd == RSP_ACK:
                 self.log_msg("SET_ALL ACK")
             else:
                 self.log_msg(f"Unexpected response: 0x{fr.cmd:02X}")
+
         except Exception as e:
             self.log_msg(f"SET_ALL error: {e}")
 
@@ -213,28 +237,36 @@ class MainWindow(QtWidgets.QWidget):
             data = self.parse_payload_text()
             offset = self.offset_spin.value()
             count = len(data)
+
             payload = bytes([
                 offset & 0xFF,
                 (offset >> 8) & 0xFF,
                 count & 0xFF,
                 (count >> 8) & 0xFF,
             ]) + data
+
             fr = self.transact(CMD_SET_RANGE, payload)
+
             if fr.cmd == RSP_ACK:
                 self.log_msg("SET_RANGE ACK")
             else:
                 self.log_msg(f"Unexpected response: 0x{fr.cmd:02X}")
+
         except Exception as e:
             self.log_msg(f"SET_RANGE error: {e}")
 
     def get_info(self):
         try:
             fr = self.transact(CMD_GET_INFO)
+
             if fr.cmd == RSP_INFO and len(fr.payload) == 2:
                 size = fr.payload[0] | (fr.payload[1] << 8)
                 self.log_msg(f"Payload size: {size}")
             else:
-                self.log_msg(f"Unexpected response: cmd=0x{fr.cmd:02X}, payload={fr.payload.hex()}")
+                self.log_msg(
+                    f"Unexpected response: cmd=0x{fr.cmd:02X}, payload={fr.payload.hex()}"
+                )
+
         except Exception as e:
             self.log_msg(f"GET_INFO error: {e}")
 
@@ -242,21 +274,77 @@ class MainWindow(QtWidgets.QWidget):
         try:
             offset = self.offset_spin.value()
             count = self.count_spin.value()
+
             payload = bytes([
                 offset & 0xFF,
                 (offset >> 8) & 0xFF,
                 count & 0xFF,
                 (count >> 8) & 0xFF,
             ])
+
             fr = self.transact(CMD_GET_RANGE, payload)
+
             if fr.cmd == RSP_RANGE:
                 txt = ",".join(str(x) for x in fr.payload)
                 self.payload_edit.setPlainText(txt)
                 self.log_msg(f"Received {len(fr.payload)} bytes")
             else:
                 self.log_msg(f"Unexpected response: 0x{fr.cmd:02X}")
+
         except Exception as e:
             self.log_msg(f"GET_RANGE error: {e}")
+
+    def toggle_random_range(self, enabled: bool):
+        if enabled:
+            if not self.client.ser or not self.client.ser.is_open:
+                self.log_msg("Randomize error: not connected")
+                self.random_range_btn.setChecked(False)
+                return
+
+            self.random_range_btn.setText("Randomize SET_RANGE: ON")
+            self.random_timer.start()
+            self.log_msg("Randomize SET_RANGE started @ 32 Hz")
+        else:
+            self.random_timer.stop()
+            self.random_range_btn.setText("Randomize SET_RANGE: OFF")
+            self.log_msg("Randomize SET_RANGE stopped")
+
+    def randomize_send_range(self):
+        try:
+            if not self.client.ser or not self.client.ser.is_open:
+                raise RuntimeError("Not connected")
+
+            offset = self.offset_spin.value()
+            count = self.count_spin.value()
+
+            data = bytes(random.getrandbits(1) for _ in range(count))
+
+            payload = bytes([
+                offset & 0xFF,
+                (offset >> 8) & 0xFF,
+                count & 0xFF,
+                (count >> 8) & 0xFF,
+            ]) + data
+
+            self.client.send(CMD_SET_RANGE, payload)
+
+            fr = self.client.read_frame()
+
+            if fr.cmd == RSP_ACK:
+                self.log_msg(f"Random SET_RANGE ACK offset={offset}, count={count}")
+            elif fr.cmd == RSP_NACK:
+                self.log_msg("Random SET_RANGE NACK")
+            else:
+                self.log_msg(f"Random SET_RANGE unexpected response: 0x{fr.cmd:02X}")
+
+        except Exception as e:
+            self.log_msg(f"Random SET_RANGE error: {e}")
+            self.random_range_btn.setChecked(False)
+
+    def closeEvent(self, event):
+        self.random_timer.stop()
+        self.client.close()
+        event.accept()
 
 
 if __name__ == "__main__":
