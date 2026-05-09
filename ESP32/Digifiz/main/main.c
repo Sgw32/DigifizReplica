@@ -476,6 +476,9 @@ void displayUpdate(void *pvParameters) {
         fireDigifiz();
         setMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState.value);
         processMFA();
+#ifdef DIGIFIZ_REFIZ_DISPLAY
+        refiz_uart_sender_trigger();
+#endif
         regout_all(digifiz_reg_out.byte);
         regin_read(digifiz_reg_in.bytes);
         //protocolParse();
