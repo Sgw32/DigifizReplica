@@ -20,6 +20,8 @@ RSP_NACK = 0x81
 RSP_INFO = 0x90
 RSP_RANGE = 0x91
 
+BAUD = 250000
+
 
 def crc8(data: bytes) -> int:
     c = 0
@@ -44,7 +46,7 @@ class SerialClient:
     def __init__(self):
         self.ser = None
 
-    def connect(self, port: str, baud: int = 115200):
+    def connect(self, port: str, baud: int = BAUD  ):
         self.ser = serial.Serial(port, baudrate=baud, timeout=0.7)
 
     def close(self):
@@ -195,9 +197,9 @@ class MainWindow(QtWidgets.QWidget):
             return
 
         try:
-            self.client.connect(port, 115200)
+            self.client.connect(port, BAUD)
             self.connect_btn.setText("Disconnect")
-            self.log_msg(f"Connected to {port} @ 115200")
+            self.log_msg(f"Connected to {port} @ " + str(BAUD))
         except Exception as e:
             self.log_msg(f"Connect error: {e}")
 

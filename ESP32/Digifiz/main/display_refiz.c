@@ -73,52 +73,86 @@ static bool check_engine_speed_override_active = false;
 static uint8_t d_clock_hours = 0;
 static uint8_t d_clock_minutes = 0;
 
-#define PAYLOAD_SIZE 520
-#define REFIZ_UART_BAUD 115200
+#define PAYLOAD_SIZE 520 
+#define SEND_PAYLOAD_SIZE 260 //We do not transmit extra data
+#define REFIZ_UART_BAUD 250000
 #define REFIZ_UART_NUM UART_NUM_1
 #define REFIZ_UART_TX_PIN 43
 #define REFIZ_UART_RX_PIN UART_PIN_NO_CHANGE
 #define REFIZ_UART_BATCH_OFFSET_START 3
-#define REFIZ_UART_BATCH_SIZE 32
+#define REFIZ_UART_BATCH_SIZE 8
 #define REFIZ_UART_SET_RANGE_CMD 0x02
 #define REFIZ_UART_SOF1 0xA5
 #define REFIZ_UART_SOF2 0x5A
-#define REFIZ_UART_TX_BUFFER_SIZE 128
+#define REFIZ_UART_TX_BUFFER_SIZE 1024
 
 static const uint8_t refiz_default_payload[PAYLOAD_SIZE] = {
-    1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1,
-    1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1,
-    0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
-    0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0,
-    1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
-    0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0,
-    1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1,
-    1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0,
-    1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1,
-    0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
-    1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
-    0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
-    0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 1, 1, 1, 1, 1
+1,1,1,
+0, 0, 0, 0, 0, 0, 0, 0, //first, second digit clock top 
+0, 0, 0, 0, 0, 0, 0, 0, //third, fourth digit clock top 
+0, 0, 0, 0, 0, 0, 0, 0, //tacho (1700-1900) + MFA
+0, 0, 0, 0, 0, 0, 0, 0, //tacho (1000-1700) 
+0, 0, 0, 0, 0, 0, 0, 0, //first and second digit clock bot
+0, 0, 0, 0, 0, 0, 0, 0, //third and fourth digit clock bot
+0, 0, 0, 0, 0, 0, 0, 0, //tacho (5100-5200) + MFA
+0, 0, 0, 0, 0, 0, 0, 0, //tacho (6000-5300)
+0, 0, 0, 0, 0, 0, 0, 0, //tacho (0-700)
+0, 0, 0, 0, 0, 0, 0, 0, //tacho(800-900)) + mileage(1-2)
+0, 0, 0, 0, 0, 0, 0, 0, //mileage(3-4)
+0, 0, 0, 0, 0, 0, 0, 0, //mileage(5-6)
+0, 0, 0, 0, 0, 0, 0, 0, //tacho (7000-6300)
+0, 0, 0, 0, 0, 0, 0, 0, //tacho (6200-6100) + mileage(1-2)
+0, 0, 0, 0, 0, 0, 0, 0, //mileage (3-4)  
+0, 0, 0, 0, 0, 0, 0, 0, //mileage (5-6)
+0, 0, 0, 0, 0, 0, 0, 0, //fuel second digit, coolant T (9-10)
+0, 0, 0, 0, 0, 0, 0, 0, //coolant T(1-8)
+0, 0, 0, 0, 0, 0, 0, 0, //tacho(3400-2800)
+0, 0, 0, 0, 0, 0, 0, 0, //tacho(2700-2000)
+0, 0, 0, 0, 0, 0, 0, 0, //fuel down, coolant T(11-12)
+0, 0, 0, 0, 0, 0, 0, 0, //coolant T(13-20)
+0, 0, 0, 0, 0, 0, 0, 0, //refuel sign, tacho(3600-4200)
+0, 0, 0, 0, 0, 0, 0, 0, //tacho(4300-5000)
+0, 0, 0, 0, 0, 0, 0, 0, //mfa (1,2 digit top)
+0, 0, 0, 0, 0, 0, 0, 0, //mfa (dot, 3,4)
+0, 0, 0, 0, 0, 0, 0, 0, //mfa (4), speed (3)
+0, 0, 0, 0, 0, 0, 0, 0, //speed(1-2), fuel(1 top)
+0, 0, 0, 0, 0, 0, 0, 0, //mfa bottom 1,2
+0, 0, 0, 0, 0, 0, 0, 0, //mfa float dot, mfa bot 3,4
+0, 0, 0, 0, 0, 0, 0, 0, //mfa bot 4, speed top 3
+0, 0, 0, 0, 0, 0, 0, 0, //speed 2-1 top, tacho, fuel shit and etc
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+1, 1, 1, 1, 1, 1, 1, 0, 
+1, 1, 1, 0, 0, 0, 1, 1, 
+1, 1, 1, 1, 1, 0, 1, 1, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+1, 1, 1, 1, 1, 1, 1, 0, 
+1, 1, 1, 1, 1, 1, 1, 1, 
+1, 0, 1, 1, 1, 1, 0, 1, 
+1, 1, 1, 1, 1, 0, 1, 1, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 0, 0, 0, 
+1,1,1,1,1
 };
 
 static uint8_t bool_data_payload[PAYLOAD_SIZE];
@@ -288,7 +322,7 @@ void refiz_uart_sender_init(void)
     ESP_ERROR_CHECK(uart_param_config(REFIZ_UART_NUM, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(REFIZ_UART_NUM, REFIZ_UART_TX_PIN, REFIZ_UART_RX_PIN,
                                  UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
-    ESP_ERROR_CHECK(uart_driver_install(REFIZ_UART_NUM, REFIZ_UART_TX_BUFFER_SIZE, 0, 0, NULL, 0));
+    ESP_ERROR_CHECK(uart_driver_install(REFIZ_UART_NUM, (REFIZ_UART_TX_BUFFER_SIZE*2), 0, 0, NULL, 0));
     memcpy(bool_data_payload, refiz_default_payload, sizeof(bool_data_payload));
     refiz_uart_next_offset = REFIZ_UART_BATCH_OFFSET_START;
     refiz_uart_ready = true;
@@ -303,18 +337,18 @@ void refiz_uart_sender_trigger(void)
         return;
     }
 
-    refiz_sync_payload_from_display();
+    //refiz_sync_payload_from_display();
 
     uint16_t offset = refiz_uart_next_offset;
-    if (offset >= PAYLOAD_SIZE)
+    if (offset >= SEND_PAYLOAD_SIZE)
     {
         offset = REFIZ_UART_BATCH_OFFSET_START;
     }
 
     uint16_t count = REFIZ_UART_BATCH_SIZE;
-    if ((offset + count) > PAYLOAD_SIZE)
+    if ((offset + count) > SEND_PAYLOAD_SIZE)
     {
-        count = PAYLOAD_SIZE - offset;
+        count = SEND_PAYLOAD_SIZE - offset;
     }
 
     uint8_t frame[2 + 3 + 4 + REFIZ_UART_BATCH_SIZE + 1];
@@ -342,7 +376,7 @@ void refiz_uart_sender_trigger(void)
     uart_write_bytes(REFIZ_UART_NUM, (const char *)frame, pos);
 
     refiz_uart_next_offset = offset + count;
-    if (refiz_uart_next_offset >= PAYLOAD_SIZE)
+    if (refiz_uart_next_offset >= SEND_PAYLOAD_SIZE)
     {
         refiz_uart_next_offset = REFIZ_UART_BATCH_OFFSET_START;
     }
@@ -1533,30 +1567,6 @@ static void getColorBySegmentNumber(ColoringScheme* c_ptr, uint16_t segment, uin
                 (*g) = c_ptr->scheme[i].g;
                 (*b) = c_ptr->scheme[i].b;
             }
-            //TODO move this logic elsewhere
-            // if (digifiz_parameters.useCustomScheme.value==0)
-            {
-                //TODO refactor this code to some js script executed on boot 
-                //or load data completely from memory (calculate on computer side)
-                if (digifiz_parameters.rpmOptions_7k_line.value)
-                {
-                    if ((segment>76)&&(segment<=78))
-                    {
-                        (*r) = 0;
-                        (*g) = 0;
-                        (*b) = 0;
-                    }
-                }
-                if (digifiz_parameters.rpmOptions_diesel_line.value)
-                {
-                    if ((segment>76)&&(segment<=80))
-                    {
-                        (*r) = 0;
-                        (*g) = 0;
-                        (*b) = 0;
-                    }
-                }
-            }
         }
         startSegment = endSegment;
     }
@@ -1574,21 +1584,11 @@ static uint8_t b_colors_active[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LED
 
 static void restore_speed_digit_colors(void)
 {
-    for (uint16_t led = SPEED_DIGITS_FIRST_SEGMENT; led <= SPEED_DIGITS_LAST_SEGMENT; ++led) {
-        r_colors_active[led] = r_colors_default[led];
-        g_colors_active[led] = g_colors_default[led];
-        b_colors_active[led] = b_colors_default[led];
-    }
     speed_alert_color_active = false;
 }
 
 static void apply_speed_alert_colors(uint8_t r, uint8_t g, uint8_t b)
 {
-    for (uint16_t led = SPEED_DIGITS_FIRST_SEGMENT; led <= SPEED_DIGITS_LAST_SEGMENT; ++led) {
-        r_colors_active[led] = r;
-        g_colors_active[led] = g;
-        b_colors_active[led] = b;
-    }
     speed_alert_color_active = true;
 }
 
@@ -1619,11 +1619,7 @@ static void update_speed_digit_color_override(uint16_t speed_value)
 
 static void apply_speed_digit_override_color(uint8_t r, uint8_t g, uint8_t b)
 {
-    for (uint16_t led = SPEED_DIGITS_FIRST_SEGMENT; led <= SPEED_DIGITS_LAST_SEGMENT; ++led) {
-        r_colors_active[led] = r;
-        g_colors_active[led] = g;
-        b_colors_active[led] = b;
-    }
+    
 }
 
 void compileColorScheme(void)

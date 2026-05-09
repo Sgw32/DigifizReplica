@@ -101,19 +101,14 @@ esp_err_t initDeviceSleep() {
 }
 
 bool device_sleep_check() {
-    //TODO tests...
-    bool sleepMode = gpio_get_level(SLEEP_PIN) == 1;
+    bool sleepMode = gpio_get_level(SLEEP_PIN) != 0;
     if (sleepMode)
     {
 #ifndef DEBUG_SLEEP_DISABLE
         resetBrightness();
 #endif
-        gpio_set_level(POWER_OUT_PIN, 0);
     }
-    else
-    {
-        gpio_set_level(POWER_OUT_PIN, 1);
-    }
+    gpio_set_level(POWER_OUT_PIN, sleepMode ? 0 : 1);
     return sleepMode;
 }
 
