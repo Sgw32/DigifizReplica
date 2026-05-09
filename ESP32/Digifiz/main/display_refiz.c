@@ -9,6 +9,8 @@
 #include "params.h"
 #include "led_effects.h"
 #include "millis.h"
+#include "driver/uart.h"
+#include "esp_err.h"
 
 #define TAG "display_refiz"
 #define SCRIPT_KEY "display_refiz_script"
@@ -70,6 +72,282 @@ static bool check_engine_speed_override_active = false;
 
 static uint8_t d_clock_hours = 0;
 static uint8_t d_clock_minutes = 0;
+
+#define PAYLOAD_SIZE 520
+#define REFIZ_UART_BAUD 115200
+#define REFIZ_UART_NUM UART_NUM_1
+#define REFIZ_UART_TX_PIN 43
+#define REFIZ_UART_RX_PIN UART_PIN_NO_CHANGE
+#define REFIZ_UART_BATCH_OFFSET_START 3
+#define REFIZ_UART_BATCH_SIZE 32
+#define REFIZ_UART_SET_RANGE_CMD 0x02
+#define REFIZ_UART_SOF1 0xA5
+#define REFIZ_UART_SOF2 0x5A
+#define REFIZ_UART_TX_BUFFER_SIZE 128
+
+static const uint8_t refiz_default_payload[PAYLOAD_SIZE] = {
+    1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1,
+    1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1,
+    0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+    0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0,
+    1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+    0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0,
+    1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1,
+    1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0,
+    1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1,
+    0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+    1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+    0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
+    0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 1, 1, 1, 1, 1
+};
+
+static uint8_t bool_data_payload[PAYLOAD_SIZE];
+static uint16_t refiz_uart_next_offset = REFIZ_UART_BATCH_OFFSET_START;
+static bool refiz_uart_ready = false;
+
+static const uint8_t refiz_orig_digit_patterns[10] = {
+    0b00111111, 0b00100001, 0b01011011, 0b01110011, 0b01100101,
+    0b01110110, 0b01111110, 0b00100011, 0b01111111, 0b01110111
+};
+static const uint16_t refiz_rpm_segments[71] = {
+    64, 65, 66, 67, 68, 69, 70, 71, 72, 73,
+    24, 25, 26, 27, 28, 29, 30, 31, 18, 17,
+    159, 158, 157, 156, 155, 154, 153, 152, 151, 150,
+    149, 148, 147, 146, 145, 253, 177, 178, 179, 180,
+    181, 182, 183, 184, 185, 186, 187, 188, 189, 190,
+    191, 49, 50, 63, 62, 61, 60, 59, 58, 57,
+    56, 105, 104, 103, 102, 101, 100, 99, 98, 97,
+    96
+};
+
+static uint8_t refiz_next_digit_to_orig(uint8_t next_pattern)
+{
+    static const uint8_t next_patterns[10] = {
+        DIGIT_NUMBER_0, DIGIT_NUMBER_1, DIGIT_NUMBER_2, DIGIT_NUMBER_3, DIGIT_NUMBER_4,
+        DIGIT_NUMBER_5, DIGIT_NUMBER_6, DIGIT_NUMBER_7, DIGIT_NUMBER_8, DIGIT_NUMBER_9
+    };
+
+    if (next_pattern == DIGIT_NUMBER_EMPTY)
+    {
+        return 0;
+    }
+    if (next_pattern == DIGIT_NUMBER_MINUS)
+    {
+        return 0b01000000;
+    }
+    for (uint8_t i = 0; i < 10; i++)
+    {
+        if (next_pattern == next_patterns[i])
+        {
+            return refiz_orig_digit_patterns[i];
+        }
+    }
+    return 0;
+}
+
+static void refiz_put_digit(const uint16_t segments[7], uint8_t next_pattern)
+{
+    uint8_t orig_pattern = refiz_next_digit_to_orig(next_pattern);
+    for (uint8_t i = 0; i < 7; i++)
+    {
+        bool_data_payload[segments[i] + 3] = (orig_pattern & (1 << i)) ? 1 : 0;
+    }
+}
+
+static void refiz_sync_payload_from_display(void)
+{
+    static const uint16_t mileage_segments[6][7] = {
+        {75, 74, 74, 74, 74, 107, 106},
+        {79, 76, 77, 109, 110, 111, 78},
+        {83, 80, 81, 113, 114, 115, 82},
+        {87, 84, 85, 117, 118, 119, 86},
+        {91, 88, 89, 121, 122, 123, 90},
+        {95, 92, 93, 125, 126, 127, 94}
+    };
+    static const uint16_t clock_segments[4][7] = {
+        {3, 0, 1, 33, 34, 35, 2},
+        {7, 4, 5, 37, 38, 39, 6},
+        {11, 8, 9, 41, 42, 43, 10},
+        {15, 12, 13, 45, 46, 47, 14}
+    };
+    static const uint16_t mfa_segments[4][7] = {
+        {195, 192, 193, 225, 226, 227, 194},
+        {199, 196, 197, 229, 230, 231, 198},
+        {204, 201, 202, 234, 235, 236, 203},
+        {208, 205, 206, 238, 239, 240, 207}
+    };
+    static const uint16_t fuel_segments[2][7] = {
+        {129, 222, 223, 255, 160, 161, 128},
+        {133, 130, 131, 163, 164, 165, 132}
+    };
+    static const uint16_t speed_segments[3][7] = {
+        {252, 221, 221, 221, 221, 220, 221},
+        {250, 249, 248, 218, 219, 216, 217},
+        {244, 245, 246, 214, 215, 212, 213}
+    };
+    static const uint16_t coolant_segments[20] = {
+        143, 142, 141, 140, 139, 138, 137, 136, 135, 134,
+        166, 167, 168, 169, 170, 171, 172, 173, 174, 175
+    };
+
+    memcpy(bool_data_payload, refiz_default_payload, sizeof(bool_data_payload));
+
+    refiz_put_digit(mileage_segments[0], display.mileage_digit_1);
+    refiz_put_digit(mileage_segments[1], display.mileage_digit_2);
+    refiz_put_digit(mileage_segments[2], display.mileage_digit_3);
+    refiz_put_digit(mileage_segments[3], display.mileage_digit_4);
+    refiz_put_digit(mileage_segments[4], display.mileage_digit_5);
+    refiz_put_digit(mileage_segments[5], display.mileage_digit_6);
+
+    refiz_put_digit(clock_segments[0], display.clock_digit_1);
+    refiz_put_digit(clock_segments[1], display.clock_digit_2);
+    refiz_put_digit(clock_segments[2], display.clock_digit_3);
+    refiz_put_digit(clock_segments[3], display.clock_digit_4);
+    bool_data_payload[40 + 3] = (display.clock_dot != 0) ? 1 : 0;
+
+    bool_data_payload[51 + 3] = (display.mfa_indicators & 0x01) ? 1 : 0;
+    bool_data_payload[19 + 3] = (display.mfa_indicators & 0x02) ? 1 : 0;
+    bool_data_payload[52 + 3] = (display.mfa_indicators & 0x04) ? 1 : 0;
+    bool_data_payload[20 + 3] = (display.mfa_indicators & 0x10) ? 1 : 0;
+    bool_data_payload[21 + 3] = (display.mfa_indicators & 0x20) ? 1 : 0;
+    bool_data_payload[53 + 3] = (display.mfa_indicators & 0x40) ? 1 : 0;
+
+    refiz_put_digit(mfa_segments[0], display.mfa_digit_1);
+    refiz_put_digit(mfa_segments[1], display.mfa_digit_2);
+    refiz_put_digit(mfa_segments[2], display.mfa_digit_3);
+    refiz_put_digit(mfa_segments[3], display.mfa_digit_4);
+    bool_data_payload[200 + 3] = (display.mfa_dots & 0x01) ? 1 : 0;
+    bool_data_payload[232 + 3] = (display.mfa_dots & 0x04) ? 1 : 0;
+
+    refiz_put_digit(fuel_segments[0], display.fuel_digit_1);
+    refiz_put_digit(fuel_segments[1], display.fuel_digit_2);
+    bool_data_payload[176 + 3] = display.fuel_low_ind ? 1 : 0;
+
+    refiz_put_digit(speed_segments[0], display.speed_digit_1);
+    refiz_put_digit(speed_segments[1], display.speed_digit_2);
+    refiz_put_digit(speed_segments[2], display.speed_digit_3);
+
+    uint16_t coolant_value = display.coolant_value;
+    for (uint8_t i = 0; i < 20; i++)
+    {
+        bool_data_payload[coolant_segments[i] + 3] = (coolant_value & (1 << i)) ? 1 : 0;
+    }
+
+    const uint8_t *display_bits = (const uint8_t *)&display;
+    uint8_t rpm_segments_on = 0;
+    for (uint8_t bit = 28; bit < 78; bit++)
+    {
+        if (display_bits[bit / 8] & (1 << (bit % 8)))
+        {
+            rpm_segments_on++;
+        }
+    }
+    for (uint8_t i = 0; i < 71; i++)
+    {
+        bool_data_payload[refiz_rpm_segments[i] + 3] = (i < rpm_segments_on) ? 1 : 0;
+    }
+    bool_data_payload[refiz_rpm_segments[0] + 3] = 1;
+}
+
+void refiz_uart_sender_init(void)
+{
+    if (refiz_uart_ready)
+    {
+        return;
+    }
+
+    uart_config_t uart_config = {
+        .baud_rate = REFIZ_UART_BAUD,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_DEFAULT,
+    };
+
+    ESP_ERROR_CHECK(uart_param_config(REFIZ_UART_NUM, &uart_config));
+    ESP_ERROR_CHECK(uart_set_pin(REFIZ_UART_NUM, REFIZ_UART_TX_PIN, REFIZ_UART_RX_PIN,
+                                 UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_ERROR_CHECK(uart_driver_install(REFIZ_UART_NUM, REFIZ_UART_TX_BUFFER_SIZE, 0, 0, NULL, 0));
+    memcpy(bool_data_payload, refiz_default_payload, sizeof(bool_data_payload));
+    refiz_uart_next_offset = REFIZ_UART_BATCH_OFFSET_START;
+    refiz_uart_ready = true;
+    ESP_LOGI(TAG, "Refiz UART sender initialized on UART%d TX GPIO%d at %d baud",
+             REFIZ_UART_NUM, REFIZ_UART_TX_PIN, REFIZ_UART_BAUD);
+}
+
+void refiz_uart_sender_trigger(void)
+{
+    if (!refiz_uart_ready)
+    {
+        return;
+    }
+
+    refiz_sync_payload_from_display();
+
+    uint16_t offset = refiz_uart_next_offset;
+    if (offset >= PAYLOAD_SIZE)
+    {
+        offset = REFIZ_UART_BATCH_OFFSET_START;
+    }
+
+    uint16_t count = REFIZ_UART_BATCH_SIZE;
+    if ((offset + count) > PAYLOAD_SIZE)
+    {
+        count = PAYLOAD_SIZE - offset;
+    }
+
+    uint8_t frame[2 + 3 + 4 + REFIZ_UART_BATCH_SIZE + 1];
+    const uint16_t payload_len = 4 + count;
+    size_t pos = 0;
+    frame[pos++] = REFIZ_UART_SOF1;
+    frame[pos++] = REFIZ_UART_SOF2;
+    frame[pos++] = REFIZ_UART_SET_RANGE_CMD;
+    frame[pos++] = payload_len & 0xFF;
+    frame[pos++] = (payload_len >> 8) & 0xFF;
+    frame[pos++] = offset & 0xFF;
+    frame[pos++] = (offset >> 8) & 0xFF;
+    frame[pos++] = count & 0xFF;
+    frame[pos++] = (count >> 8) & 0xFF;
+    memcpy(&frame[pos], &bool_data_payload[offset], count);
+    pos += count;
+
+    uint8_t crc = 0;
+    for (size_t i = 2; i < pos; i++)
+    {
+        crc ^= frame[i];
+    }
+    frame[pos++] = crc;
+
+    uart_write_bytes(REFIZ_UART_NUM, (const char *)frame, pos);
+
+    refiz_uart_next_offset = offset + count;
+    if (refiz_uart_next_offset >= PAYLOAD_SIZE)
+    {
+        refiz_uart_next_offset = REFIZ_UART_BATCH_OFFSET_START;
+    }
+}
+
 
 static uint8_t apply_indicator_filter(indicator_filter_t *filter, uint8_t new_value, uint16_t required_cycles)
 {
@@ -479,6 +757,7 @@ void initDisplay() {
     effect_state.saturation = digifiz_parameters.ledEffect_saturation.value;
     effect_state.value = digifiz_parameters.ledEffect_value.value;
     led_effect_init(&effect_state);
+    refiz_uart_sender_init();
     ESP_LOGI(LOG_TAG, "initDisplay ended");
 }
 

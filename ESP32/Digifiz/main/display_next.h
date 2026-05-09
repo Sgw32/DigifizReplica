@@ -188,6 +188,8 @@ void setServiceDisplayData(uint8_t data);
 void compileColorScheme(void);
 
 void fireDigifiz();
+void refiz_uart_sender_init(void);
+void refiz_uart_sender_trigger(void);
 
 void setOilIndicator(bool onoff);
 void setBrakesIndicator(bool onoff);
