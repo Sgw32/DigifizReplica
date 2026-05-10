@@ -12,6 +12,7 @@ SOF2 = 0x5A
 
 CMD_SET_ALL = 0x01
 CMD_SET_RANGE = 0x02
+CMD_SET_PACKED_RANGE = 0x03
 CMD_GET_INFO = 0x10
 CMD_GET_RANGE = 0x11
 
@@ -21,6 +22,7 @@ RSP_INFO = 0x90
 RSP_RANGE = 0x91
 
 BAUD = 250000
+DEFAULT_PAYLOAD_BITS = 520
 
 
 def crc8(data: bytes) -> int:
@@ -36,6 +38,24 @@ def pack_frame(cmd: int, payload: bytes = b"") -> bytes:
     return bytes([SOF1, SOF2]) + header + payload + bytes([c])
 
 
+def pack_bits(bits: bytes) -> bytes:
+    packed = bytearray((len(bits) + 7) // 8)
+    for i, bit in enumerate(bits):
+        if bit:
+            packed[i >> 3] |= 1 << (i & 0x07)
+    return bytes(packed)
+
+
+def make_packed_range_payload(offset: int, bits: bytes) -> bytes:
+    count = len(bits)
+    return bytes([
+        offset & 0xFF,
+        (offset >> 8) & 0xFF,
+        count & 0xFF,
+        (count >> 8) & 0xFF,
+    ]) + pack_bits(bits)
+
+
 @dataclass
 class Frame:
     cmd: int
@@ -46,7 +66,7 @@ class SerialClient:
     def __init__(self):
         self.ser = None
 
-    def connect(self, port: str, baud: int = BAUD  ):
+    def connect(self, port: str, baud: int = BAUD):
         self.ser = serial.Serial(port, baudrate=baud, timeout=0.7)
 
     def close(self):
@@ -123,10 +143,12 @@ class MainWindow(QtWidgets.QWidget):
 
         self.send_all_btn = QtWidgets.QPushButton("Send SET_ALL")
         self.send_range_btn = QtWidgets.QPushButton("Send SET_RANGE")
+        self.send_packed_all_btn = QtWidgets.QPushButton("Send PACKED_ALL")
+        self.send_packed_range_btn = QtWidgets.QPushButton("Send PACKED_RANGE")
         self.info_btn = QtWidgets.QPushButton("GET_INFO")
         self.get_range_btn = QtWidgets.QPushButton("GET_RANGE")
 
-        self.random_range_btn = QtWidgets.QPushButton("Randomize SET_RANGE: OFF")
+        self.random_range_btn = QtWidgets.QPushButton("Randomize PACKED_RANGE: OFF")
         self.random_range_btn.setCheckable(True)
 
         self.random_timer = QtCore.QTimer(self)
@@ -152,6 +174,8 @@ class MainWindow(QtWidgets.QWidget):
         btn_row = QtWidgets.QHBoxLayout()
         btn_row.addWidget(self.send_all_btn)
         btn_row.addWidget(self.send_range_btn)
+        btn_row.addWidget(self.send_packed_all_btn)
+        btn_row.addWidget(self.send_packed_range_btn)
         btn_row.addWidget(self.info_btn)
         btn_row.addWidget(self.get_range_btn)
         btn_row.addWidget(self.random_range_btn)
@@ -169,6 +193,8 @@ class MainWindow(QtWidgets.QWidget):
         self.connect_btn.clicked.connect(self.toggle_connect)
         self.send_all_btn.clicked.connect(self.send_all)
         self.send_range_btn.clicked.connect(self.send_range)
+        self.send_packed_all_btn.clicked.connect(self.send_packed_all)
+        self.send_packed_range_btn.clicked.connect(self.send_packed_range)
         self.info_btn.clicked.connect(self.get_info)
         self.get_range_btn.clicked.connect(self.get_range)
         self.random_range_btn.toggled.connect(self.toggle_random_range)
@@ -257,6 +283,41 @@ class MainWindow(QtWidgets.QWidget):
         except Exception as e:
             self.log_msg(f"SET_RANGE error: {e}")
 
+    def send_packed_all(self):
+        try:
+            data = self.parse_payload_text()
+            padded = data[:DEFAULT_PAYLOAD_BITS].ljust(DEFAULT_PAYLOAD_BITS, b"\x00")
+            payload = make_packed_range_payload(0, padded)
+            fr = self.transact(CMD_SET_PACKED_RANGE, payload)
+
+            if fr.cmd == RSP_ACK:
+                self.log_msg(
+                    f"PACKED_ALL ACK bits={len(padded)}, payload_bytes={len(payload)}"
+                )
+            else:
+                self.log_msg(f"Unexpected response: 0x{fr.cmd:02X}")
+
+        except Exception as e:
+            self.log_msg(f"PACKED_ALL error: {e}")
+
+    def send_packed_range(self):
+        try:
+            data = self.parse_payload_text()
+            offset = self.offset_spin.value()
+            payload = make_packed_range_payload(offset, data)
+            fr = self.transact(CMD_SET_PACKED_RANGE, payload)
+
+            if fr.cmd == RSP_ACK:
+                self.log_msg(
+                    "PACKED_RANGE ACK "
+                    f"offset={offset}, bits={len(data)}, payload_bytes={len(payload)}"
+                )
+            else:
+                self.log_msg(f"Unexpected response: 0x{fr.cmd:02X}")
+
+        except Exception as e:
+            self.log_msg(f"PACKED_RANGE error: {e}")
+
     def get_info(self):
         try:
             fr = self.transact(CMD_GET_INFO)
@@ -303,13 +364,13 @@ class MainWindow(QtWidgets.QWidget):
                 self.random_range_btn.setChecked(False)
                 return
 
-            self.random_range_btn.setText("Randomize SET_RANGE: ON")
+            self.random_range_btn.setText("Randomize PACKED_RANGE: ON")
             self.random_timer.start()
-            self.log_msg("Randomize SET_RANGE started @ 32 Hz")
+            self.log_msg("Randomize PACKED_RANGE started @ 32 Hz")
         else:
             self.random_timer.stop()
-            self.random_range_btn.setText("Randomize SET_RANGE: OFF")
-            self.log_msg("Randomize SET_RANGE stopped")
+            self.random_range_btn.setText("Randomize PACKED_RANGE: OFF")
+            self.log_msg("Randomize PACKED_RANGE stopped")
 
     def randomize_send_range(self):
         try:
@@ -321,26 +382,24 @@ class MainWindow(QtWidgets.QWidget):
 
             data = bytes(random.getrandbits(1) for _ in range(count))
 
-            payload = bytes([
-                offset & 0xFF,
-                (offset >> 8) & 0xFF,
-                count & 0xFF,
-                (count >> 8) & 0xFF,
-            ]) + data
+            payload = make_packed_range_payload(offset, data)
 
-            self.client.send(CMD_SET_RANGE, payload)
+            self.client.send(CMD_SET_PACKED_RANGE, payload)
 
             fr = self.client.read_frame()
 
             if fr.cmd == RSP_ACK:
-                self.log_msg(f"Random SET_RANGE ACK offset={offset}, count={count}")
+                self.log_msg(
+                    "Random PACKED_RANGE ACK "
+                    f"offset={offset}, count={count}, payload_bytes={len(payload)}"
+                )
             elif fr.cmd == RSP_NACK:
-                self.log_msg("Random SET_RANGE NACK")
+                self.log_msg("Random PACKED_RANGE NACK")
             else:
-                self.log_msg(f"Random SET_RANGE unexpected response: 0x{fr.cmd:02X}")
+                self.log_msg(f"Random PACKED_RANGE unexpected response: 0x{fr.cmd:02X}")
 
         except Exception as e:
-            self.log_msg(f"Random SET_RANGE error: {e}")
+            self.log_msg(f"Random PACKED_RANGE error: {e}")
             self.random_range_btn.setChecked(False)
 
     def closeEvent(self, event):
