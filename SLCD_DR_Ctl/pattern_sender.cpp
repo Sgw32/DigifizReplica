@@ -160,17 +160,44 @@ void setPayloadRange(uint16_t offset, const uint8_t* src, uint16_t len) {
 }
 
 void setPayloadPackedRange(uint16_t offset, const uint8_t* src, uint16_t bit_len) {
-  if (offset >= PAYLOAD_SIZE || bit_len == 0) {
+  if (offset >= PAYLOAD_SIZE || bit_len == 0 || src == NULL) {
     return;
   }
+
   if (offset + bit_len > PAYLOAD_SIZE) {
     bit_len = PAYLOAD_SIZE - offset;
   }
+
   noInterrupts();
+
+  // Fast path: byte-aligned copy
+  if ((offset & 0x07) == 0) {
+    uint16_t byte_offset = offset >> 3;
+    uint16_t full_bytes = bit_len >> 3;
+    uint8_t remaining_bits = bit_len & 0x07;
+
+    if (full_bytes > 0) {
+      memcpy((void*)&bool_data_payload[byte_offset], src, full_bytes);
+    }
+
+    // Copy remaining bits without touching upper bits
+    if (remaining_bits > 0) {
+      uint8_t mask = (1 << remaining_bits) - 1;
+      bool_data_payload[byte_offset + full_bytes] =
+        (bool_data_payload[byte_offset + full_bytes] & ~mask) |
+        (src[full_bytes] & mask);
+    }
+
+    interrupts();
+    return;
+  }
+
+  // Fallback: unaligned bit copy
   for (uint16_t i = 0; i < bit_len; ++i) {
     const bool value = (src[i >> 3] & (1 << (i & 0x07))) != 0;
     setPayloadBit(offset + i, value);
   }
+
   interrupts();
 }
 

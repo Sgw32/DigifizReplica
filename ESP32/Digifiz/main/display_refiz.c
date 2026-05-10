@@ -75,13 +75,15 @@ static uint8_t d_clock_minutes = 0;
 
 #define PAYLOAD_SIZE 520
 #define PACKED_PAYLOAD_SIZE ((PAYLOAD_SIZE + 7) / 8)
-#define SEND_PAYLOAD_SIZE 260 //We do not transmit extra data
-#define REFIZ_UART_BAUD 250000
+//#define SEND_PAYLOAD_BITS 256 //we do not transmit extra data
+#define REFIZ_UART_BATCH_OFFSET_START 0
+#define REFIZ_UART_BATCH_BYTES 33
+#define REFIZ_UART_BATCH_BITS (REFIZ_UART_BATCH_BYTES * 8)
+
+#define REFIZ_UART_BAUD 57600
 #define REFIZ_UART_NUM UART_NUM_1
 #define REFIZ_UART_TX_PIN 43
 #define REFIZ_UART_RX_PIN UART_PIN_NO_CHANGE
-#define REFIZ_UART_BATCH_OFFSET_START 3
-#define REFIZ_UART_BATCH_SIZE 64
 #define REFIZ_UART_SET_RANGE_CMD 0x02
 #define REFIZ_UART_SET_PACKED_RANGE_CMD 0x03
 #define REFIZ_UART_SOF1 0xA5
@@ -97,7 +99,6 @@ static const uint8_t refiz_default_payload[PACKED_PAYLOAD_SIZE] = {
 };
 
 static uint8_t bool_data_payload[PACKED_PAYLOAD_SIZE];
-static uint16_t refiz_uart_next_offset = REFIZ_UART_BATCH_OFFSET_START;
 static bool refiz_uart_ready = false;
 
 static const uint8_t refiz_orig_digit_patterns[10] = {
@@ -291,7 +292,6 @@ void refiz_uart_sender_init(void)
                                  UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     ESP_ERROR_CHECK(uart_driver_install(REFIZ_UART_NUM, (REFIZ_UART_TX_BUFFER_SIZE*2), 0, 0, NULL, 0));
     memcpy(bool_data_payload, refiz_default_payload, sizeof(bool_data_payload));
-    refiz_uart_next_offset = REFIZ_UART_BATCH_OFFSET_START;
     refiz_uart_ready = true;
     ESP_LOGI(TAG, "Refiz UART sender initialized on UART%d TX GPIO%d at %d baud",
              REFIZ_UART_NUM, REFIZ_UART_TX_PIN, REFIZ_UART_BAUD);
@@ -306,54 +306,60 @@ void refiz_uart_sender_trigger(void)
 
     refiz_sync_payload_from_display();
 
-    uint16_t offset = refiz_uart_next_offset;
-    if (offset >= SEND_PAYLOAD_SIZE)
-    {
-        offset = REFIZ_UART_BATCH_OFFSET_START;
-    }
-
-    uint16_t count = REFIZ_UART_BATCH_SIZE;
-    if ((offset + count) > SEND_PAYLOAD_SIZE)
-    {
-        count = SEND_PAYLOAD_SIZE - offset;
-    }
-
-    uint8_t frame[2 + 3 + 4 + ((REFIZ_UART_BATCH_SIZE + 7) / 8) + 1];
-    const uint16_t byte_count = (count + 7) / 8;
+    const uint16_t offset = REFIZ_UART_BATCH_OFFSET_START;
+    const uint16_t bit_count = REFIZ_UART_BATCH_BITS;
+    const uint16_t byte_count = REFIZ_UART_BATCH_BYTES;
     const uint16_t payload_len = 4 + byte_count;
+
+    uint8_t frame[2 + 3 + 4 + REFIZ_UART_BATCH_BYTES + 1];
+
     size_t pos = 0;
+
     frame[pos++] = REFIZ_UART_SOF1;
     frame[pos++] = REFIZ_UART_SOF2;
     frame[pos++] = REFIZ_UART_SET_PACKED_RANGE_CMD;
+
     frame[pos++] = payload_len & 0xFF;
     frame[pos++] = (payload_len >> 8) & 0xFF;
+
     frame[pos++] = offset & 0xFF;
     frame[pos++] = (offset >> 8) & 0xFF;
-    frame[pos++] = count & 0xFF;
-    frame[pos++] = (count >> 8) & 0xFF;
-    memset(&frame[pos], 0, byte_count);
-    for (uint16_t i = 0; i < count; i++)
-    {
-        if (refiz_payload_get_bit(offset + i))
-        {
-            frame[pos + (i >> 3)] |= 1 << (i & 0x07);
-        }
-    }
-    pos += byte_count;
+
+    frame[pos++] = bit_count & 0xFF;
+    frame[pos++] = (bit_count >> 8) & 0xFF;
+
+    memcpy(&frame[pos], bool_data_payload, REFIZ_UART_BATCH_BYTES);
+    pos += REFIZ_UART_BATCH_BYTES;
 
     uint8_t crc = 0;
     for (size_t i = 2; i < pos; i++)
     {
         crc ^= frame[i];
     }
+
     frame[pos++] = crc;
+    /* Send in chunks */
+    size_t tx_pos = 0;
 
-    uart_write_bytes(REFIZ_UART_NUM, (const char *)frame, pos);
-
-    refiz_uart_next_offset = offset + count;
-    if (refiz_uart_next_offset >= SEND_PAYLOAD_SIZE)
+    while (tx_pos < pos)
     {
-        refiz_uart_next_offset = REFIZ_UART_BATCH_OFFSET_START;
+        size_t chunk = pos - tx_pos;
+
+        if (chunk > 8)
+        {
+            chunk = 8;
+        }
+
+        uart_write_bytes(
+            REFIZ_UART_NUM,
+            (const char *)&frame[tx_pos],
+            chunk
+        );
+
+        tx_pos += chunk;
+
+        /* Optional pause between chunks */
+        //vTaskDelay(pdMS_TO_TICKS(2));
     }
 }
 

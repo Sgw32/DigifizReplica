@@ -329,7 +329,7 @@ void displayUpdate(void *pvParameters) {
 #endif
 
         displaySpeedCnt++;
-        if (displaySpeedCnt==16 && gear_blink_toggles==0) // 2 Hz loop(as on original Digifiz)
+        if (displaySpeedCnt==2 && gear_blink_toggles==0) // 2 Hz loop(as on original Digifiz)
         {
             setSpeedometerData((uint16_t)spd_m_speedometer);
             current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;

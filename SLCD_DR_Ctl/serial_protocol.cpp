@@ -71,8 +71,8 @@ void sendFrame(uint8_t cmd, const uint8_t* payload, uint16_t len) {
 }
 
 void sendAck(uint8_t commandEcho) {
-  uint8_t payload[1] = {commandEcho};
-  sendFrame(RSP_ACK, payload, 1);
+  //uint8_t payload[1] = {commandEcho};
+  //sendFrame(RSP_ACK, payload, 1);
 }
 
 void sendNack(uint8_t errCode) {
