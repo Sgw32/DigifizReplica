@@ -7,6 +7,7 @@ constexpr uint8_t SOF1 = 0xA5;
 constexpr uint8_t SOF2 = 0x5A;
 constexpr uint8_t CMD_SET_ALL = 0x01;
 constexpr uint8_t CMD_SET_RANGE = 0x02;
+constexpr uint8_t CMD_SET_PACKED_RANGE = 0x03;
 constexpr uint8_t CMD_GET_INFO = 0x10;
 constexpr uint8_t CMD_GET_RANGE = 0x11;
 
@@ -99,6 +100,23 @@ void handleFrame(uint8_t cmd, const uint8_t* payload, uint16_t len) {
       }
       setPayloadRange(offset, &payload[4], count);
       sendAck(CMD_SET_RANGE);
+      break;
+    }
+
+    case CMD_SET_PACKED_RANGE: {
+      if (len < 4) {
+        sendNack(0x07);
+        break;
+      }
+      const uint16_t offset = static_cast<uint16_t>(payload[0]) | (static_cast<uint16_t>(payload[1]) << 8);
+      const uint16_t bit_count = static_cast<uint16_t>(payload[2]) | (static_cast<uint16_t>(payload[3]) << 8);
+      const uint16_t byte_count = (bit_count + 7) / 8;
+      if (len != static_cast<uint16_t>(byte_count + 4)) {
+        sendNack(0x08);
+        break;
+      }
+      setPayloadPackedRange(offset, &payload[4], bit_count);
+      sendAck(CMD_SET_PACKED_RANGE);
       break;
     }
 

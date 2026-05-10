@@ -16,4 +16,5 @@ constexpr uint8_t DATA_PIN_NAME = PB2;
 #define DATA_PORT PORTB
 
 constexpr uint16_t PAYLOAD_SIZE = 520;
+constexpr uint16_t PACKED_PAYLOAD_SIZE = (PAYLOAD_SIZE + 7) / 8;
 constexpr uint32_t UART_BAUD = 250000;

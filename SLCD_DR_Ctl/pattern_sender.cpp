@@ -1,75 +1,35 @@
 #include "pattern_sender.h"
 
+#include <string.h>
+
 volatile uint8_t tr_status = 0x00; // sending, clockbit, 000000
 volatile uint16_t data_cnt = 0;
-volatile uint8_t bool_data_payload[PAYLOAD_SIZE] = {
-  1,1,1,
-  0, 1, 0, 0, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 0,
-  0, 1, 1, 1, 1, 1, 0, 0,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  0, 1, 1, 0, 0, 1, 0, 1,
-  0, 1, 1, 1, 1, 0, 1, 1,
-  1, 1, 1, 0, 1, 0, 0, 0,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 0, 0, 0, 0, 0, 0,
-  1, 1, 1, 1, 0, 1, 1, 1,
-  1, 1, 0, 1, 0, 1, 0, 0,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 0, 0, 0, 0, 0, 0,
-  1, 1, 0, 0, 0, 1, 0, 1,
-  0, 1, 1, 1, 0, 1, 1, 0,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  0, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  0, 1, 1, 1, 1, 1, 1, 1,
-  1, 0, 0, 0, 1, 1, 1, 1,
-  1, 0, 0, 0, 1, 0, 1, 1,
-  1, 0, 1, 1, 0, 1, 0, 0,
-  0, 1, 1, 1, 0, 1, 1, 1,
-  1, 0, 1, 1, 1, 0, 1, 1,
-  1, 0, 0, 0, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 0, 1,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  1, 1, 1, 1, 1, 1, 1, 0,
-  1, 1, 1, 0, 0, 0, 1, 1,
-  1, 1, 1, 1, 1, 0, 1, 1,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  1, 1, 1, 1, 1, 1, 1, 0,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  1, 0, 1, 1, 1, 1, 0, 1,
-  1, 1, 1, 1, 1, 0, 1, 1,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  1,1,1,1,1
+volatile uint8_t bool_data_payload[PACKED_PAYLOAD_SIZE] = {
+  0x97, 0xFF, 0xF3, 0xF9, 0x37, 0xF5, 0xBE, 0xF8, 0xFF, 0x1F, 0x78, 0x5F, 0xF9,
+  0x1F, 0x18, 0x75, 0xFB, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF7, 0xFF, 0xF7, 0x8F,
+  0x8F, 0x6E, 0x71, 0xEF, 0x8E, 0xFF, 0x05, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x3B,
+  0xFE, 0x06, 0x00, 0x00, 0x00, 0xF8, 0xFB, 0xEF, 0xFD, 0x06, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8
 };
+
+static bool getPayloadBit(uint16_t bit_index) {
+  if (bit_index >= PAYLOAD_SIZE) {
+    return false;
+  }
+  return (bool_data_payload[bit_index >> 3] & (1 << (bit_index & 0x07))) != 0;
+}
+
+static void setPayloadBit(uint16_t bit_index, bool value) {
+  if (bit_index >= PAYLOAD_SIZE) {
+    return;
+  }
+  const uint8_t mask = 1 << (bit_index & 0x07);
+  if (value) {
+    bool_data_payload[bit_index >> 3] |= mask;
+  } else {
+    bool_data_payload[bit_index >> 3] &= ~mask;
+  }
+}
 
 void initDisplayClockTimer() {
   cli();
@@ -129,14 +89,14 @@ ISR(TIMER1_COMPA_vect) {
 
       if (data_cnt > 250) {
         delayMicroseconds(8);
-        if (bool_data_payload[data_cnt]) {
+        if (getPayloadBit(data_cnt)) {
           DATA_PORT |= (1 << DATA_PIN_NAME);
         } else {
           DATA_PORT &= ~(1 << DATA_PIN_NAME);
         }
       } else if (data_cnt > 3) {
         delayMicroseconds(8);
-        if (bool_data_payload[data_cnt]) {
+        if (getPayloadBit(data_cnt)) {
           DATA_PORT |= (1 << DATA_PIN_NAME);
         } else {
           DATA_PORT &= ~(1 << DATA_PIN_NAME);
@@ -178,8 +138,9 @@ void setPayloadAll(const uint8_t* src, uint16_t len) {
     len = PAYLOAD_SIZE;
   }
   noInterrupts();
-  for (uint16_t i = 0; i < PAYLOAD_SIZE; ++i) {
-    bool_data_payload[i] = (i < len && src[i] != 0) ? 1 : 0;
+  memset((void*)bool_data_payload, 0, PACKED_PAYLOAD_SIZE);
+  for (uint16_t i = 0; i < len; ++i) {
+    setPayloadBit(i, src[i] != 0);
   }
   interrupts();
 }
@@ -193,7 +154,22 @@ void setPayloadRange(uint16_t offset, const uint8_t* src, uint16_t len) {
   }
   noInterrupts();
   for (uint16_t i = 0; i < len; ++i) {
-    bool_data_payload[offset + i] = (src[i] != 0) ? 1 : 0;
+    setPayloadBit(offset + i, src[i] != 0);
+  }
+  interrupts();
+}
+
+void setPayloadPackedRange(uint16_t offset, const uint8_t* src, uint16_t bit_len) {
+  if (offset >= PAYLOAD_SIZE || bit_len == 0) {
+    return;
+  }
+  if (offset + bit_len > PAYLOAD_SIZE) {
+    bit_len = PAYLOAD_SIZE - offset;
+  }
+  noInterrupts();
+  for (uint16_t i = 0; i < bit_len; ++i) {
+    const bool value = (src[i >> 3] & (1 << (i & 0x07))) != 0;
+    setPayloadBit(offset + i, value);
   }
   interrupts();
 }
@@ -211,7 +187,7 @@ void getPayloadRange(uint16_t offset, uint8_t* dst, uint16_t len) {
   }
   noInterrupts();
   for (uint16_t i = 0; i < len; ++i) {
-    dst[i] = bool_data_payload[offset + i];
+    dst[i] = getPayloadBit(offset + i) ? 1 : 0;
   }
   interrupts();
 }
