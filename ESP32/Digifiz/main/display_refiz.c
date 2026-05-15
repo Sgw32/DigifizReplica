@@ -9,6 +9,7 @@
 #include "params.h"
 #include "led_effects.h"
 #include "millis.h"
+#include "crc8.h"
 #include "driver/uart.h"
 #include "esp_err.h"
 
@@ -331,13 +332,7 @@ void refiz_uart_sender_trigger(void)
     memcpy(&frame[pos], bool_data_payload, REFIZ_UART_BATCH_BYTES);
     pos += REFIZ_UART_BATCH_BYTES;
 
-    uint8_t crc = 0;
-    for (size_t i = 2; i < pos; i++)
-    {
-        crc ^= frame[i];
-    }
-
-    frame[pos++] = crc;
+    frame[pos++] = crc8(&frame[2], pos - 2);
     /* Send in chunks */
     size_t tx_pos = 0;
 
