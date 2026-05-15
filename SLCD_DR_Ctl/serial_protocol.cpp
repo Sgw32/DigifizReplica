@@ -1,5 +1,6 @@
 #include "serial_protocol.h"
 
+#include "crc8.h"
 #include "pattern_sender.h"
 
 namespace {
@@ -33,31 +34,32 @@ ParseState g_state = ParseState::WaitSof1;
 uint8_t g_cmd = 0;
 uint16_t g_len = 0;
 uint16_t g_pos = 0;
-uint8_t g_crc = 0;
 uint8_t g_payload[MAX_FRAME_PAYLOAD];
-
-uint8_t crc8(const uint8_t* data, uint16_t len) {
-  uint8_t c = 0;
-  for (uint16_t i = 0; i < len; ++i) {
-    c ^= data[i];
-  }
-  return c;
-}
+uint8_t g_crc_data[3 + MAX_FRAME_PAYLOAD];
 
 void resetParser() {
   g_state = ParseState::WaitSof1;
   g_cmd = 0;
   g_len = 0;
   g_pos = 0;
-  g_crc = 0;
 }
 
 void sendFrame(uint8_t cmd, const uint8_t* payload, uint16_t len) {
   if (g_serial == nullptr) {
     return;
   }
-  uint8_t header[3] = {cmd, static_cast<uint8_t>(len & 0xFF), static_cast<uint8_t>((len >> 8) & 0xFF)};
-  uint8_t c = crc8(header, 3) ^ crc8(payload, len);
+  if (len > MAX_FRAME_PAYLOAD) {
+    return;
+  }
+
+  uint8_t crc_data[3 + MAX_FRAME_PAYLOAD];
+  crc_data[0] = cmd;
+  crc_data[1] = static_cast<uint8_t>(len & 0xFF);
+  crc_data[2] = static_cast<uint8_t>((len >> 8) & 0xFF);
+  for (uint16_t i = 0; i < len; ++i) {
+    crc_data[3 + i] = payload[i];
+  }
+  const uint8_t c = crc8(crc_data, static_cast<uint16_t>(len + 3));
 
   g_serial->write(SOF1);
   g_serial->write(SOF2);
@@ -185,19 +187,19 @@ void protocolProcess() {
 
       case ParseState::WaitCmd:
         g_cmd = b;
-        g_crc = b;
+        g_crc_data[0] = b;
         g_state = ParseState::WaitLenL;
         break;
 
       case ParseState::WaitLenL:
         g_len = b;
-        g_crc ^= b;
+        g_crc_data[1] = b;
         g_state = ParseState::WaitLenH;
         break;
 
       case ParseState::WaitLenH:
         g_len |= static_cast<uint16_t>(b) << 8;
-        g_crc ^= b;
+        g_crc_data[2] = b;
         if (g_len > MAX_FRAME_PAYLOAD) {
           sendNack(0x05);
           resetParser();
@@ -210,15 +212,16 @@ void protocolProcess() {
         break;
 
       case ParseState::WaitPayload:
-        g_payload[g_pos++] = b;
-        g_crc ^= b;
+        g_payload[g_pos] = b;
+        g_crc_data[3 + g_pos] = b;
+        ++g_pos;
         if (g_pos >= g_len) {
           g_state = ParseState::WaitCrc;
         }
         break;
 
       case ParseState::WaitCrc:
-        if (b == g_crc) {
+        if (b == crc8(g_crc_data, static_cast<uint16_t>(g_len + 3))) {
           handleFrame(g_cmd, g_payload, g_len);
         } else {
           sendNack(0x06);

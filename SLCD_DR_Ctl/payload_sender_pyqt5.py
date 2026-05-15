@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 import serial
 import serial.tools.list_ports
+from crc8 import crc8
 from PyQt5 import QtCore, QtWidgets
 
 SOF1 = 0xA5
@@ -23,13 +24,6 @@ RSP_RANGE = 0x91
 
 BAUD = 250000
 DEFAULT_PAYLOAD_BITS = 520
-
-
-def crc8(data: bytes) -> int:
-    c = 0
-    for b in data:
-        c ^= b
-    return c
 
 
 def pack_frame(cmd: int, payload: bytes = b"") -> bytes:
