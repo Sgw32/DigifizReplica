@@ -332,7 +332,9 @@ void refiz_uart_sender_trigger(void)
     memcpy(&frame[pos], bool_data_payload, REFIZ_UART_BATCH_BYTES);
     pos += REFIZ_UART_BATCH_BYTES;
 
-    frame[pos++] = crc8(&frame[2], pos - 2);
+    const uint16_t crc_len = (uint16_t)(pos - 2);
+    const uint8_t crc = crc8(&frame[2], crc_len);
+    frame[pos++] = crc;
     /* Send in chunks */
     size_t tx_pos = 0;
 
