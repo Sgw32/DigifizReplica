@@ -22,12 +22,14 @@ uint8_t backlightOff = 0;
 uint8_t backlightLevel = 30;
 
 DigifizNextDisplay display;
+RefizSegmentsDisplay refiz_display;
 static led_strip_handle_t led_strip;
 float brightnessFiltered = 6.0f;
 static led_effect_state_t effect_state;
 
 static uint16_t l_spd_m = 0;
-static uint16_t last_coolant_value = 0;
+static uint32_t refiz_coolant_value = 0;
+static uint32_t last_coolant_value = 0;
 
 static void refresh_speed_digit_colors(uint16_t speed_value);
 static void apply_speed_digit_override_color(uint8_t r, uint8_t g, uint8_t b);
@@ -204,7 +206,7 @@ static void refiz_sync_payload_from_display(void)
     };
     static const uint16_t speed_segments[3][7] = {
         {252, 221, 221, 221, 221, 220, 221},
-        {250, 249, 248, 218, 219, 216, 217},
+        {248, 249, 250, 218, 219, 216, 217},
         {244, 245, 246, 214, 215, 212, 213}
     };
     static const uint16_t coolant_segments[20] = {
@@ -249,7 +251,7 @@ static void refiz_sync_payload_from_display(void)
     refiz_put_digit(speed_segments[1], display.speed_digit_2);
     refiz_put_digit(speed_segments[2], display.speed_digit_3);
 
-    uint16_t coolant_value = display.coolant_value;
+    uint32_t coolant_value = refiz_coolant_value;
     for (uint8_t i = 0; i < 20; i++)
     {
         refiz_payload_set_bit(coolant_segments[i] + 3, (coolant_value & (1 << i)) ? 1 : 0);
@@ -427,12 +429,12 @@ static void reset_indicator_filter(indicator_filter_t *filter, uint8_t value)
 
 static void reset_indicator_filters(void)
 {
-    reset_indicator_filter(&brakes_indicator_filter, display.brakes_ind);
-    reset_indicator_filter(&foglight1_indicator_filter, display.foglight_ind1);
-    reset_indicator_filter(&foglight2_indicator_filter, display.foglight_ind2);
-    reset_indicator_filter(&glassheat_indicator_filter, display.glassheat_ind);
-    reset_indicator_filter(&left_turn_indicator_filter, display.left_turn_ind);
-    reset_indicator_filter(&right_turn_indicator_filter, display.right_turn_ind);
+    reset_indicator_filter(&brakes_indicator_filter, refiz_display.brakes_ind);
+    reset_indicator_filter(&foglight1_indicator_filter, refiz_display.foglight_ind1);
+    reset_indicator_filter(&foglight2_indicator_filter, refiz_display.foglight_ind2);
+    reset_indicator_filter(&glassheat_indicator_filter, refiz_display.glassheat_ind);
+    reset_indicator_filter(&left_turn_indicator_filter, refiz_display.left_turn_ind);
+    reset_indicator_filter(&right_turn_indicator_filter, refiz_display.right_turn_ind);
 }
 
 static void update_turn_blink_state(uint32_t now)
@@ -725,27 +727,27 @@ void initDisplay() {
     ESP_LOGI(LOG_TAG, "initDisplay started");
     setBrightness(1);
     memset(&display, 0, sizeof(DigifizNextDisplay));
-    display.battery_ind = 0;
-    display.mfa1_ind = 0;
-    display.mfa2_ind = 0;
-    display.coolant_backlight = 1;
-    display.vdo_backlight = 1;
-    // display.clock_digit_1 = 0b1111111;
-    setClockData(00,00);
+    memset(&refiz_display, 0xFF, sizeof(refiz_display)); //all lit, except indicators
+
+    refiz_display.lights_on_ind = 0;
+    refiz_display.foglight_ind2 = 0;
+    refiz_display.foglight_ind1 = 0;
+    refiz_display.glassheat_ind = 0;
+    refiz_display.farlight_ind = 0;
+    refiz_display.left_turn_ind = 0;
+
+    refiz_display.right_turn_ind = 0;
+    refiz_display.brakes_ind = 0;
+    refiz_display.oil_ind = 0;
+    refiz_display.battery_ind = 0;
+    refiz_display.mfa1_ind = 0;
+    refiz_display.mfa2_ind = 0;
+    
+    setClockData(0,00);
     setMFADisplayedNumber(-99);
     setCoolantData(7);
     setRefuelSign(1);
-    // display.mfa_digit_1 = DIGIT_NUMBER_8;
-    // display.mfa_digit_2 = DIGIT_NUMBER_0;
-    // display.mfa_dots = 0b111;
-    // display.mfa_digit_3 = DIGIT_NUMBER_0;
-    // display.mfa_digit_4 = DIGIT_NUMBER_0;
     display.clock_dot = 0b11;
-    display.km_ind = 1;
-    display.fuel_ind = 1;
-    display.lights_on_ind = 0;
-    display.foglight_ind2 = 0;
-    display.backlight_leds = 0xFFFFFFFF;
 
     reset_indicator_filters();
 
@@ -1015,18 +1017,18 @@ void setSpeedometerGear(int8_t gear) {
 
 // Set the coolant temperature data
 void setCoolantData(uint16_t data) {
-    if (data>14)
-        data=14; 
-    display.coolant_value=0;
+    if (data>20)
+        data=20; 
+    refiz_coolant_value=0;
     for (uint8_t i=0;i<data;i++)
     {
-        display.coolant_value|=(1<<i);
+        refiz_coolant_value|=(1<<i);
     }
-    for (uint8_t i=data;i<14;i++)
+    for (uint8_t i=data;i<20;i++)
     {
-        display.coolant_value&=~(1<<i);
+        refiz_coolant_value&=~(1<<i);
     }
-    last_coolant_value = display.coolant_value;
+    last_coolant_value = refiz_coolant_value;
 }
 
 // Set the dot status
@@ -1036,7 +1038,6 @@ void setDot(bool value) {
 
 // Set the floating dot status
 void setFloatDot(bool value) {
-    // Implementation placeholder
     if (value)
         display.mfa_dots |= 0b100;
     else
@@ -1181,7 +1182,7 @@ void displayMFAClock()
         }
         else
         {
-            display.clock_digit_1 = DIGIT_NUMBER_0;
+            display.clock_digit_1 = DIGIT_NUMBER_EMPTY;
             display.clock_digit_2 = number_clock[(d_clock_hours / 1) % 10];
             display.clock_digit_3 = number_clock[(d_clock_minutes / 10) % 10];
             display.clock_digit_4 = number_clock[(d_clock_minutes / 1) % 10];
@@ -1332,15 +1333,15 @@ void setMFABlock(uint8_t block) {
   {
     if (block&0x1)
     {
-      display.mfa1_ind = 1;
-      display.mfa2_ind = 0;
+      refiz_display.mfa1_ind = 1;
+      refiz_display.mfa2_ind = 0;
       digifiz_reg_out.led_mfa1 = 1;
       digifiz_reg_out.led_mfa2 = 0;
     }
     else
     {
-      display.mfa1_ind = 0;
-      display.mfa2_ind = 1;
+      //refiz_display.mfa1_ind = 0;
+      //refiz_display.mfa2_ind = 1;
       digifiz_reg_out.led_mfa1 = 0;
       digifiz_reg_out.led_mfa2 = 1;
     }
@@ -1406,7 +1407,7 @@ void applyCheckEngineAction(void)
 
     if (action == CHECK_ENGINE_ACTION_TEMP_BLINK)
     {
-        display.coolant_value = check_engine_blink_state ? last_coolant_value : 0;
+        refiz_coolant_value = check_engine_blink_state ? last_coolant_value : 0;
         if (check_engine_speed_override_active)
         {
             refresh_speed_digit_colors(l_spd_m);
@@ -1445,23 +1446,23 @@ void setServiceDisplayData(uint8_t data) {
 
 void setOilIndicator(bool onoff)
 {
-    display.oil_ind = onoff ? 1 : 0;
+    refiz_display.oil_ind = onoff ? 1 : 0;
 }
 void setBrakesIndicator(bool onoff)
 {
-    display.brakes_ind = filter_general_indicator(&brakes_indicator_filter, onoff ? 1 : 0);
+    refiz_display.brakes_ind = filter_general_indicator(&brakes_indicator_filter, onoff ? 1 : 0);
 }
 void setHeatLightsIndicator(bool onoff)
 {
-    display.foglight_ind1 = filter_general_indicator(&foglight1_indicator_filter, onoff ? 1 : 0);
+    refiz_display.foglight_ind1 = filter_general_indicator(&foglight1_indicator_filter, onoff ? 1 : 0);
 }
 void setBackLightsHeatIndicator(bool onoff)
 {
-    display.foglight_ind2 = filter_general_indicator(&foglight2_indicator_filter, onoff ? 1 : 0);
+    refiz_display.foglight_ind2 = filter_general_indicator(&foglight2_indicator_filter, onoff ? 1 : 0);
 }
 void setBackWindowHeatIndicator(bool onoff)
 {
-    display.glassheat_ind = filter_general_indicator(&glassheat_indicator_filter, onoff ? 1 : 0);
+    refiz_display.glassheat_ind = filter_general_indicator(&glassheat_indicator_filter, onoff ? 1 : 0);
 }
 void processIndicators()
 {
@@ -1499,20 +1500,20 @@ void processIndicators()
         uint8_t left_active = is_turn_signal_active(&left_turn_latch, left_raw, now);
         uint8_t right_active = is_turn_signal_active(&right_turn_latch, right_raw, now);
 
-        display.left_turn_ind = left_active ? turn_blink_state : 0;
-        display.right_turn_ind = right_active ? turn_blink_state : 0;
+        refiz_display.left_turn_ind = left_active ? turn_blink_state : 0;
+        refiz_display.right_turn_ind = right_active ? turn_blink_state : 0;
     }
     else
     {
-        display.left_turn_ind = filter_turn_indicator(&left_turn_indicator_filter, left_raw);
-        display.right_turn_ind = filter_turn_indicator(&right_turn_indicator_filter, right_raw);
+        refiz_display.left_turn_ind = filter_turn_indicator(&left_turn_indicator_filter, left_raw);
+        refiz_display.right_turn_ind = filter_turn_indicator(&right_turn_indicator_filter, right_raw);
     }
 
     uint8_t brakes_raw = digifiz_reg_in.brakesInd ? 0 : 1;
     uint8_t foglight2_raw = digifiz_reg_in.lightsHeatInd ? 0 : 1;
 
-    display.brakes_ind = filter_general_indicator(&brakes_indicator_filter, brakes_raw);
-    display.foglight_ind2 = filter_general_indicator(&foglight2_indicator_filter, foglight2_raw);
+    refiz_display.brakes_ind = filter_general_indicator(&brakes_indicator_filter, brakes_raw);
+    refiz_display.foglight_ind2 = filter_general_indicator(&foglight2_indicator_filter, foglight2_raw);
 }
 
 static void getColorBySegmentNumber(ColoringScheme* c_ptr, uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* b)
@@ -1641,8 +1642,7 @@ void compileColorScheme(void)
     }
 
     // If custom scheme is not enabled or failed to load, use standard scheme
-    uint8_t *ptr = (uint8_t*)&display;
-    for (uint16_t i = 0; i != sizeof(DigifizNextDisplay); i++)
+    for (uint16_t i = 0; i != DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS; i++)
     {
         for (uint16_t j = 0; j != 8; j++)
         {
@@ -1673,35 +1673,79 @@ void compileColorScheme(void)
 
 // Fire up the Digifiz system
 void fireDigifiz() {
+    led_num = 0;
+
+    uint8_t *ptr = (uint8_t*)&refiz_display;
     effect_state.effect = digifiz_parameters.ledEffect_type.value;
     if (effect_state.effect != LED_EFFECT_NONE)
     {
         effect_state.hue = digifiz_parameters.ledEffect_hue.value;
         effect_state.saturation = digifiz_parameters.ledEffect_saturation.value;
         effect_state.value = digifiz_parameters.ledEffect_value.value;
-        for (uint16_t i = 0; i < (DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS); i++)
+        for (uint16_t i = 0; i != DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS; i++)
         {
-            led_rgb_t col = led_effect_compute(&effect_state, i);
-            led_strip_set_pixel(led_strip, i,
-                ((uint32_t)col.r * (uint32_t)backlightLevel) / 100,
-                ((uint32_t)col.g * (uint32_t)backlightLevel) / 100,
-                ((uint32_t)col.b * (uint32_t)backlightLevel) / 100);
+            for (uint16_t j = 0; j != 8; j++)
+            {
+                uint8_t bit = (ptr[i] >> j) & 1;
+                led_rgb_t col = led_effect_compute(&effect_state, led_num);
+                
+                if (get_update_in_progress())
+                    bit=0;
+                //led_strip_set_pixel(led_strip, led_num, 10,10,10);
+                if (bit)
+                {
+                    led_strip_set_pixel(led_strip, led_num,
+                        ((uint32_t)col.r*((uint32_t)backlightLevel))/100,
+                        ((uint32_t)col.g*((uint32_t)backlightLevel))/100,
+                        ((uint32_t)col.b*((uint32_t)backlightLevel))/100);
+                }
+                else
+                {
+                    led_strip_set_pixel(led_strip, led_num, 0,0,0);
+                }
+                led_num+=1;
+                if (led_num>(DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1))
+                {
+                    led_num=DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1;
+                    break;
+                }
+            }
         }
     }
     else
     {
-        for (uint16_t i = 0; i < (DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS); i++)
+        for (uint16_t i = 0; i != DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS; i++)
         {
-            uint8_t r = r_colors_active[i];
-            uint8_t g = g_colors_active[i];
-            uint8_t b = b_colors_active[i];
-            led_strip_set_pixel(led_strip, i,
-                ((uint32_t)r * (uint32_t)backlightLevel) / 100,
-                ((uint32_t)g * (uint32_t)backlightLevel) / 100,
-                ((uint32_t)b * (uint32_t)backlightLevel) / 100);
+            for (uint16_t j = 0; j != 8; j++)
+            {
+                uint8_t bit = (ptr[i] >> j) & 1;
+                uint8_t r = r_colors_active[led_num];
+                uint8_t g = g_colors_active[led_num];
+                uint8_t b = b_colors_active[led_num];
+
+                if (get_update_in_progress())
+                    bit=0;
+                //led_strip_set_pixel(led_strip, led_num, 10,10,10);
+                if (bit)
+                {
+                    led_strip_set_pixel(led_strip, led_num, ((uint32_t)r*((uint32_t)backlightLevel))/100,
+                        ((uint32_t)g*((uint32_t)backlightLevel))/100,
+                        ((uint32_t)b*((uint32_t)backlightLevel))/100);
+                }
+                else
+                {
+                    led_strip_set_pixel(led_strip, led_num, 0,0,0);
+                }
+                led_num+=1;
+                if (led_num>(DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1))
+                {
+                    led_num=DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1;
+                    break;
+                }
+            }
         }
     }
-
+    
     led_strip_refresh(led_strip);
     led_effect_step(&effect_state, 1.0f);
 }

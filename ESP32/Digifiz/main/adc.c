@@ -349,7 +349,12 @@ uint8_t getDisplayedCoolantTemp() {
         }
         else
         {
+            #if !defined(AUDI_RED_DISPLAY) && !defined(AUDI_DISPLAY) && !defined(DIGIFIZ_REFIZ_DISPLAY)
             return 14;
+            #endif
+            #if defined(DIGIFIZ_REFIZ_DISPLAY)
+            return 20;
+            #endif
         }
     }
     else
@@ -389,12 +394,18 @@ uint8_t getDisplayedCoolantTemp() {
 
         #endif
 
-        #if !defined(AUDI_RED_DISPLAY) && !defined(AUDI_DISPLAY)
+        #if !defined(AUDI_RED_DISPLAY) && !defined(AUDI_DISPLAY) && !defined(DIGIFIZ_REFIZ_DISPLAY)
             //14 LEDs
             return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin.value)/
                     (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*14.0f),minSegments,14.0f); 
         
-        #endif   
+        #endif  
+        
+        #if defined(DIGIFIZ_REFIZ_DISPLAY)
+            //20 LCD segments
+            return (int)constrain((float)((coolantT-digifiz_parameters.coolantMin.value)/
+                    (digifiz_parameters.coolantMax.value - digifiz_parameters.coolantMin.value)*20.0f),minSegments,20.0f);
+        #endif
     }
 }
 

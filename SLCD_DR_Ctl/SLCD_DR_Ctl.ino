@@ -14,14 +14,24 @@ void setup() {
   protocolInit(Serial);
 }
 
+uint32_t lastProtocol = 0;
+uint32_t lastTrigger = 0;
+
 void loop() {
-  protocolProcess();
+  uint32_t now = millis();
 
-  delay(70);
-  triggerFrameIfIdle();
+  // Call protocolProcess every 2 ms
+  static uint32_t lastProtocolUs = 0;
+  uint32_t nowUs = micros();
 
-  protocolProcess();
+  if ((uint32_t)(nowUs - lastProtocolUs) >= 2000) {
+    lastProtocolUs = nowUs;
+    protocolProcess();
+  }
 
-  delay(70);
-  triggerFrameIfIdle();
+  // Keep original 70 ms trigger period
+  if ((uint32_t)(now - lastTrigger) >= 70) {
+    lastTrigger = now;
+    triggerFrameIfIdle();
+  }
 }

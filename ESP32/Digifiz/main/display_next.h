@@ -165,6 +165,32 @@ typedef struct __attribute__((packed)) DigifizNextDisplay
     uint32_t backlight_leds:32; //282
 } DigifizNextDisplay;
 
+typedef struct __attribute__((packed)) RefizSegmentsDisplay
+{
+    // Byte 0
+    uint8_t backlight_leds1 : 2; // Bits 0-1
+    uint8_t backlight_leds2 : 2; // Bits 2-3
+    uint8_t mfa2_ind        : 1; // Bit 4
+    uint8_t mfa1_ind        : 1; // Bit 5
+    uint8_t battery_ind     : 1; // Bit 6
+    uint8_t backlight_leds3 : 1; // Bit 7
+
+    // Byte 1
+    uint8_t oil_ind         : 1; // Bit 8
+    uint8_t brakes_ind      : 1; // Bit 9
+    uint8_t right_turn_ind  : 1; // Bit 10
+    uint8_t left_turn_ind   : 1; // Bit 11
+    uint8_t farlight_ind    : 1; // Bit 12
+    uint8_t glassheat_ind   : 1; // Bit 13
+    uint8_t backlight_leds4 : 1; // Bit 14
+    uint8_t foglight_ind1   : 1; // Bit 15
+
+    // Byte 2
+    uint8_t foglight_ind2   : 1; // Bit 16
+    uint8_t lights_on_ind   : 1; // Bit 17
+    uint8_t reserved        : 6; // Bits 18-23
+} RefizSegmentsDisplay;
+
 void initDisplay(); 
 void setRPM(uint32_t rpmdata);
 void setClockData(uint8_t clock_hours,uint8_t clock_minutes);
