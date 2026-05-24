@@ -187,6 +187,31 @@ static void printADC()
   printLnFloat((float)getFuelPressRawADCVal());
 }
 
+static void printRegDump()
+{
+  uint8_t i = 0;
+  char reg_out_bits[10] = {0};
+  char reg_in_bits[18] = {0};
+
+  for (i = 0; i < 8; i++)
+  {
+    reg_out_bits[i] = ((digifiz_reg_out.byte >> i) & 0x01) ? '1' : '0';
+  }
+  reg_out_bits[8] = '\n';
+
+  for (i = 0; i < 16; i++)
+  {
+    reg_in_bits[i] = ((digifiz_reg_in.bytes[i / 8] >> (i % 8)) & 0x01) ? '1' : '0';
+  }
+  reg_in_bits[16] = '\n';
+
+  printLnCString("digifiz_reg_out bits:\n");
+  printLnCString(reg_out_bits);
+
+  printLnCString("digifiz_reg_in bits:\n");
+  printLnCString(reg_in_bits);
+}
+
 static void printStatusJSON()
 {
   update_json_string();
@@ -1001,6 +1026,10 @@ void protocolParse(char* buf, uint8_t len)
                 else if (strcmp(cmd_buffer_par,"adc")==0)
                 {
                     printADC();
+                }
+                else if (strcmp(cmd_buffer_par,"reg_dump")==0)
+                {
+                    printRegDump();
                 }
                 else if (strcmp(cmd_buffer_par,"reset_colors")==0)
                 {
