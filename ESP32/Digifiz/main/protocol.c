@@ -7,6 +7,7 @@
 #include "digifiz_time.h"
 #include "vehicle_data.h"
 #include "display_next.h"
+#include "reg_inout.h"
 #include <stdlib.h>
 #include <ctype.h>
 
