@@ -188,6 +188,7 @@ static void printADC()
   printLnFloat((float)getFuelPressRawADCVal());
 }
 
+#ifdef DIGIFIZ_NEXT_DISPLAY
 static void printRegDump()
 {
   uint8_t i = 0;
@@ -212,6 +213,34 @@ static void printRegDump()
   printLnCString("digifiz_reg_in bits:\n");
   printLnCString(reg_in_bits);
 }
+#endif
+
+#ifdef DIGIFIZ_REFIZ_DISPLAY
+static void printRegDump()
+{
+  uint8_t i = 0;
+  char reg_out_bits[10] = {0};
+  char reg_in_bits[26] = {0};
+
+  for (i = 0; i < 8; i++)
+  {
+    reg_out_bits[i] = ((digifiz_reg_out.byte >> i) & 0x01) ? '1' : '0';
+  }
+  reg_out_bits[8] = '\n';
+
+  for (i = 0; i < 24; i++)
+  {
+    reg_in_bits[i] = ((digifiz_reg_in.bytes[i / 8] >> (i % 8)) & 0x01) ? '1' : '0';
+  }
+  reg_in_bits[24] = '\n';
+
+  printLnCString("digifiz_reg_out bits:\n");
+  printLnCString(reg_out_bits);
+
+  printLnCString("digifiz_reg_in bits:\n");
+  printLnCString(reg_in_bits);
+}
+#endif
 
 static void printStatusJSON()
 {

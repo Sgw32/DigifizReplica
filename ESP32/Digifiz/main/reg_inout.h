@@ -11,6 +11,8 @@
 #include "driver/spi_master.h"
 #include <stdint.h>
 
+#include "setup.h"
+
 // Define your pin connections
 #define HC165_SER_PIN  2  // Serial data input
 #define HC165_Q7_PIN   3  // Serial data output
@@ -47,6 +49,8 @@ typedef struct DigifizOut{
     };
 } DigifizOut;
 
+
+#ifdef DIGIFIZ_NEXT_DISPLAY
 typedef struct DigifizIn{
     union {
         struct {
@@ -74,6 +78,55 @@ typedef struct DigifizIn{
     };
 } DigifizIn;
 
+#endif
+
+#ifdef DIGIFIZ_REFIZ_DISPLAY
+
+typedef struct DigifizIn{
+    union {
+        struct {
+            uint8_t bytes[4];  // 8-bit variable
+        };
+        struct {
+            uint32_t lightsHeatInd : 1;    // 1-bit variable
+            uint32_t fogLightsInd : 1;    // 1-bit variable
+            uint32_t farLightsInd : 1;    // 1-bit variable
+            uint32_t blinkLeftInd : 1;    // 1-bit variable
+            uint32_t blinkRightInd : 1;    // 1-bit variable
+            uint32_t brakesInd : 1;    // 1-bit variable
+            uint32_t blinkAll : 1;    // 1-bit variable
+            uint32_t batteryInd : 1;    // 1-bit variable
+
+            uint32_t oil03 : 1;  // 1-bit variable
+            uint32_t oil18 : 1;  // 1-bit variable
+            uint32_t glheatInd : 1; // 1-bit variable
+            uint32_t checkEng : 1;    // 1-bit variable
+            uint32_t mfaMode : 1;    // 1-bit variable
+            uint32_t mfaBlock : 1;    // 1-bit variable
+            uint32_t mfaReset : 1;    // 1-bit variable
+            uint32_t lightsInd : 1;    // 1-bit variable
+            
+            uint32_t coolantFail : 1;    // 1-bit variable
+            uint32_t clockMinutes : 1;    // 1-bit variable
+            uint32_t clockHours : 1;    // 1-bit variable
+            uint32_t d2 : 1;    // 1-bit variable
+            uint32_t d3 : 1;    // 1-bit variable
+            uint32_t d4 : 1;    // 1-bit variable
+            uint32_t d5 : 1;    // 1-bit variable
+            uint32_t d3_0 : 1;    // 1-bit variable
+            
+            uint32_t d3_1 : 1;    // 1-bit variable
+            uint32_t d3_2 : 1;    // 1-bit variable
+            uint32_t d3_3 : 1;    // 1-bit variable
+            uint32_t d3_4 : 1;    // 1-bit variable
+            uint32_t d3_5 : 1;    // 1-bit variable
+            uint32_t d3_6 : 1;    // 1-bit variable
+            uint32_t d3_7 : 1;    // 1-bit variable
+        };
+    };
+} DigifizIn;
+
+#endif
 /// Configurations of the spi_hc595
 typedef struct {
     spi_host_device_t host; ///< The SPI host used, set before calling `spi_hc595_init()`

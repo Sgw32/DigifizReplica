@@ -2,20 +2,23 @@
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "freertos/semphr.h" // Include semaphore/mutex header
-
+#include "freertos/semphr.h"
+#include "esp_rom_sys.h"
+#include <stdlib.h>
 
 static const char TAG[] = "reg_inout";
 
 #define REG_INOUT_HOST       SPI2_HOST
-#define PIN_NUM_MISO      13
-#define PIN_NUM_MOSI      11
-#define PIN_NUM_CLK       12
-#define PIN_NUM_CS_OUT        40
-#define PIN_NUM_CS_IN        37
+#define PIN_NUM_MISO         13      // 74HC165 QH / DATA
+#define PIN_NUM_MOSI         11      // currently unused; 74HC595 omitted
+#define PIN_NUM_CLK          12      // 74HC165 CP / CLOCK, idle LOW
+#define PIN_NUM_CS_OUT       40      // currently unused; 74HC595 omitted
+#define PIN_NUM_CS_IN        37      // 74HC165 /PL / LATCH, idle HIGH
 
 DigifizOut digifiz_reg_out;
 DigifizIn digifiz_reg_in;
+
+#ifdef DIGIFIZ_NEXT_DISPLAY
 
 spi_bus_config_t buscfg = {
     .miso_io_num = PIN_NUM_MISO,
@@ -244,4 +247,168 @@ void initRegInOut(void)
     ESP_ERROR_CHECK(ret);
     ESP_LOGI(TAG, "initRegInOut ended");
 }
+#endif
 
+#ifdef DIGIFIZ_REFIZ_DISPLAY
+
+#define HC165_COUNT          3
+#define HC165_PULSE_WIDTH_US 10
+
+hc595_config_t hc595_config = {
+    .cs_io = PIN_NUM_CS_OUT,
+    .host = REG_INOUT_HOST,
+};
+
+hc165_config_t hc165_config = {
+    .cs_io = PIN_NUM_CS_IN,
+    .host = REG_INOUT_HOST,
+};
+
+/*
+ * 74HC595 operation is intentionally omitted for now.
+ * The Arduino example reads 74HC165 by bit-banging, not by SPI.transfer().
+ */
+hc595_handle_t hc595_handle = NULL;
+hc165_handle_t hc165_handle = NULL;
+
+static inline void hc165_latch_inputs(void)
+{
+    // Arduino behavior:
+    // digitalWrite(latchPin, LOW);
+    // delayMicroseconds(pulseWidth);
+    // digitalWrite(latchPin, HIGH);
+    gpio_set_level(PIN_NUM_CS_IN, 0);
+    esp_rom_delay_us(HC165_PULSE_WIDTH_US);
+    gpio_set_level(PIN_NUM_CS_IN, 1);
+    esp_rom_delay_us(HC165_PULSE_WIDTH_US);
+}
+
+static uint8_t hc165_read_one(void)
+{
+    uint8_t ret = 0;
+
+    /*
+     * Same behavior as the Arduino ReadOne165():
+     * - clock idles LOW
+     * - read the current bit first
+     * - then pulse clock HIGH -> LOW
+     * - first bit read is D7, so store from bit 7 down to bit 0
+     */
+    for (int i = 7; i >= 0; --i) {
+        if (gpio_get_level(PIN_NUM_MISO)) {
+            ret |= (uint8_t)(1U << i);
+        }
+
+        gpio_set_level(PIN_NUM_CLK, 1);
+        esp_rom_delay_us(HC165_PULSE_WIDTH_US);
+        gpio_set_level(PIN_NUM_CLK, 0);
+        esp_rom_delay_us(HC165_PULSE_WIDTH_US);
+    }
+
+    return ret;
+}
+
+esp_err_t spi_devices_init(const hc595_config_t *cfg_regout, hc595_handle_t* out_ctx_regout,
+                           const hc165_config_t *cfg_regin, hc165_handle_t* out_ctx_regin)
+{
+    (void)cfg_regout;
+    hc165_context_t* ctx_regin = (hc165_context_t*)calloc(1, sizeof(hc165_context_t));
+    if (!ctx_regin) {
+        return ESP_ERR_NO_MEM;
+    }
+
+    ctx_regin->cfg = cfg_regin ? *cfg_regin : hc165_config;
+
+    gpio_config_t hc165_gpio_cfg = {
+        .pin_bit_mask = BIT64(PIN_NUM_CS_IN) | BIT64(PIN_NUM_CLK),
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&hc165_gpio_cfg));
+
+    gpio_config_t hc165_data_cfg = {
+        .pin_bit_mask = BIT64(PIN_NUM_MISO),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&hc165_data_cfg));
+
+    // Match Arduino idle states: CLOCK LOW, LATCH HIGH.
+    gpio_set_level(PIN_NUM_CLK, 0);
+    gpio_set_level(PIN_NUM_CS_IN, 1);
+
+    if (out_ctx_regout) {
+        *out_ctx_regout = NULL;
+    }
+    if (out_ctx_regin) {
+        *out_ctx_regin = ctx_regin;
+    }
+
+    return ESP_OK;
+}
+
+esp_err_t spi_hc165_read(hc165_context_t* ctx, uint8_t* out_data)
+{
+    (void)ctx;
+
+    if (!out_data) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    hc165_latch_inputs();
+
+    /*
+     * Arduino example with 4 registers did:
+     *   for (int i = 24; i >= 0; i -= 8)
+     *       optionSwitch |= ReadOne165() << i;
+     *
+     * For 3 registers, keep the same ordering but only read 24 bits:
+     * first byte read = highest byte, then middle, then lowest.
+     */
+    for (int i = 0; i < HC165_COUNT; ++i) {
+        out_data[i] = hc165_read_one();
+    }
+
+    return ESP_OK;
+}
+
+esp_err_t spi_hc595_write(hc595_context_t* ctx, uint8_t data)
+{
+    (void)ctx;
+    (void)data;
+
+    // 74HC595 is intentionally omitted for now.
+    return ESP_OK;
+}
+
+esp_err_t regin_read(uint8_t* out_data)
+{
+    return spi_hc165_read(hc165_handle, out_data);
+}
+
+esp_err_t regout_all(uint16_t data)
+{
+    (void)data;
+
+    // 74HC595 is intentionally omitted for now.
+    return ESP_OK;
+}
+
+void initRegInOut(void)
+{
+    esp_err_t ret;
+    ESP_LOGI(TAG, "initRegInOut started");
+
+    ESP_LOGI(TAG, "Initializing HC165 GPIO bit-bang interface...");
+    ret = spi_devices_init(NULL, &hc595_handle, &hc165_config, &hc165_handle);
+    ESP_ERROR_CHECK(ret);
+
+    ESP_LOGI(TAG, "initRegInOut ended");
+}
+
+
+#endif

@@ -270,7 +270,7 @@ static void refiz_sync_payload_from_display(void)
     {
         refiz_payload_set_bit(refiz_rpm_segments[i] + 3, (i < rpm_segments_on) ? 1 : 0);
     }
-    refiz_payload_set_bit(refiz_rpm_segments[0] + 3, 1);
+    //refiz_payload_set_bit(refiz_rpm_segments[0] + 3, 1);
 }
 
 void refiz_uart_sender_init(void)
@@ -1335,15 +1335,11 @@ void setMFABlock(uint8_t block) {
     {
       refiz_display.mfa1_ind = 1;
       refiz_display.mfa2_ind = 0;
-      digifiz_reg_out.led_mfa1 = 1;
-      digifiz_reg_out.led_mfa2 = 0;
     }
     else
     {
-      //refiz_display.mfa1_ind = 0;
-      //refiz_display.mfa2_ind = 1;
-      digifiz_reg_out.led_mfa1 = 0;
-      digifiz_reg_out.led_mfa2 = 1;
+      refiz_display.mfa1_ind = 0;
+      refiz_display.mfa2_ind = 1;
     }
   }
 }
@@ -1509,11 +1505,18 @@ void processIndicators()
         refiz_display.right_turn_ind = filter_turn_indicator(&right_turn_indicator_filter, right_raw);
     }
 
-    uint8_t brakes_raw = digifiz_reg_in.brakesInd ? 0 : 1;
+    uint8_t brakes_raw = digifiz_reg_in.brakesInd ? 1 : 0;
     uint8_t foglight2_raw = digifiz_reg_in.lightsHeatInd ? 0 : 1;
+    uint8_t foglight1_raw = digifiz_reg_in.fogLightsInd ? 0 : 1;
+    uint8_t glheat_raw = digifiz_reg_in.glheatInd ? 0 : 1;
+
 
     refiz_display.brakes_ind = filter_general_indicator(&brakes_indicator_filter, brakes_raw);
     refiz_display.foglight_ind2 = filter_general_indicator(&foglight2_indicator_filter, foglight2_raw);
+    refiz_display.foglight_ind1 = filter_general_indicator(&foglight1_indicator_filter, foglight1_raw);
+    refiz_display.glassheat_ind = filter_general_indicator(&glassheat_indicator_filter, glheat_raw);
+    refiz_display.farlight_ind = digifiz_reg_in.farLightsInd ? 0 : 1;
+    refiz_display.battery_ind = digifiz_reg_in.batteryInd ? 0 : 1;
 }
 
 static void getColorBySegmentNumber(ColoringScheme* c_ptr, uint16_t segment, uint8_t* r, uint8_t* g, uint8_t* b)
