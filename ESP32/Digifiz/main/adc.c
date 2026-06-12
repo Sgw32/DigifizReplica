@@ -28,7 +28,8 @@ float R2_Oil = 220;
 float R1_Coolant = COOLANT_R_AT_NORMAL_T; //for Coolant
 float R1_Oil = OIL_R_AT_NORMAL_T; //for Coolant
 float R1_Ambient = AMBIENT_R_AT_NORMAL_T; //for Coolant
-const uint8_t lightSensorChannel = ADC_CHANNEL_4; // Light sensor
+const uint8_t lightSensorChannel = ADC_CHANNEL_4; // Light sensor on IO5
+const uint8_t manualKl58bChannel = ADC_CHANNEL_2; // Manual KL58b brightness input on IO3
 const uint8_t coolantChannel = ADC_CHANNEL_0; // Coolant temp sensor
 const uint8_t gasolineChannel = ADC_CHANNEL_1; //Gasoline sensor
 const uint8_t oilChannel = ADC_CHANNEL_7; //Oil temp sensor
@@ -57,6 +58,7 @@ static DeviceSensorsFaulty faulty_status = {.fault_status = 0};
 
 uint8_t tankCapacity = 55;
 float lightLevel = 0;
+float manualKl58bLevel = 0;
 uint32_t consumptionCounter;
 
 extern float averageRPM;
@@ -84,11 +86,13 @@ adc_cali_handle_t adc1_cali_chan3_handle = NULL;
 adc_cali_handle_t adc1_cali_chan4_handle = NULL;
 adc_cali_handle_t adc1_cali_chan5_handle = NULL;
 adc_cali_handle_t adc1_cali_chan6_handle = NULL;
+adc_cali_handle_t adc1_cali_chan7_handle = NULL;
 static DigifizSensorData adc_raw;
 
 // Read ADC values from multiple pins
 void read_adc_values() {
     ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, lightSensorChannel, &adc_raw.lightRawADCVal));
+    ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, manualKl58bChannel, &adc_raw.manualKl58bRawADCVal));
     ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, coolantChannel, &adc_raw.coolantRawADCVal));
     ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, gasolineChannel, &adc_raw.fuelRawADCVal));
     ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, oilChannel, &adc_raw.oilTempRawADCVal));
@@ -104,6 +108,7 @@ void log_sensor_data() {
     ESP_LOGI(TAG, "coolantRawADCVal: %d", adc_raw.coolantRawADCVal);
     ESP_LOGI(TAG, "fuelRawADCVal: %d", adc_raw.fuelRawADCVal);
     ESP_LOGI(TAG, "lightRawADCVal: %d", adc_raw.lightRawADCVal);
+    ESP_LOGI(TAG, "manualKl58bRawADCVal: %d", adc_raw.manualKl58bRawADCVal);
     ESP_LOGI(TAG, "ambTempRawADCVal: %d", adc_raw.ambTempRawADCVal);
     ESP_LOGI(TAG, "oilTempRawADCVal: %d", adc_raw.oilTempRawADCVal);
     ESP_LOGI(TAG, "intakePressRawADCVal: %d", adc_raw.intakePressRawADCVal);
@@ -116,6 +121,8 @@ void read_initial_adc_values() {
     {
         ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, lightSensorChannel, &adc));
         adc_raw.lightRawADCVal+=adc;
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, manualKl58bChannel, &adc));
+        adc_raw.manualKl58bRawADCVal+=adc;
         ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, coolantChannel, &adc));
         adc_raw.coolantRawADCVal+=adc;
         ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, gasolineChannel, &adc));
@@ -130,6 +137,7 @@ void read_initial_adc_values() {
         adc_raw.fuelPressRawADCVal+=adc;
     }
     adc_raw.lightRawADCVal/=256;
+    adc_raw.manualKl58bRawADCVal/=256;
     adc_raw.coolantRawADCVal/=256;
     adc_raw.fuelRawADCVal/=256;
     adc_raw.oilTempRawADCVal/=256;
@@ -236,12 +244,14 @@ void initADC() {
     // Implementation placeholder
     coolantT = oilT = airT = 0.0;
     lightLevel = 0;
+    manualKl58bLevel = 0;
     updateADCSettings();
 
     //-------------ADC1 Init---------------//
     ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc1_handle));
     //-------------ADC1 Config---------------//
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, lightSensorChannel, &config));
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, manualKl58bChannel, &config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, coolantChannel, &config));
     ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, gasolineChannel, &config));
     reconfigOilChannel();
@@ -251,6 +261,7 @@ void initADC() {
     //-------------ADC1 Calibration Init---------------//
 
     adc_calibration_init(ADC_UNIT_1, lightSensorChannel, ADC_ATTEN_DB_12,    &adc1_cali_chan0_handle);
+    adc_calibration_init(ADC_UNIT_1, manualKl58bChannel, ADC_ATTEN_DB_12,   &adc1_cali_chan7_handle);
     adc_calibration_init(ADC_UNIT_1, coolantChannel, ADC_ATTEN_DB_12,        &adc1_cali_chan1_handle);
     adc_calibration_init(ADC_UNIT_1, gasolineChannel, ADC_ATTEN_DB_12,       &adc1_cali_chan2_handle);
     if (digifiz_parameters.tempOptions_oil_atten.value)
@@ -269,6 +280,8 @@ void initADC() {
     {
         read_adc_values();
     }
+    lightLevel = (float)adc_raw.lightRawADCVal;
+    manualKl58bLevel = (float)adc_raw.manualKl58bRawADCVal;
     //read_initial_adc_values();
     //log_sensor_data();
     //Init values:
@@ -530,32 +543,58 @@ float getAmbientTemperatureFahrenheit() {
     return (res*1.8f)+32.0f;
 }
 
-// Get the brightness level
-uint8_t getBrightnessLevel() {
-    lightLevel += (getRawBrightnessLevel()-lightLevel)*LIGHT_SENSOR_TAU;
-    float m_lightLevel = lightLevel;
-    if (digifiz_parameters.signalOptions_invert_light_input.value)
+static float interpolateLevel(float raw, float minSig, float maxSig, float minLevel, float maxLevel)
+{
+    if (fabsf(maxSig - minSig) < 0.0001f)
+        return raw >= maxSig ? maxLevel : minLevel;
+
+    if (minSig < maxSig)
     {
-        m_lightLevel = constrain((float)digifiz_parameters.brightnessSignalMax.value - m_lightLevel,
-                                 0,
-                                 (float)digifiz_parameters.brightnessSignalMax.value);
+        if (raw <= minSig)
+            return minLevel;
+        if (raw >= maxSig)
+            return maxLevel;
+    }
+    else
+    {
+        if (raw >= minSig)
+            return minLevel;
+        if (raw <= maxSig)
+            return maxLevel;
     }
 
-    float minSig = (float)digifiz_parameters.brightnessSignalMin.value;
-    float maxSig = (float)digifiz_parameters.brightnessSignalMax.value;
-    float minBr = (float)digifiz_parameters.brightnessMin.value;
-    float maxBr = (float)digifiz_parameters.brightnessMax.value;
+    return minLevel + (raw - minSig) * (maxLevel - minLevel) / (maxSig - minSig);
+}
 
-    float level;
-    if (m_lightLevel <= minSig)
-        level = minBr;
-    else if (m_lightLevel >= maxSig)
-        level = maxBr;
-    else
-        level = minBr + (m_lightLevel - minSig) * (maxBr - minBr) / (maxSig - minSig);
+// Get the brightness level
+uint8_t getBrightnessLevel() {
+    float level = (float)digifiz_parameters.brightnessLevel.value;
+    if (digifiz_parameters.autoBrightness.value)
+    {
+        float m_lightLevel = lightLevel;
+        if (digifiz_parameters.signalOptions_invert_light_input.value)
+        {
+            m_lightLevel = constrain((float)digifiz_parameters.brightnessSignalMax.value - m_lightLevel,
+                                     0,
+                                     (float)digifiz_parameters.brightnessSignalMax.value);
+        }
+
+        level = interpolateLevel(m_lightLevel,
+                                 (float)digifiz_parameters.brightnessSignalMin.value,
+                                 (float)digifiz_parameters.brightnessSignalMax.value,
+                                 (float)digifiz_parameters.brightnessMin.value,
+                                 (float)digifiz_parameters.brightnessMax.value);
+    }
 
     if (level > digifiz_parameters.brightnessLevel.value)
         level = digifiz_parameters.brightnessLevel.value;
+
+    float manualCoef = interpolateLevel(manualKl58bLevel,
+                                        (float)digifiz_parameters.manualKl58bSignalMin.value,
+                                        (float)digifiz_parameters.manualKl58bSignalMax.value,
+                                        0.5f,
+                                        1.0f);
+    level *= manualCoef;
 
     return (uint8_t)constrain(level, 0, 255);
 }
@@ -563,6 +602,11 @@ uint8_t getBrightnessLevel() {
 // Get the raw brightness level
 uint16_t getRawBrightnessLevel() {
     return adc_raw.lightRawADCVal;
+}
+
+// Get the raw manual KL58b brightness input level
+uint16_t getRawManualKl58bLevel() {
+    return adc_raw.manualKl58bRawADCVal;
 }
 
 // Process coolant temperature data
@@ -783,7 +827,8 @@ float getWidebandLambdaAFR() {
 
 // Process brightness level data
 void processBrightnessLevel() {
-    // Implementation placeholder
+    lightLevel += (getRawBrightnessLevel()-lightLevel)*LIGHT_SENSOR_TAU;
+    manualKl58bLevel += (getRawManualKl58bLevel()-manualKl58bLevel)*LIGHT_SENSOR_TAU;
 }
 
 // Process the first coolant temperature data
@@ -900,6 +945,10 @@ int getFuelRawADCVal(void) {
 
 int getLightRawADCVal(void) {
     return adc_raw.lightRawADCVal;
+}
+
+int getManualKl58bRawADCVal(void) {
+    return adc_raw.manualKl58bRawADCVal;
 }
 
 int getAmbTempRawADCVal(void) {

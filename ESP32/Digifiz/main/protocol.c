@@ -85,6 +85,8 @@ static const ParameterMap parameter_map[] = {
     {"PARAMETER_BRIGHTNESS_MIN", PARAMETER_BRIGHTNESS_MIN},
     {"PARAMETER_BRIGHTNESS_MAX", PARAMETER_BRIGHTNESS_MAX},
     {"PARAMETER_BRIGHTNESS_SPEED", PARAMETER_BRIGHTNESS_SPEED},
+    {"PARAMETER_MANUAL_KL58B_SIGNAL_MIN", PARAMETER_MANUAL_KL58B_SIGNAL_MIN},
+    {"PARAMETER_MANUAL_KL58B_SIGNAL_MAX", PARAMETER_MANUAL_KL58B_SIGNAL_MAX},
     {"PARAMETER_EFFECT_TYPE", PARAMETER_EFFECT_TYPE},
     {"PARAMETER_EFFECT_HUE", PARAMETER_EFFECT_HUE},
     {"PARAMETER_EFFECT_SATURATION", PARAMETER_EFFECT_SATURATION},
@@ -178,6 +180,8 @@ static void printADC()
   printLnFloat((float)getFuelRawADCVal());
   //printLnCString("getLightRawADCVal:");
   printLnFloat((float)getLightRawADCVal());
+  //printLnCString("getManualKl58bRawADCVal:");
+  printLnFloat((float)getManualKl58bRawADCVal());
   //printLnCString("getAmbTempRawADCVal:");
   printLnFloat((float)getAmbTempRawADCVal());
   //printLnCString("getOilTempRawADCVal:");
@@ -624,6 +628,14 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_BRIGHTNESS_SPEED\n");
         digifiz_parameters.brightnessSpeed.value = value;
         break;
+      case PARAMETER_MANUAL_KL58B_SIGNAL_MIN:
+        printLnCString("PARAMETER_MANUAL_KL58B_SIGNAL_MIN\n");
+        digifiz_parameters.manualKl58bSignalMin.value = value;
+        break;
+      case PARAMETER_MANUAL_KL58B_SIGNAL_MAX:
+        printLnCString("PARAMETER_MANUAL_KL58B_SIGNAL_MAX\n");
+        digifiz_parameters.manualKl58bSignalMax.value = value;
+        break;
       case PARAMETER_EFFECT_TYPE:
         printLnCString("PARAMETER_EFFECT_TYPE\n");
         digifiz_parameters.ledEffect_type.value = value;
@@ -983,6 +995,14 @@ void processData(int parameter,long value)
       case PARAMETER_BRIGHTNESS_SPEED:
         printLnCString("PARAMETER_BRIGHTNESS_SPEED\n");
         printLnUINT8(digifiz_parameters.brightnessSpeed.value);
+        break;
+      case PARAMETER_MANUAL_KL58B_SIGNAL_MIN:
+        printLnCString("PARAMETER_MANUAL_KL58B_SIGNAL_MIN\n");
+        printLnUINT32(digifiz_parameters.manualKl58bSignalMin.value);
+        break;
+      case PARAMETER_MANUAL_KL58B_SIGNAL_MAX:
+        printLnCString("PARAMETER_MANUAL_KL58B_SIGNAL_MAX\n");
+        printLnUINT32(digifiz_parameters.manualKl58bSignalMax.value);
         break;
       case PARAMETER_EFFECT_TYPE:
         printLnCString("PARAMETER_EFFECT_TYPE\n");
