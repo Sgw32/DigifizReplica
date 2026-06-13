@@ -74,6 +74,7 @@ static bool check_engine_speed_override_active = false;
 
 static uint8_t d_clock_hours = 0;
 static uint8_t d_clock_minutes = 0;
+static uint8_t rpm_segments_on = 0;
 
 #define PAYLOAD_SIZE 520
 #define PACKED_PAYLOAD_SIZE ((PAYLOAD_SIZE + 7) / 8)
@@ -258,7 +259,7 @@ static void refiz_sync_payload_from_display(void)
     }
 
     const uint8_t *display_bits = (const uint8_t *)&display;
-    uint8_t rpm_segments_on = 0;
+    
     for (uint8_t bit = 28; bit < 78; bit++)
     {
         if (display_bits[bit / 8] & (1 << (bit % 8)))
@@ -266,6 +267,8 @@ static void refiz_sync_payload_from_display(void)
             rpm_segments_on++;
         }
     }
+
+    //rpm_segments_on = 71;
     for (uint8_t i = 0; i < 71; i++)
     {
         refiz_payload_set_bit(refiz_rpm_segments[i] + 3, (i < rpm_segments_on) ? 1 : 0);
@@ -908,33 +911,15 @@ void setFuel(uint8_t litres) {
 // Set the RPM data
 void setRPMData(uint16_t inp_d) {
     // Implementation placeholder
+    //Currently 7k version only!!!
     if (inp_d>digifiz_parameters.maxRPM.value)
         inp_d = digifiz_parameters.maxRPM.value;
-    uint32_t data = (49*(uint32_t)inp_d)/8000;
+    uint32_t data = (71*(uint32_t)inp_d)/7000;
     if (data<1)
         data=1;
-    if (data>49)
-        data=49; 
-    display.rpm_padding=0;
-    memset(display.rpm,0,5); 
-    display.rpm_last = 0;
-    uint8_t *ptr = (uint8_t*)&display;
-    for (uint16_t i = 28; i < 28+data; i++)
-    {
-        for (uint16_t j = i%8; j < 8; j++)
-        {
-            //uint8_t bit = (ptr[i] >> j) & 1;
-            ptr[i/8]|=(1<<j);
-        }
-    }
-    for (uint16_t i = 28+data; i < 28+49; i++)
-    {
-        for (uint16_t j = i%8; j < 8; j++)
-        {
-            ptr[i/8]&=~(1<<j);
-        }
-    }
-    display.rpm_backlight = 0b111111111111111111;
+    if (data>71)
+        data=71; 
+    rpm_segments_on = data;
 }
 
 // Set the speedometer data
@@ -1505,7 +1490,7 @@ void processIndicators()
         refiz_display.right_turn_ind = filter_turn_indicator(&right_turn_indicator_filter, right_raw);
     }
 
-    uint8_t brakes_raw = digifiz_reg_in.brakesInd ? 1 : 0;
+    uint8_t brakes_raw = digifiz_reg_in.brakesInd ? 0 : 1;
     uint8_t foglight2_raw = digifiz_reg_in.lightsHeatInd ? 0 : 1;
     uint8_t foglight1_raw = digifiz_reg_in.fogLightsInd ? 0 : 1;
     uint8_t glheat_raw = digifiz_reg_in.glheatInd ? 0 : 1;
