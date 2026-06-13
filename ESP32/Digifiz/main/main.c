@@ -467,7 +467,7 @@ void displayUpdate(void *pvParameters) {
         processIndicators();
         if (millis()>2000)
         {
-            setBrightness(digifiz_parameters.autoBrightness.value ? getBrightnessLevel() : digifiz_parameters.brightnessLevel.value);
+            setBrightness(getBrightnessLevel());
         }
         else
         {

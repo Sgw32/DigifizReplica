@@ -403,6 +403,20 @@ extern "C" {
         .max = 100, \
     ) \
     PARAM(  \
+        U16, \
+        manualKl58bSignalMin, \
+        .p_name = "KL58b signal min", \
+        .p_info = "ADC value for minimum KL58b brightness trim",\
+        .value = 300, \
+    ) \
+    PARAM(  \
+        U16, \
+        manualKl58bSignalMax, \
+        .p_name = "KL58b signal max", \
+        .p_info = "ADC value for maximum KL58b brightness trim",\
+        .value = 800, \
+    ) \
+    PARAM(  \
         U8, \
         tankCapacity, \
         .p_name = "Fuel tank capacity", \
