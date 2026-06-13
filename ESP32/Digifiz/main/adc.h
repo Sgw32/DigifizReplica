@@ -27,6 +27,7 @@ typedef struct {
     int coolantRawADCVal;
     int fuelRawADCVal;
     int lightRawADCVal;
+    int manualKl58bRawADCVal;
     int ambTempRawADCVal;
     int oilTempRawADCVal;
     int intakePressRawADCVal;
@@ -94,6 +95,7 @@ float getAmbientTemperatureFahrenheit(); //F
 
 uint8_t getBrightnessLevel();
 uint16_t getRawBrightnessLevel();
+uint16_t getRawManualKl58bLevel();
 
 void processCoolantTemperature();
 void processOilTemperature();
@@ -113,6 +115,7 @@ void reconfigOilChannel();
 int getCoolantRawADCVal(void);
 int getFuelRawADCVal(void);
 int getLightRawADCVal(void);
+int getManualKl58bRawADCVal(void);
 int getAmbTempRawADCVal(void);
 int getOilTempRawADCVal(void);
 int getIntakePressRawADCVal(void);
