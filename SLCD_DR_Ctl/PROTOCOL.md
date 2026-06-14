@@ -102,3 +102,43 @@ Payload: bytes with requested payload content.
 3. Prefer `SET_PACKED_RANGE` (`0x03`) to set the full frame or partial ranges with packed bytes. Legacy `SET_ALL` and `SET_RANGE` remain available for unpacked `0`/`1` byte payloads.
 4. Wait for `ACK`.
 
+
+### `0x20` SET_MODE
+Enter or leave the high-level interactive mode without changing the legacy raw-payload commands.
+
+Payload:
+```text
+MODE
+```
+- `0x00` = raw payload mode.
+- `0x01` = interactive mode.
+
+### `0x21` INTERACTIVE_SET
+Compressed high-level control for the same segment groups used by `orig_display.cpp` on `A2560_BoardR2`. The command is valid after `SET_MODE 0x01`; each field is packed as one byte of field ID plus a signed 32-bit little-endian value. Multiple fields can be sent in a single frame.
+
+Payload:
+```text
+FIELD0 VALUE0_L VALUE0_1 VALUE0_2 VALUE0_H [FIELD1 VALUE1_L ...]
+```
+
+Field IDs:
+- `0x01` speedometer value (`0..999`)
+- `0x02` RPM value
+- `0x03` MFA type (`0` duration, `1` km, `2` l/100, `3` km/h, `4` oil, `5` air, `6` none)
+- `0x04` MFA displayed number (signed)
+- `0x05` MFA clock as `(hours << 8) | minutes`
+- `0x06` fuel litres (`0..99`)
+- `0x07` coolant bar count (`0..20`)
+- `0x08` mileage (`0..999999`)
+- `0x09` clock as `(hours << 8) | minutes`
+- `0x0A` clock/MFA dot (`0` off, non-zero on)
+- `0x0B` MFA float dot (`0` off, non-zero on)
+- `0x0C` refuel sign (`0` off, non-zero on)
+- `0x0D` MFA block placeholder; accepted for protocol compatibility, but SLCD_DR_Ctl has no external MFA block pins
+- `0x0E` backlight placeholder; accepted for protocol compatibility, but SLCD_DR_Ctl has no external backlight pin
+- `0x0F` max RPM scale for the RPM bar (defaults to `7000`)
+
+Additional `NACK` error codes:
+- `0x09` invalid SET_MODE payload length
+- `0x0A` invalid INTERACTIVE_SET payload length
+- `0x0B` unsupported interactive field or interactive mode is not enabled
