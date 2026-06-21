@@ -5,6 +5,7 @@
 #include "driver/gpio.h"
 #include "adc.h"
 #include <time.h>
+#include <sys/time.h>
 
 uint8_t uptimeDisplayEnabled = 0;
 uint8_t mfaMemorySelected = 0;
@@ -13,11 +14,19 @@ uint8_t bMFAMode = 0;
 uint8_t bMFABlock = 0;
 uint8_t bMFAReset = 0;
 uint8_t bMFASensor = 0;
+#ifdef DIGIFIZ_REFIZ_DISPLAY
+uint8_t bClockMinutes = 0;
+uint8_t bClockHours = 0;
+#endif
 
 uint8_t prevMFAMode = 0;
 uint8_t prevMFABlock = 0;
 uint8_t prevMFAReset = 0;
 uint8_t prevMFASensor = 0;
+#ifdef DIGIFIZ_REFIZ_DISPLAY
+uint8_t prevClockMinutes = 0;
+uint8_t prevClockHours = 0;
+#endif
 
 uint8_t sensorPressed = 0;
 uint32_t pressSensorTime = 0;
@@ -26,6 +35,24 @@ extern int16_t seconds_block1;
 extern int16_t seconds_block2;
 extern struct tm saved_time1;
 extern struct tm saved_time2;
+
+#ifdef DIGIFIZ_REFIZ_DISPLAY
+static void addSystemTime(int hours, int minutes)
+{
+    time_t current_time_t;
+    struct tm current_time;
+
+    time(&current_time_t);
+    localtime_r(&current_time_t, &current_time);
+
+    current_time.tm_hour += hours;
+    current_time.tm_min += minutes;
+
+    current_time_t = mktime(&current_time);
+    struct timeval tv = { .tv_sec = current_time_t, .tv_usec = 0 };
+    settimeofday(&tv, NULL);
+}
+#endif
 // Initialize the MFA (Multi-Function Display)
 void initMFA() {
     // Implementation placeholder
@@ -48,6 +75,10 @@ void processMFA()
     bMFAMode = digifiz_reg_in.mfaMode;
     bMFABlock = digifiz_reg_in.mfaBlock;
     bMFAReset = digifiz_reg_in.mfaReset;
+#ifdef DIGIFIZ_REFIZ_DISPLAY
+    bClockMinutes = digifiz_reg_in.clockMinutes;
+    bClockHours = digifiz_reg_in.clockHours;
+#endif
     if (digifiz_parameters.signalOptions_enable_touch_sensor.value)
     {
         bMFASensor = gpio_get_level(TOUCH_PIN);
@@ -64,6 +95,10 @@ void processMFA()
         prevMFABlock = bMFABlock;
         prevMFAReset = bMFAReset;
         prevMFASensor = bMFASensor;
+#ifdef DIGIFIZ_REFIZ_DISPLAY
+        prevClockMinutes = bClockMinutes;
+        prevClockHours = bClockHours;
+#endif
         return;
     }
 
@@ -109,10 +144,27 @@ void processMFA()
             pressMFASensorSuperSuperLong();
     }
 #endif
+#ifdef DIGIFIZ_REFIZ_DISPLAY
+    if ((bClockMinutes == 0) && (prevClockMinutes == 1))
+    {
+        ESP_LOGI(LOG_TAG,  "Clock minutes increment");
+        addSystemTime(0, 1);
+    }
+
+    if ((bClockHours == 0) && (prevClockHours == 1))
+    {
+        ESP_LOGI(LOG_TAG,  "Clock hours increment");
+        addSystemTime(1, 0);
+    }
+#endif
     prevMFAMode = bMFAMode;
     prevMFABlock = bMFABlock;
     prevMFAReset = bMFAReset;
     prevMFASensor = bMFASensor;
+#ifdef DIGIFIZ_REFIZ_DISPLAY
+    prevClockMinutes = bClockMinutes;
+    prevClockHours = bClockHours;
+#endif
 }
 
 // Simulate pressing MFA mode button
