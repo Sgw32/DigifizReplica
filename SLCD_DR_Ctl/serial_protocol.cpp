@@ -10,6 +10,8 @@ constexpr uint8_t CMD_SET_RANGE = 0x02;
 constexpr uint8_t CMD_SET_PACKED_RANGE = 0x03;
 constexpr uint8_t CMD_GET_INFO = 0x10;
 constexpr uint8_t CMD_GET_RANGE = 0x11;
+constexpr uint8_t CMD_SET_MODE = 0x20;
+constexpr uint8_t CMD_INTERACTIVE_SET = 0x21;
 
 constexpr uint8_t RSP_ACK = 0x80;
 constexpr uint8_t RSP_NACK = 0x81;
@@ -125,6 +127,41 @@ void handleFrame(uint8_t cmd, const uint8_t* payload, uint16_t len) {
           static_cast<uint8_t>(getPayloadSize() & 0xFF),
           static_cast<uint8_t>((getPayloadSize() >> 8) & 0xFF)};
       sendFrame(RSP_INFO, info, 2);
+      break;
+    }
+
+    case CMD_SET_MODE: {
+      if (len != 1) {
+        sendNack(0x09);
+        break;
+      }
+      setInteractiveMode(payload[0] == 1);
+      sendAck(CMD_SET_MODE);
+      break;
+    }
+
+    case CMD_INTERACTIVE_SET: {
+      if (len < 5 || (len % 5) != 0) {
+        sendNack(0x0A);
+        break;
+      }
+
+      bool ok = true;
+      for (uint16_t i = 0; i < len; i += 5) {
+        uint32_t raw_value = static_cast<uint32_t>(payload[i + 1]) |
+                             (static_cast<uint32_t>(payload[i + 2]) << 8) |
+                             (static_cast<uint32_t>(payload[i + 3]) << 16) |
+                             (static_cast<uint32_t>(payload[i + 4]) << 24);
+        if (!applyInteractiveField(payload[i], static_cast<int32_t>(raw_value))) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) {
+        sendAck(CMD_INTERACTIVE_SET);
+      } else {
+        sendNack(0x0B);
+      }
       break;
     }
 

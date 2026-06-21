@@ -15,6 +15,24 @@ CMD_SET_RANGE = 0x02
 CMD_SET_PACKED_RANGE = 0x03
 CMD_GET_INFO = 0x10
 CMD_GET_RANGE = 0x11
+CMD_SET_MODE = 0x20
+CMD_INTERACTIVE_SET = 0x21
+
+IF_SPEED = 0x01
+IF_RPM = 0x02
+IF_MFA_TYPE = 0x03
+IF_MFA_NUMBER = 0x04
+IF_MFA_CLOCK = 0x05
+IF_FUEL = 0x06
+IF_COOLANT = 0x07
+IF_MILEAGE = 0x08
+IF_CLOCK = 0x09
+IF_DOT = 0x0A
+IF_FLOAT_DOT = 0x0B
+IF_REFUEL_SIGN = 0x0C
+IF_MFA_BLOCK = 0x0D
+IF_BACKLIGHT = 0x0E
+IF_MAX_RPM = 0x0F
 
 RSP_ACK = 0x80
 RSP_NACK = 0x81
@@ -54,6 +72,14 @@ def make_packed_range_payload(offset: int, bits: bytes) -> bytes:
         count & 0xFF,
         (count >> 8) & 0xFF,
     ]) + pack_bits(bits)
+
+
+def pack_interactive_fields(fields):
+    payload = bytearray()
+    for field, value in fields:
+        value = int(value) & 0xFFFFFFFF
+        payload.extend([field, value & 0xFF, (value >> 8) & 0xFF, (value >> 16) & 0xFF, (value >> 24) & 0xFF])
+    return bytes(payload)
 
 
 @dataclass
@@ -151,6 +177,24 @@ class MainWindow(QtWidgets.QWidget):
         self.random_range_btn = QtWidgets.QPushButton("Randomize PACKED_RANGE: OFF")
         self.random_range_btn.setCheckable(True)
 
+        self.interactive_btn = QtWidgets.QPushButton("Enter interactive mode")
+        self.speed_spin = QtWidgets.QSpinBox(); self.speed_spin.setRange(0, 999)
+        self.rpm_spin = QtWidgets.QSpinBox(); self.rpm_spin.setRange(0, 12000)
+        self.max_rpm_spin = QtWidgets.QSpinBox(); self.max_rpm_spin.setRange(1, 12000); self.max_rpm_spin.setValue(7000)
+        self.fuel_spin = QtWidgets.QSpinBox(); self.fuel_spin.setRange(0, 99)
+        self.coolant_spin = QtWidgets.QSpinBox(); self.coolant_spin.setRange(0, 20)
+        self.mileage_spin = QtWidgets.QSpinBox(); self.mileage_spin.setRange(0, 999999)
+        self.mfa_type_spin = QtWidgets.QSpinBox(); self.mfa_type_spin.setRange(0, 6)
+        self.mfa_number_spin = QtWidgets.QSpinBox(); self.mfa_number_spin.setRange(-9999, 9999)
+        self.clock_hour_spin = QtWidgets.QSpinBox(); self.clock_hour_spin.setRange(0, 23)
+        self.clock_min_spin = QtWidgets.QSpinBox(); self.clock_min_spin.setRange(0, 59)
+        self.mfa_hour_spin = QtWidgets.QSpinBox(); self.mfa_hour_spin.setRange(0, 99)
+        self.mfa_min_spin = QtWidgets.QSpinBox(); self.mfa_min_spin.setRange(0, 99)
+        self.dot_chk = QtWidgets.QCheckBox("Clock/MFA dot")
+        self.float_dot_chk = QtWidgets.QCheckBox("MFA float dot")
+        self.refuel_chk = QtWidgets.QCheckBox("Refuel sign")
+        self.send_interactive_btn = QtWidgets.QPushButton("Send interactive values")
+
         self.random_timer = QtCore.QTimer(self)
         self.random_timer.setInterval(1000 // 32)
         self.random_timer.timeout.connect(self.randomize_send_range)
@@ -186,6 +230,28 @@ class MainWindow(QtWidgets.QWidget):
         lay.addWidget(self.payload_edit, 1)
         lay.addLayout(range_row)
         lay.addLayout(btn_row)
+
+        interactive_grid = QtWidgets.QGridLayout()
+        interactive_grid.addWidget(self.interactive_btn, 0, 0, 1, 2)
+        labels_widgets = [
+            ("Speed", self.speed_spin), ("RPM", self.rpm_spin), ("Max RPM", self.max_rpm_spin),
+            ("Fuel", self.fuel_spin), ("Coolant", self.coolant_spin), ("Mileage", self.mileage_spin),
+            ("MFA type", self.mfa_type_spin), ("MFA number", self.mfa_number_spin),
+            ("Clock hour", self.clock_hour_spin), ("Clock min", self.clock_min_spin),
+            ("MFA hour", self.mfa_hour_spin), ("MFA min", self.mfa_min_spin),
+        ]
+        for idx, (label, widget) in enumerate(labels_widgets, start=1):
+            row = (idx + 1) // 2
+            col = 0 if idx % 2 else 2
+            interactive_grid.addWidget(QtWidgets.QLabel(label + ":"), row, col)
+            interactive_grid.addWidget(widget, row, col + 1)
+        interactive_grid.addWidget(self.dot_chk, 7, 0, 1, 2)
+        interactive_grid.addWidget(self.float_dot_chk, 7, 2, 1, 2)
+        interactive_grid.addWidget(self.refuel_chk, 8, 0, 1, 2)
+        interactive_grid.addWidget(self.send_interactive_btn, 8, 2, 1, 2)
+        lay.addWidget(QtWidgets.QLabel("Interactive compressed controls:"))
+        lay.addLayout(interactive_grid)
+
         lay.addWidget(QtWidgets.QLabel("Log:"))
         lay.addWidget(self.log, 1)
 
@@ -198,6 +264,8 @@ class MainWindow(QtWidgets.QWidget):
         self.info_btn.clicked.connect(self.get_info)
         self.get_range_btn.clicked.connect(self.get_range)
         self.random_range_btn.toggled.connect(self.toggle_random_range)
+        self.interactive_btn.clicked.connect(self.enter_interactive_mode)
+        self.send_interactive_btn.clicked.connect(self.send_interactive_values)
 
         self.refresh_ports()
 
@@ -247,15 +315,14 @@ class MainWindow(QtWidgets.QWidget):
         self.log_msg(f"RX cmd=0x{fr.cmd:02X}, len={len(fr.payload)}")
         return fr
 
+    def send_command(self, cmd: int, payload: bytes = b"", description: str = "command"):
+        self.client.send(cmd, payload)
+        self.log_msg(f"TX {description}: cmd=0x{cmd:02X}, payload_len={len(payload)}")
+
     def send_all(self):
         try:
             payload = self.parse_payload_text()
-            fr = self.transact(CMD_SET_ALL, payload)
-
-            if fr.cmd == RSP_ACK:
-                self.log_msg("SET_ALL ACK")
-            else:
-                self.log_msg(f"Unexpected response: 0x{fr.cmd:02X}")
+            self.send_command(CMD_SET_ALL, payload, "SET_ALL")
 
         except Exception as e:
             self.log_msg(f"SET_ALL error: {e}")
@@ -273,12 +340,7 @@ class MainWindow(QtWidgets.QWidget):
                 (count >> 8) & 0xFF,
             ]) + data
 
-            fr = self.transact(CMD_SET_RANGE, payload)
-
-            if fr.cmd == RSP_ACK:
-                self.log_msg("SET_RANGE ACK")
-            else:
-                self.log_msg(f"Unexpected response: 0x{fr.cmd:02X}")
+            self.send_command(CMD_SET_RANGE, payload, "SET_RANGE")
 
         except Exception as e:
             self.log_msg(f"SET_RANGE error: {e}")
@@ -288,14 +350,7 @@ class MainWindow(QtWidgets.QWidget):
             data = self.parse_payload_text()
             padded = data[:DEFAULT_PAYLOAD_BITS].ljust(DEFAULT_PAYLOAD_BITS, b"\x00")
             payload = make_packed_range_payload(0, padded)
-            fr = self.transact(CMD_SET_PACKED_RANGE, payload)
-
-            if fr.cmd == RSP_ACK:
-                self.log_msg(
-                    f"PACKED_ALL ACK bits={len(padded)}, payload_bytes={len(payload)}"
-                )
-            else:
-                self.log_msg(f"Unexpected response: 0x{fr.cmd:02X}")
+            self.send_command(CMD_SET_PACKED_RANGE, payload, f"PACKED_ALL bits={len(padded)}")
 
         except Exception as e:
             self.log_msg(f"PACKED_ALL error: {e}")
@@ -305,15 +360,7 @@ class MainWindow(QtWidgets.QWidget):
             data = self.parse_payload_text()
             offset = self.offset_spin.value()
             payload = make_packed_range_payload(offset, data)
-            fr = self.transact(CMD_SET_PACKED_RANGE, payload)
-
-            if fr.cmd == RSP_ACK:
-                self.log_msg(
-                    "PACKED_RANGE ACK "
-                    f"offset={offset}, bits={len(data)}, payload_bytes={len(payload)}"
-                )
-            else:
-                self.log_msg(f"Unexpected response: 0x{fr.cmd:02X}")
+            self.send_command(CMD_SET_PACKED_RANGE, payload, f"PACKED_RANGE offset={offset}, bits={len(data)}")
 
         except Exception as e:
             self.log_msg(f"PACKED_RANGE error: {e}")
@@ -385,22 +432,45 @@ class MainWindow(QtWidgets.QWidget):
             payload = make_packed_range_payload(offset, data)
 
             self.client.send(CMD_SET_PACKED_RANGE, payload)
-
-            fr = self.client.read_frame()
-
-            if fr.cmd == RSP_ACK:
-                self.log_msg(
-                    "Random PACKED_RANGE ACK "
-                    f"offset={offset}, count={count}, payload_bytes={len(payload)}"
-                )
-            elif fr.cmd == RSP_NACK:
-                self.log_msg("Random PACKED_RANGE NACK")
-            else:
-                self.log_msg(f"Random PACKED_RANGE unexpected response: 0x{fr.cmd:02X}")
+            self.log_msg(
+                "Random PACKED_RANGE TX "
+                f"offset={offset}, count={count}, payload_bytes={len(payload)}"
+            )
 
         except Exception as e:
             self.log_msg(f"Random PACKED_RANGE error: {e}")
             self.random_range_btn.setChecked(False)
+
+
+    def enter_interactive_mode(self):
+        try:
+            self.send_command(CMD_SET_MODE, b"\x01", "enter interactive mode")
+        except Exception as e:
+            self.log_msg(f"Interactive mode error: {e}")
+
+    def send_interactive_values(self):
+        try:
+            clock_value = (self.clock_hour_spin.value() << 8) | self.clock_min_spin.value()
+            mfa_clock_value = (self.mfa_hour_spin.value() << 8) | self.mfa_min_spin.value()
+            fields = [
+                (IF_MAX_RPM, self.max_rpm_spin.value()),
+                (IF_SPEED, self.speed_spin.value()),
+                (IF_RPM, self.rpm_spin.value()),
+                (IF_FUEL, self.fuel_spin.value()),
+                (IF_COOLANT, self.coolant_spin.value()),
+                (IF_MILEAGE, self.mileage_spin.value()),
+                (IF_MFA_TYPE, self.mfa_type_spin.value()),
+                (IF_MFA_NUMBER, self.mfa_number_spin.value()),
+                (IF_CLOCK, clock_value),
+                (IF_MFA_CLOCK, mfa_clock_value),
+                (IF_DOT, int(self.dot_chk.isChecked())),
+                (IF_FLOAT_DOT, int(self.float_dot_chk.isChecked())),
+                (IF_REFUEL_SIGN, int(self.refuel_chk.isChecked())),
+            ]
+            payload = pack_interactive_fields(fields)
+            self.send_command(CMD_INTERACTIVE_SET, payload, "interactive compressed update")
+        except Exception as e:
+            self.log_msg(f"Interactive update error: {e}")
 
     def closeEvent(self, event):
         self.random_timer.stop()
