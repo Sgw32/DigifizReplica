@@ -2,6 +2,11 @@
 #ifndef KLINE_H
 #define KLINE_H
 
+/**
+ * @file kline.h
+ * @brief K-Line (ISO 9141) communication interface for ECU data.
+ */
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -31,8 +36,22 @@ typedef struct {
     kline_message_t rx_msg;
 } kline_state_t;
 
+/**
+ * @brief Initialize K-Line UART and communication state machine.
+ */
 void initKline(void);
+
+/**
+ * @brief Send raw K-Line frame bytes.
+ *
+ * @param data Pointer to frame payload.
+ * @param len Number of bytes to transmit.
+ */
 void kline_send(const uint8_t *data, uint8_t len);
+
+/**
+ * @brief Poll and process incoming K-Line response data.
+ */
 void kline_handle_response(void);
 
 #endif // KLINE_H

@@ -49,7 +49,6 @@ float airB = 4000;
 float V0;
 float gasolineLevel,gasolineLevelFiltered,gasolineLevelFiltered05hour;
 float tauCoolant, tauGasoline, tauAir, tauOil,tauGasolineConsumption;
-float consumptionLevel;
 float fuelPressure = 0.0f;
 float barometerPressure = 0.0f;
 float widebandLambdaAFR = 0.0f;
@@ -88,6 +87,26 @@ adc_cali_handle_t adc1_cali_chan5_handle = NULL;
 adc_cali_handle_t adc1_cali_chan6_handle = NULL;
 adc_cali_handle_t adc1_cali_chan7_handle = NULL;
 static DigifizSensorData adc_raw;
+
+static float calculateDividerResistance(float raw_adc, float pullup_resistance, float series_resistance)
+{
+    if ((raw_adc <= 0.0f) || (raw_adc >= ADC_NTC_INCORRECT_UPPER_BOUND)) {
+        return NAN;
+    }
+
+    float denominator = ADC_UPPER_BOUND - raw_adc;
+    if (denominator <= 0.0f) {
+        return NAN;
+    }
+
+    float measured_total = pullup_resistance * raw_adc / denominator;
+    float sensor_resistance = measured_total - series_resistance;
+    if (sensor_resistance <= 0.0f) {
+        return NAN;
+    }
+
+    return sensor_resistance;
+}
 
 // Read ADC values from multiple pins
 void read_adc_values() {
@@ -298,10 +317,27 @@ void processADC()
     processOilTemperature();
     processAmbientTemperature();
     processBrightnessLevel();
-    processConsumptionSensor();
+
     processFuelPressure();
     processBarometer();
     processWidebandLambda();
+
+    // switch (digifiz_parameters.mfa_sensor.value) {
+    //     case MFA_SENSOR_CONSUMPTION:
+    //         return getFuelConsumption();
+    //         break;
+    //     case MFA_SENSOR_BAROMETER:
+    //         return getBarometerPressure();
+    //         break;
+    //     case MFA_SENSOR_LAMBDA_AFR:
+    //         return getWidebandLambdaAFR();
+    //         break;
+    //     case MFA_SENSOR_FUEL_PRESSURE:
+    //         return getFuelPressure();
+    //         break;
+    //     default:
+    //         break;;
+    // }
     //ESP_LOGI(LOG_TAG, "process ADC ended");
 }
 
@@ -478,7 +514,7 @@ float getAmbientTemperature()
 // Get the fuel consumption
 float getFuelConsumption() 
 {
-    return constrain(consumptionLevel,0,1.0f);
+    return (digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]*100.0f);
 }
 
 // Get the intake pressure
@@ -493,8 +529,22 @@ float getIntakePressure() {
 #ifdef FUEL_CONSUMPTION_TESTMODE
    intp = 512;
 #endif
-   
-    return 84749.0f-20152.0f*intp/ADC_UPPER_BOUND*5.0f;
+
+    float voltage = intp / ADC_UPPER_BOUND * 3.3f;
+    float vLow = digifiz_parameters.Viplow.value;
+    float vHigh = digifiz_parameters.Viphigh.value;
+    float pLow = digifiz_parameters.IPlow.value;
+    float pHigh = digifiz_parameters.IPhigh.value;
+
+    float pressure = pLow;
+    if (fabsf(vHigh - vLow) > 0.0001f)
+    {
+        pressure = pLow + (voltage - vLow) * (pHigh - pLow) / (vHigh - vLow);
+    }
+
+    float pressureMin = fminf(pLow, pHigh);
+    float pressureMax = fmaxf(pLow, pHigh);
+    return constrain(pressure, pressureMin, pressureMax);
 }
 
 // Get the current intake fuel consumption
@@ -690,8 +740,6 @@ void processGasLevel() {
             faulty_status.fuel_faulty += 1;
         return;
     }
-
-    //TODO do not set faulty immediately
     if (R2 < lowerFaultBound)
     {
         if (faulty_status.fuel_faulty < 255)
@@ -756,14 +804,6 @@ void processAmbientTemperature() {
 }
 
 
-void processConsumptionSensor() {
-    float raw = (float)adc_raw.intakePressRawADCVal;
-    // if (digifiz_parameters.mfa_sensor.value == 2)
-    // {
-    //     raw = ADC_UPPER_BOUND / 2.0f;
-    // }
-    consumptionLevel += 0.05f * ((raw / ADC_UPPER_BOUND) - consumptionLevel);
-}
 
 void processFuelPressure() {
     float raw = (float)adc_raw.fuelPressRawADCVal;
@@ -772,30 +812,46 @@ void processFuelPressure() {
     //     raw = ADC_UPPER_BOUND / 2.0f;
     // }
     float voltage = (raw / ADC_UPPER_BOUND) * 3.3f;
-    fuelPressure += 0.05f * (constrain(voltage * (10.0f / 3.3f), 0.0f, 10.0f) - fuelPressure);
+
+    float vLow = digifiz_parameters.Vfplow.value;
+    float vHigh = digifiz_parameters.Vfphigh.value;
+    float pLow = digifiz_parameters.FPlow.value;
+    float pHigh = digifiz_parameters.FPhigh.value;
+
+    float pressure = pLow;
+    if (fabsf(vHigh - vLow) > 0.0001f)
+    {
+        pressure = pLow + (voltage - vLow) * (pHigh - pLow) / (vHigh - vLow);
+    }
+
+    float pressureMin = fminf(pLow, pHigh);
+    float pressureMax = fmaxf(pLow, pHigh);
+    pressure = constrain(pressure, pressureMin, pressureMax);
+    fuelPressure += 0.05f * (pressure - fuelPressure);
 }
 
 void processBarometer() {
     float raw = (float)adc_raw.fuelPressRawADCVal;
     float voltage = (raw / ADC_UPPER_BOUND) * 3.3f;
 
-    // float vLow = digifiz_parameters.Vblow.value;
-    // float vHigh = digifiz_parameters.Vbhigh.value;
-    // float bLow = digifiz_parameters.Blow.value;
-    // float bHigh = digifiz_parameters.Bhigh.value;
+    float vLow = digifiz_parameters.Vblow.value;
+    float vHigh = digifiz_parameters.Vbhigh.value;
+    float bLow = digifiz_parameters.Blow.value;
+    float bHigh = digifiz_parameters.Bhigh.value;
 
-    // float pressure = bLow;
-    // if (fabsf(vHigh - vLow) > 0.0001f)
-    // {
-    //     pressure = bLow + (voltage - vLow) * (bHigh - bLow) / (vHigh - vLow);
-    // }
-    // pressure = constrain(pressure, bHigh, bLow);
-    // barometerPressure += 0.001f * (pressure - barometerPressure);
+    float pressure = bLow;
+    if (fabsf(vHigh - vLow) > 0.0001f)
+    {
+        pressure = bLow + (voltage - vLow) * (bHigh - bLow) / (vHigh - vLow);
+    }
+    pressure = constrain(pressure, bLow, bHigh);
+    barometerPressure += 0.05f * (pressure - barometerPressure);
 
-    barometerPressure += 0.05f * (constrain((voltage - 0.045f) * 8.0f / (0.409f - 0.045f), 0.0f, 8.0f) - barometerPressure);
+    //barometerPressure += 0.05f * (constrain((voltage - 0.045f) * 8.0f / (0.409f - 0.045f), 0.0f, 8.0f) - barometerPressure);
 }
 
 void processWidebandLambda() {
+    //Wideband lambda uses intakePressRawADCVal as input
     float raw = (float)adc_raw.intakePressRawADCVal;
     float voltage = (raw / ADC_UPPER_BOUND) * 3.3f;
 
@@ -965,4 +1021,20 @@ int getIntakePressRawADCVal(void) {
 
 int getFuelPressRawADCVal(void) {
     return adc_raw.fuelPressRawADCVal;
+}
+
+float getCoolantResistance(void) {
+    return calculateDividerResistance((float)adc_raw.coolantRawADCVal, R2_Coolant, 0.0f);
+}
+
+float getOilResistance(void) {
+    return calculateDividerResistance((float)adc_raw.oilTempRawADCVal, R2_Oil, Rseries_Oil);
+}
+
+float getAmbientResistance(void) {
+    return calculateDividerResistance((float)adc_raw.ambTempRawADCVal, R2_Ambient, 0.0f);
+}
+
+float getFuelLevelResistance(void) {
+    return calculateDividerResistance((float)adc_raw.fuelRawADCVal, 220.0f, 0.0f);
 }

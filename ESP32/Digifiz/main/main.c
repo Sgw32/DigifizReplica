@@ -207,7 +207,8 @@ void digifizLoop(void *pvParameters) {
         digifiz_status.mileage+=spd_m;
         digifiz_status.daily_mileage[digifiz_parameters.mfaBlock.value]+=spd_m;
 #ifdef AVERAGE_CONSUMPTION_L100KM
-        digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value] += 0.01f*(getCurrentIntakeFuelConsumption()-digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]);//getFuelConsumption()*digifiz_parameters.tankCapacity;
+        digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value] += 
+                0.01f*(getCurrentIntakeFuelConsumption()-digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]);//getFuelConsumption()*digifiz_parameters.tankCapacity;
 #endif
 #ifdef CURRENT_CONSUMPTION_L100KM
         digifiz_parameters.averageConsumption[digifiz_parameters.mfaBlock.value] = getCurrentIntakeFuelConsumption();//getFuelConsumption()*digifiz_parameters.tankCapacity;
@@ -312,14 +313,14 @@ void displayUpdate(void *pvParameters) {
                 gear_refuel_show = false;
                 gear_blink_toggles = 0;
                 if (!refuel_low_active) {
-                    setRefuelGear(gear_refuel_value);
+                    setRefuelGear((int8_t)gear_refuel_value);
                 }
             } else {
                 gear_blink_value = current_gear;
                 gear_blink_toggles = 5; // show gear three times
                 gear_blink_last_millis = millis();
                 gear_blink_show = true;
-                setSpeedometerGear(gear_blink_value);
+                setSpeedometerGear((int8_t)gear_blink_value);
             }
         }
 
@@ -329,7 +330,7 @@ void displayUpdate(void *pvParameters) {
 #endif
 
         displaySpeedCnt++;
-        if (displaySpeedCnt==2 && gear_blink_toggles==0) // 2 Hz loop(as on original Digifiz)
+        if (displaySpeedCnt==16) // 2 Hz loop(as on original Digifiz)
         {
             setSpeedometerData((uint16_t)spd_m_speedometer);
             current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;
@@ -350,9 +351,7 @@ void displayUpdate(void *pvParameters) {
             uint32_t now = millis();
             if (now - gear_blink_last_millis >= 250) {
                 gear_blink_last_millis = now;
-                if (gear_blink_show) {
-                    setSpeedometerData((uint16_t)spd_m_speedometer);
-                } else {
+                if (!gear_blink_show) {
                     setSpeedometerGear(gear_blink_value);
                 }
                 gear_blink_show = !gear_blink_show;
@@ -603,6 +602,7 @@ void on_cpu_1(void *pvParameters)
     initRegInOut();
     //CRUCIAL! without it power is not set
     device_sleep_dump();
+    device_power_enable(true);
     // Check if MFA MODE button is held during startup for factory reset
     {
         regin_read(digifiz_reg_in.bytes);
@@ -626,6 +626,8 @@ void on_cpu_1(void *pvParameters)
             }
         }
     }
+    device_sleep_dump();
+
     initVehicleJSON();
     ble_module_init();
     //initKline();

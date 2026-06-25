@@ -1,6 +1,11 @@
 #ifndef SPEEDOMETER_H
 #define SPEEDOMETER_H
 
+/**
+ * @file speedometer.h
+ * @brief Vehicle speed pulse counting interface.
+ */
+
 #include <stdint.h>
 #include <math.h>
 #include "esp_log.h"
@@ -24,7 +29,16 @@
 //#define SPD_M_WINDOW_DURATION 1.0  // seconds
 #define SPD_M_FILTER_LENGTH 1023  // APB @ 80MHz, limits to < 39,100 Hz
 
+/**
+ * @brief Initialize speedometer pulse counter and sampling task.
+ */
 void initSpeedometer();
+
+/**
+ * @brief Read latest filtered vehicle speed sample.
+ *
+ * @return uint32_t Speed value in project-specific raw units.
+ */
 uint32_t readLastSpeed();
 
 #endif

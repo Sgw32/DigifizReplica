@@ -71,26 +71,49 @@
 
 #define USE_DISPLAY_LEDS
 
+/**
+ * @brief Initializes display drivers, buffers, and startup animation state.
+ */
 void initDisplay(); 
+/// @brief Updates tachometer pointer/segments from engine RPM.
 void setRPM(int rpmdata);
+/// @brief Writes current time into the primary clock area.
 void setClockData(uint8_t clock_hours,uint8_t clock_minutes);
+/// @brief Writes current time into the MFA clock area.
 void setMFAClockData(uint8_t mfa_clock_hours,uint8_t mfa_clock_minutes);
+/// @brief Displays a signed numeric value on MFA segment area.
 void setMFADisplayedNumber(int16_t data);
+/// @brief Displays fuel quantity.
 void setFuel(uint8_t litres);
+/// @brief Displays raw RPM value digits.
 void setRPMData(uint16_t data);
+/// @brief Displays current vehicle speed digits.
 void setSpeedometerData(uint16_t data);
+/// @brief Displays coolant temperature indicator.
 void setCoolantData(uint16_t data);
+/// @brief Enables/disables the primary decimal separator.
 void setDot(bool value);
+/// @brief Enables/disables the auxiliary decimal separator.
 void setFloatDot(bool value);
+/// @brief Displays odometer mileage.
 void setMileage(uint32_t mileage);
+/// @brief Selects current MFA item type.
 void setMFAType(uint8_t mfaType);
+/// @brief Renders current MFA item type label/icon.
 void displayMFAType(uint8_t mfaType);
+/// @brief Selects current MFA block.
 void setMFABlock(uint8_t block);
+/// @brief Sets display brightness level.
 void setBrightness(uint8_t levels);
+/// @brief Shows/hides refuel indicator.
 void setRefuelSign(bool onoff);
+/// @brief Shows/hides check-engine indicator.
 void setCheckEngine(bool onoff);
+/// @brief Controls LCD/cluster backlight output.
 void setBacklight(bool onoff);
+/// @brief Displays service/status byte in service area.
 void setServiceDisplayData(uint8_t data);
+/// @brief Triggers display self-test/startup effect.
 void fireDigifiz();
 #endif
 #endif
