@@ -14,7 +14,11 @@ extern "C" {
 
 #include "setup.h"
 
+#ifdef DIGIFIZ_REFIZ_DISPLAY
 
+#include "params_list_refiz.h"
+
+#else
 // typedef union RPMOptions
 // {
 //     uint8_t packed_options;       // 1 byte
@@ -915,6 +919,8 @@ extern "C" {
         .max = 400, \
     ) \
 
+
+#endif
 
 #ifdef __cplusplus
 }

@@ -84,6 +84,9 @@ void checkEmergency(int mRPM)
       #ifdef DIGIFIZ_NEXT_DISPLAY
         setOilIndicator(0);
       #endif
+      #ifdef DIGIFIZ_REFIZ_DISPLAY
+        setOilIndicator(0);
+      #endif
         buzzerOff();
     }
     if (emergency_state==1)
@@ -97,6 +100,9 @@ void checkEmergency(int mRPM)
       #ifdef DIGIFIZ_NEXT_DISPLAY
         setOilIndicator(1);
       #endif
+      #ifdef DIGIFIZ_REFIZ_DISPLAY
+        setOilIndicator(1);
+      #endif
         buzzerOff();
     }
     if (emergency_state==3)
@@ -108,6 +114,9 @@ void checkEmergency(int mRPM)
         setLCDOilIndicator(true);
       #endif
       #ifdef DIGIFIZ_NEXT_DISPLAY
+        setOilIndicator(1);
+      #endif
+      #ifdef DIGIFIZ_REFIZ_DISPLAY
         setOilIndicator(1);
       #endif
         buzzerOn();

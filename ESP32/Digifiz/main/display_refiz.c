@@ -260,13 +260,13 @@ static void refiz_sync_payload_from_display(void)
 
     const uint8_t *display_bits = (const uint8_t *)&display;
     
-    for (uint8_t bit = 28; bit < 78; bit++)
-    {
-        if (display_bits[bit / 8] & (1 << (bit % 8)))
-        {
-            rpm_segments_on++;
-        }
-    }
+    // for (uint8_t bit = 28; bit < 78; bit++)
+    // {
+    //     if (display_bits[bit / 8] & (1 << (bit % 8)))
+    //     {
+    //         rpm_segments_on++;
+    //     }
+    // }
 
     //rpm_segments_on = 71;
     for (uint8_t i = 0; i < 71; i++)
@@ -526,7 +526,7 @@ ColoringScheme digifizStandard = {
             .b = 2,
             .end_segment = 2,
             .type = COLOR_SCHEME_BACKLIGHT,
-            .basecolor_enabled = 2
+            .basecolor_enabled = 1
         },
         {
             .r = 20,
@@ -1501,6 +1501,7 @@ void processIndicators()
     refiz_display.foglight_ind1 = filter_general_indicator(&foglight1_indicator_filter, foglight1_raw);
     refiz_display.glassheat_ind = filter_general_indicator(&glassheat_indicator_filter, glheat_raw);
     refiz_display.farlight_ind = digifiz_reg_in.farLightsInd ? 0 : 1;
+    refiz_display.lights_on_ind = digifiz_reg_in.lightsInd ? 0 : 1;
     refiz_display.battery_ind = digifiz_reg_in.batteryInd ? 0 : 1;
 }
 
@@ -1670,7 +1671,7 @@ void fireDigifiz() {
         effect_state.hue = digifiz_parameters.ledEffect_hue.value;
         effect_state.saturation = digifiz_parameters.ledEffect_saturation.value;
         effect_state.value = digifiz_parameters.ledEffect_value.value;
-        for (uint16_t i = 0; i != DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS; i++)
+        for (uint16_t i = 0; i != sizeof(RefizSegmentsDisplay); i++)
         {
             for (uint16_t j = 0; j != 8; j++)
             {
@@ -1702,7 +1703,7 @@ void fireDigifiz() {
     }
     else
     {
-        for (uint16_t i = 0; i != DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS; i++)
+        for (uint16_t i = 0; i != sizeof(RefizSegmentsDisplay); i++)
         {
             for (uint16_t j = 0; j != 8; j++)
             {
