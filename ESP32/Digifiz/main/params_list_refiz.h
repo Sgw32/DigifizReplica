@@ -365,8 +365,8 @@ extern "C" {
         brightnessLevel, \
         .p_name = "Brightness level", \
         .p_info = "Manual brightness level.",\
-        .value = 60, \
-        .max = 70, \
+        .value = 100, \
+        .max = 100, \
     ) \
     PARAM(  \
         U16, \

@@ -1727,6 +1727,10 @@ void fireDigifiz() {
                     led_strip_set_pixel(led_strip, led_num, ((uint32_t)r*((uint32_t)backlightLevel))/100,
                         ((uint32_t)g*((uint32_t)backlightLevel))/100,
                         ((uint32_t)b*((uint32_t)backlightLevel))/100);
+
+                    // led_strip_set_pixel(led_strip, led_num, ((uint32_t)r),
+                    //     ((uint32_t)g),
+                    //     ((uint32_t)b));
                 }
                 else
                 {
