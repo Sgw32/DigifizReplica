@@ -34,8 +34,8 @@ const uint8_t coolantChannel = ADC_CHANNEL_0; // Coolant temp sensor
 const uint8_t gasolineChannel = ADC_CHANNEL_1; //Gasoline sensor
 const uint8_t oilChannel = ADC_CHANNEL_7; //Oil temp sensor
 const uint8_t airChannel = ADC_CHANNEL_3; //Air temp sensor
-const uint8_t intakePressureChannel = ADC_CHANNEL_5; //Manifold pressure sensor pin
-const uint8_t fuelPressureChannel = ADC_CHANNEL_6; //Manifold pressure sensor pin
+const uint8_t intakePressureChannel = ADC_CHANNEL_5; //Manifold pressure sensor pin "24PC+"
+const uint8_t fuelPressureChannel = ADC_CHANNEL_6; //Fuel pressure sensor pin "24PC-"
 
 float logR2 = 0.0f;
 float R2 = 0.0f;

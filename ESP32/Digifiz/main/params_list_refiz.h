@@ -253,7 +253,7 @@ extern "C" {
         rpmCoefficient, \
         .p_name = "RPM Coefficient", \
         .p_info = "Coefficient for RPM calibration",\
-        .value = 1500, \
+        .value = 3000, \
     ) \
     PARAM(  \
         U16, \
@@ -459,7 +459,7 @@ extern "C" {
         .p_name = "MFA sensor type", \
         .p_info = "0=consumption, 1=barometer, 2=wideband lambda, 3=fuel pressure",\
         .value = 0, \
-        .max = 3, \
+        .max = 5, \
     ) \
     PARAM(  \
         U8, \
@@ -467,7 +467,7 @@ extern "C" {
         .p_name = "MFA clock sensor type", \
         .p_info = "0=clock, 1=barometer, 2=wideband lambda, 3=fuel pressure",\
         .value = 0, \
-        .max = 3, \
+        .max = 5, \
     ) \
     PARAM(  \
         FLOAT, \
@@ -546,7 +546,7 @@ extern "C" {
         Viplow, \
         .p_name = "Intake pressure V low", \
         .p_info = "Low voltage calibration point for intake pressure",\
-        .value = 0.0f, \
+        .value = 0.9f, \
         .min = 0.0f, \
         .max = 3.3f, \
     ) \
@@ -555,7 +555,7 @@ extern "C" {
         Viphigh, \
         .p_name = "Intake pressure V high", \
         .p_info = "High voltage calibration point for intake pressure",\
-        .value = 3.3f, \
+        .value = 2.35f, \
         .min = 0.0f, \
         .max = 3.3f, \
     ) \
@@ -564,7 +564,7 @@ extern "C" {
         IPlow, \
         .p_name = "Intake pressure low", \
         .p_info = "Pressure at low voltage point",\
-        .value = 84749.0f, \
+        .value = 90000.0f, \
         .min = -20000.0f, \
         .max = 250000.0f, \
     ) \
@@ -573,7 +573,7 @@ extern "C" {
         IPhigh, \
         .p_name = "Intake pressure high", \
         .p_info = "Pressure at high voltage point",\
-        .value = 18247.4f, \
+        .value = 1000.0f, \
         .min = -20000.0f, \
         .max = 250000.0f, \
     ) \

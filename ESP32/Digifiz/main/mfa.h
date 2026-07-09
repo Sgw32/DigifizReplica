@@ -119,6 +119,8 @@ float getMFAClockSensorValue();
 /** @brief Enables temporary uptime display page when non-zero. */
 extern uint8_t uptimeDisplayEnabled;
 
+void MFAResetMillis();
+
 #ifdef __cplusplus
 }
 #endif

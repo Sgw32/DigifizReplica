@@ -7,6 +7,7 @@
 #include "setup.h"
 #include "display_next.h"
 #include "digifiz_watchdog.h"
+#include "mfa.h"
 #include <stdio.h>
 
 #include "freertos/FreeRTOS.h"
@@ -107,6 +108,7 @@ bool device_sleep_check() {
 #ifndef DEBUG_SLEEP_DISABLE
         resetBrightness();
 #endif
+        MFAResetMillis();
     }
     gpio_set_level(POWER_OUT_PIN, sleepMode ? 0 : 1);
     return sleepMode;

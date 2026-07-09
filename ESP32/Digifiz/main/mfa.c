@@ -54,6 +54,8 @@ static void addSystemTime(int hours, int minutes)
     settimeofday(&tv, NULL);
 }
 #endif
+
+static uint32_t bootMillis = 0;
 // Initialize the MFA (Multi-Function Display)
 void initMFA() {
     // Implementation placeholder
@@ -67,7 +69,13 @@ void initMFA() {
     gpio_config(&io_conf);
     // Set the GPIO as a input
     gpio_set_direction(TOUCH_PIN, GPIO_MODE_INPUT);
+    bootMillis = millis();
     ESP_LOGI(LOG_TAG, "initMFA ended");
+}
+
+void MFAResetMillis()
+{
+    bootMillis = millis();
 }
 
 // Process MFA data
@@ -77,8 +85,8 @@ void processMFA()
     bMFABlock = digifiz_reg_in.mfaBlock;
     bMFAReset = digifiz_reg_in.mfaReset;
 #ifdef DIGIFIZ_REFIZ_DISPLAY
-    bClockMinutes = digifiz_reg_in.clockMinutes;
-    bClockHours = digifiz_reg_in.clockHours;
+    bClockMinutes = !digifiz_reg_in.clockMinutes;
+    bClockHours = !digifiz_reg_in.clockHours;
 #endif
     if (digifiz_parameters.signalOptions_enable_touch_sensor.value)
     {
@@ -90,7 +98,7 @@ void processMFA()
     }
 
     // Block MFA input actions shortly after boot to prevent spurious events
-    if (millis() < 3000)
+    if ((millis()-bootMillis) < 3000)
     {
         prevMFAMode = bMFAMode;
         prevMFABlock = bMFABlock;
