@@ -467,6 +467,7 @@
 	<a href="#" onclick="selTab(event,'Control')" class="tablinks">Control</a>
 	<a href="#" onclick="selTab(event,'Settings')" class="tablinks">Settings</a>
 	<a href="#" onclick="selTab(event,'Colors')" class="tablinks">Colors</a>
+	<a href="#" onclick="selTab(event,'Diagnostics')" class="tablinks">Diagnostics</a>
 	<a href="#" onclick="selTab(event,'About')" class="tablinks">About</a>
 	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
 		<span class="hamburger"></span>
@@ -575,6 +576,23 @@
     			<button class="cl01" type="button" id="importScheme">Import from File</button>
 			</div>
 			<input type="file" id="importFile" style="display: none">
+		</div>
+	</div>
+</div>
+
+<div id="Diagnostics" class="tabcontent">
+	<div class="tci">
+		<div class="hdr">ReFIZ segment diagnostics</div>
+		<div class="cl1">
+			<p style="font-size: 1rem;">Diagnostic mode freezes the LCD pattern. Select each logical segment that should be on, then apply the pattern.</p>
+			<label><input type="checkbox" id="refizDiagnosticEnabled"> Enable diagnostic mode</label>
+			<div class="mfa-buttons" style="margin: 10px 0;">
+				<button type="button" id="refizAllOn">Select all</button>
+				<button type="button" id="refizAllOff">Clear all</button>
+				<button type="button" id="refizApply">Apply pattern</button>
+			</div>
+			<div id="refizSegments" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:4px;text-align:left;"></div>
+			<div id="refizDiagnosticStatus" role="status" style="margin-top:10px;"></div>
 		</div>
 	</div>
 </div>
@@ -924,6 +942,45 @@ function myFunction() {
   }
 }
 document.getElementById("defaultTab").click();
+</script>
+
+<script>
+const refizSegments = document.getElementById('refizSegments');
+for (let segment = 0; segment <= 260; segment++) {
+	const label = document.createElement('label');
+	const input = document.createElement('input');
+	input.type = 'checkbox';
+	input.dataset.segment = segment;
+	label.append(input, ` ${segment}`);
+	refizSegments.appendChild(label);
+}
+
+function setAllRefizSegments(checked) {
+	refizSegments.querySelectorAll('input').forEach(input => input.checked = checked);
+}
+
+document.getElementById('refizAllOn').addEventListener('click', () => setAllRefizSegments(true));
+document.getElementById('refizAllOff').addEventListener('click', () => setAllRefizSegments(false));
+document.getElementById('refizApply').addEventListener('click', async () => {
+	const status = document.getElementById('refizDiagnosticStatus');
+	const segments = Array.from(refizSegments.querySelectorAll('input:checked'),
+		input => Number(input.dataset.segment));
+	status.textContent = 'Applying…';
+	try {
+		const response = await fetch('/refiz_diagnostic', {
+			method: 'POST',
+			headers: {'Content-Type': 'application/json'},
+			body: JSON.stringify({
+				enabled: document.getElementById('refizDiagnosticEnabled').checked,
+				segments
+			})
+		});
+		if (!response.ok) throw new Error(await response.text());
+		status.textContent = `Applied ${segments.length} enabled segment(s).`;
+	} catch (error) {
+		status.textContent = `Could not apply diagnostics: ${error.message}`;
+	}
+});
 </script>
 
 <script>
