@@ -779,6 +779,15 @@ extern "C" {
     ) \
     PARAM(  \
         U16, \
+        speedDisplayUpdateDivider, \
+        .p_name = "Speed display update divider", \
+        .p_info = "Number of 32 Hz main-loop cycles between displayed speed updates",\
+        .value = 16, \
+        .min = 1, \
+        .max = 320, \
+    ) \
+    PARAM(  \
+        U16, \
         coolantThermistorPullUpRes, \
         .p_name = "Coolant pull-up", \
         .p_info = "Pull-up resistance for coolant temperature sensor",\

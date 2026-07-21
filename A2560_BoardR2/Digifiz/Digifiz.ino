@@ -31,7 +31,7 @@ extern uint8_t tr_status;
 #endif
 
 int saveParametersCounter = 0;
-uint16_t displaySpeedCnt = 0;
+uint16_t displaySpeedCounter = 0;
 //Speed related data
 uint32_t spd_m = 0;
 float spd_m_speedometer = 0;
@@ -158,7 +158,8 @@ ISR(TIMER4_COMPA_vect)
 {
   if (testMode)
   {
-    if (displaySpeedCnt==3) // 2 Hz loop(as on original Digifiz)  
+    // Keep test-mode values in step with the configured speed display cadence.
+    if ((displaySpeedCounter + 1) >= digifiz_parameters.speedDisplayUpdateDivider.value)
     {
       averageRPM+=50;
       if (averageRPM>8000)
@@ -257,14 +258,15 @@ ISR(TIMER4_COMPA_vect)
 #endif  
   }
 
-  displaySpeedCnt++;
-  if (displaySpeedCnt==4) // 2 Hz loop(as on original Digifiz)  
+  displaySpeedCounter++;
+  // The divider defaults to 4, matching the original Digifiz's 2 Hz update rate.
+  if (displaySpeedCounter >= digifiz_parameters.speedDisplayUpdateDivider.value)
   {
     setSpeedometerData((uint16_t)spd_m_speedometer);
     //setSpeedometerData(digifiz_parameters.mfaState.value);
     current_averageSpeed1 += (spd_m_speedometer-current_averageSpeed1)*0.01;
     current_averageSpeed2 += (spd_m_speedometer-current_averageSpeed2)*0.01;
-    displaySpeedCnt = 0;
+    displaySpeedCounter = 0;
   }
   if (getBuzzerEnabled())
   {
