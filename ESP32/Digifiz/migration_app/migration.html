@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Welcome to Digifiz Next</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #031126; color: white; }
+    .scene { position: fixed; inset: 0; overflow: hidden; background: linear-gradient(155deg,#168be2,#125da9 55%,#0a326d); animation: evening 5s 3s ease-in forwards; }
+    .sky-glow { position: absolute; width: 45vmax; height: 45vmax; right: -10vmax; top: -20vmax; border-radius: 50%; background: radial-gradient(circle,#b9e8ff70,transparent 65%); }
+    .horizon { position: absolute; inset: 55% 0 24%; background: linear-gradient(165deg,transparent 32%,#0a2850 33% 49%,#071b38 50%); opacity: .72; }
+    .road { position: absolute; inset: 76% 0 0; background: linear-gradient(#172435,#07101e); border-top: 3px solid #7892a7; }
+    .road::after { content:""; position:absolute; left:0; right:0; top:50%; height:4px; background:repeating-linear-gradient(90deg,#dbeeff 0 8vw,transparent 8vw 15vw); opacity:.7; animation: road 1s linear infinite; }
+    .car { position:absolute; left:50%; bottom:18%; width:min(520px,74vw); height:min(180px,25vw); transform:translateX(-50%); animation: arrive 2.7s cubic-bezier(.16,.8,.24,1) both; filter:drop-shadow(0 22px 18px #0009); }
+    .car-body { position:absolute; left:4%; right:2%; bottom:18%; height:48%; border-radius:42% 22% 13% 10%/50% 55% 25% 30%; background:linear-gradient(165deg,#d8263c,#8b071e 58%,#3d0611); border-bottom:7px solid #17040a; }
+    .car-body::before { content:""; position:absolute; left:23%; top:-60%; width:53%; height:75%; background:linear-gradient(145deg,#a5d7ed 5%,#18334c 52%,#081624); clip-path:polygon(19% 0,75% 0,100% 100%,0 100%); border:6px solid #780719; }
+    .car-body::after { content:""; position:absolute; right:4%; top:28%; width:19%; height:20%; border-radius:50% 35% 30% 50%; background:linear-gradient(90deg,#fff7b8,#eaffff); box-shadow:0 0 25px #d9f5ff; }
+    .bumper { position:absolute; right:0; bottom:15%; width:28%; height:16%; background:#111a22; border-radius:8px 16px 8px 4px; border-top:3px solid #546473; }
+    .grille { position:absolute; right:19%; bottom:30%; width:21%; height:20%; border-radius:4px; background:repeating-linear-gradient(90deg,#111 0 5px,#38414a 5px 7px); transform:skewX(-10deg); }
+    .wheel { position:absolute; bottom:0; width:21%; aspect-ratio:1; border-radius:50%; background:radial-gradient(circle,#b9c4ce 0 13%,#232d39 14% 35%,#05070a 36% 62%,#1c2229 63% 72%,#030405 73%); border:3px solid #090a0c; animation:spin .65s linear 4; }
+    .wheel.left { left:15%; } .wheel.right { right:12%; }
+    .spoiler { position:absolute; left:4%; bottom:64%; width:23%; height:8%; border-radius:5px; background:#390710; transform:skewX(14deg); }
+    .content { position:relative; z-index:2; width:min(760px,calc(100% - 32px)); margin:0 auto; min-height:100vh; padding:9vh 0 50px; text-align:center; opacity:0; animation:reveal .9s 5.8s forwards; }
+    .content::before { content:""; position:fixed; inset:0; z-index:-1; background:#020a17a1; backdrop-filter:blur(10px); }
+    .eyebrow { color:#70d7ff; font-weight:800; letter-spacing:.18em; text-transform:uppercase; font-size:.72rem; }
+    h1 { margin:.45rem 0 0; font-size:clamp(2.2rem,7vw,4.7rem); line-height:.95; letter-spacing:-.055em; text-shadow:0 5px 35px #000; }
+    h2 { margin:.65rem 0 2.1rem; color:#a9dfff; font-size:clamp(1.1rem,3vw,1.65rem); font-weight:500; }
+    .card { padding:clamp(20px,4vw,34px); text-align:left; border:1px solid #8fddff3d; border-radius:24px; background:linear-gradient(135deg,#09264dcc,#07162dd9); box-shadow:0 22px 70px #0008,inset 0 1px #ffffff22; }
+    .card h3 { margin:0 0 15px; color:#80dcff; font-size:1.1rem; }
+    ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; list-style:none; margin:0; padding:0; }
+    li { padding:12px 14px; border-radius:13px; background:#ffffff0b; border:1px solid #ffffff0e; opacity:0; transform:translateY(12px); animation:item .45s forwards; }
+    li:nth-child(1){animation-delay:7s} li:nth-child(2){animation-delay:7.45s} li:nth-child(3){animation-delay:7.9s} li:nth-child(4){animation-delay:8.35s} li:nth-child(5){animation-delay:8.8s} li:nth-child(6){animation-delay:9.25s}
+    .action { margin-top:24px; text-align:center; opacity:0; transform:translateY(12px); animation:item .7s 10.6s forwards; }
+    .action h3 { margin:0; font-size:1.65rem; color:white; }
+    .action p { margin:6px 0 18px; color:#b9d2e8; }
+    .upload { display:flex; gap:9px; padding:8px; border-radius:16px; background:#020b19b5; border:1px solid #5fcaff45; }
+    input[type=file] { min-width:0; flex:1; padding:11px; color:#cfe9ff; }
+    input::file-selector-button, button { padding:10px 16px; border:0; border-radius:10px; color:white; background:#17436b; font-weight:700; cursor:pointer; }
+    button { background:linear-gradient(135deg,#20a8f4,#2468ed); box-shadow:0 7px 22px #1479dc66; white-space:nowrap; }
+    button:disabled { opacity:.55; cursor:wait; }
+    #status { min-height:1.4em; margin:12px 0 0; color:#8de0ff; }
+    @keyframes evening { to { background:linear-gradient(155deg,#073a70,#071d44 55%,#030b20); } }
+    @keyframes arrive { from { transform:translateX(-180vw) scale(.75); } 70% { transform:translateX(-42%) scale(1.02); } to { transform:translateX(-50%); } }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @keyframes road { to { transform:translateX(-15vw); } }
+    @keyframes reveal { to { opacity:1; } }
+    @keyframes item { to { opacity:1; transform:none; } }
+    @media(max-width:620px){ .content{padding-top:6vh} ul{grid-template-columns:1fr}.upload{flex-direction:column} }
+    @media(prefers-reduced-motion:reduce){ *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important} }
+  </style>
+</head>
+<body>
+  <div class="scene" aria-hidden="true">
+    <div class="sky-glow"></div><div class="horizon"></div><div class="road"></div>
+    <div class="car"><div class="spoiler"></div><div class="car-body"></div><div class="grille"></div><div class="bumper"></div><div class="wheel left"></div><div class="wheel right"></div></div>
+  </div>
+  <main class="content">
+    <div class="eyebrow">The road ahead</div>
+    <h1>Welcome to the new<br>Digifiz Next</h1>
+    <h2>Expanded version</h2>
+    <section class="card">
+      <h3>Coming soon:</h3>
+      <ul>
+        <li>🧠 Up to 2x more memory for features</li>
+        <li>🩺 Diagnostic modes</li>
+        <li>🎯 More precise algorithms</li>
+        <li>🔌 CAN and K-Line software support</li>
+        <li>📈 Oscilloscope for input signals</li>
+        <li>🌐 Web-based realtime viewer</li>
+      </ul>
+      <div class="action">
+        <h3>Stay tuned</h3>
+        <p>And update the provided expanded firmware</p>
+        <div class="upload"><input type="file" id="firmware" accept=".bin,application/octet-stream"><button id="update" type="button">Update firmware</button></div>
+        <p id="status" role="status"></p>
+      </div>
+    </section>
+  </main>
+  <script>
+    const button=document.querySelector('#update'),file=document.querySelector('#firmware'),status=document.querySelector('#status');
+    button.addEventListener('click',async()=>{if(!file.files[0]){status.textContent='Please select the expanded firmware first.';return}button.disabled=true;status.textContent='Uploading firmware… Keep the device powered.';try{const response=await fetch('/update',{method:'POST',body:file.files[0]});status.textContent=await response.text();if(!response.ok)throw new Error()}catch(error){status.textContent='Update failed. Keep the device powered and try again.';button.disabled=false}});
+  </script>
+</body>
+</html>
