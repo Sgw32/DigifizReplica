@@ -48,7 +48,7 @@
 
 int i = 0;
 int saveParametersCounter = 0;
-uint16_t displaySpeedCnt = 0;
+uint16_t displaySpeedCounter = 0;
 //Speed related data
 uint32_t spd_m = 0;
 float spd_m_speedometer = 0;
@@ -333,8 +333,9 @@ void displayUpdate(void *pvParameters) {
         averageRPM = 3000.0f;
 #endif
 
-        displaySpeedCnt++;
-        if (displaySpeedCnt==16) // 2 Hz loop(as on original Digifiz)
+        displaySpeedCounter++;
+        // The divider defaults to 16, matching the original Digifiz's 2 Hz update rate.
+        if (displaySpeedCounter >= digifiz_parameters.speedDisplayUpdateDivider.value)
         {
             setSpeedometerData((uint16_t)spd_m_speedometer);
             current_averageSpeed += (spd_m_speedometer-current_averageSpeed)*0.01;
@@ -348,7 +349,7 @@ void displayUpdate(void *pvParameters) {
                     rpm=0;
             }
 
-            displaySpeedCnt = 0;
+            displaySpeedCounter = 0;
         }
 
         if (!showGearInRefuel && gear_blink_toggles>0) {
