@@ -123,6 +123,14 @@ extern "C" {
     ) \
     PARAM(  \
         U8, \
+        option_invert_oil03_input, \
+        .p_name = "Invert 0.3 bar input", \
+        .p_info = "Invert the 0.3 bar oil pressure input (1 is treated as 0 and 0 as 1)",\
+        .value = 0, \
+        .max = 1, \
+    ) \
+    PARAM(  \
+        U8, \
         rpmOptions_redline_segments, \
         .p_name = "Redline segments", \
         .p_info = "Redline segments number",\
