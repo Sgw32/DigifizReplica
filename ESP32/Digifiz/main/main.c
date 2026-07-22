@@ -270,7 +270,9 @@ void displayUpdate(void *pvParameters) {
 
         if (!digifiz_parameters.option_testmode_on.value)
         {
-            spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
+            if (digifiz_parameters.speed_rpm_mode.value == 0) {
+                spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
+            }
             rpm = readLastRPM(); 
         }
         //For test fuel intake
@@ -297,7 +299,13 @@ void displayUpdate(void *pvParameters) {
         {
             averageRPM += (0-averageRPM)*0.5;
         }
-        gear_estimator_set_input(rpm, spd_m);
+
+        if (digifiz_parameters.speed_rpm_mode.value != 0) {
+            gear_speed_emulator_set_rpm(averageRPM);
+            spd_m = (uint32_t)gear_speed_emulator_get_speed();
+            spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
+        }
+        gear_estimator_set_input(averageRPM, spd_m);
 
         bool showGearInRefuel = digifiz_parameters.option_gear_indicator_in_refuel.value;
         int current_gear = gear_estimator_get_current_gear();
@@ -568,6 +576,7 @@ void initGearEstimator(void) {
     
     // Set coefficients
     gear_estimator_set_coefficients(coefficients, MAX_GEARS);
+    gear_speed_emulator_init(digifiz_parameters.speed_rpm_mode.value);
 }
 
 void initAndCheckRTC(void)

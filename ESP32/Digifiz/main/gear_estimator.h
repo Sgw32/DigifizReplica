@@ -9,8 +9,8 @@
 #include <stddef.h>
 
 
-//6 gears + reverse
-#define MAX_GEARS 7
+// Forward gears represented by the configurable coefficient table.
+#define MAX_GEARS 6
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,6 +65,18 @@ void gear_estimator_calibrate(int gear);  // gear is 1-based (1 to 6)
  * @return float Current ratio used for estimation.
  */
 float gear_estimator_get_current_ratio(void);
+
+/** Start the RPM-based speed emulator selected at boot (mode 0, 1, or 2). */
+void gear_speed_emulator_init(unsigned char mode);
+
+/** Supply the latest calibrated RPM sample to the speed emulator. */
+void gear_speed_emulator_set_rpm(float rpm);
+
+/** Return speed calculated from RPM, or zero when RPM emulation is disabled. */
+float gear_speed_emulator_get_speed(void);
+
+/** Return the gear selected by the dynamic RPM emulator (1..6). */
+int gear_speed_emulator_get_gear(void);
 
 #ifdef __cplusplus
 }

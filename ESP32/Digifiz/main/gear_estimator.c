@@ -1,7 +1,15 @@
 #include "gear_estimator.h"
 #include "ble_module.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include <string.h>
 #include <math.h>
+
+#define STATIC_SPEED_GEAR_INDEX 2
+#define DYNAMIC_INITIAL_GEAR_INDEX 2
+#define RPM_SHIFT_MIN_DELTA 200.0f
+#define RPM_SHIFT_SAMPLE_MS 50
+#define RPM_SHIFT_HOLDOFF_MS 400
 
 typedef struct {
     float rpm;
@@ -14,6 +22,36 @@ static int calibration_counts[MAX_GEARS] = {0};
 static float calibration_sums[MAX_GEARS] = {0};
 
 static GearEstimatorInput current_input = {0};
+static volatile float emulator_rpm = 0.0f;
+static volatile float emulator_speed = 0.0f;
+static volatile int emulator_gear_index = DYNAMIC_INITIAL_GEAR_INDEX;
+static unsigned char emulator_mode = 0;
+
+static void gear_speed_emulator_task(void *arg) {
+    float previous_rpm = 0.0f;
+    TickType_t last_shift = 0;
+
+    while (1) {
+        const float rpm = emulator_rpm;
+        const TickType_t now = xTaskGetTickCount();
+        const float delta = rpm - previous_rpm;
+
+        if (previous_rpm > 300.0f && rpm > 300.0f &&
+            (now - last_shift) >= pdMS_TO_TICKS(RPM_SHIFT_HOLDOFF_MS)) {
+            if (delta <= -RPM_SHIFT_MIN_DELTA && emulator_gear_index < MAX_GEARS - 1) {
+                emulator_gear_index++;
+                last_shift = now;
+            } else if (delta >= RPM_SHIFT_MIN_DELTA && emulator_gear_index > 0) {
+                emulator_gear_index--;
+                last_shift = now;
+            }
+        }
+
+        emulator_speed = rpm > 0.0f ? rpm * gear_coeffs[emulator_gear_index] : 0.0f;
+        previous_rpm = rpm;
+        vTaskDelay(pdMS_TO_TICKS(RPM_SHIFT_SAMPLE_MS));
+    }
+}
 
 void gear_estimator_init(void) {
     memset(gear_coeffs, 0, sizeof(gear_coeffs));
@@ -71,4 +109,32 @@ void gear_estimator_calibrate(int gear) {
     calibration_sums[idx] += current_input.ratio;
     calibration_counts[idx] += 1;
     gear_coeffs[idx] = calibration_sums[idx] / calibration_counts[idx];
+}
+
+void gear_speed_emulator_init(unsigned char mode) {
+    emulator_mode = mode <= 2 ? mode : 0;
+    emulator_rpm = 0.0f;
+    emulator_speed = 0.0f;
+    emulator_gear_index = DYNAMIC_INITIAL_GEAR_INDEX;
+
+    if (emulator_mode == 2) {
+        xTaskCreatePinnedToCore(gear_speed_emulator_task, "rpm_speed_task", 2048,
+                                NULL, 6, NULL, 1);
+    }
+}
+
+void gear_speed_emulator_set_rpm(float rpm) {
+    emulator_rpm = rpm;
+    if (emulator_mode == 1) {
+        emulator_speed = rpm > 0.0f ? rpm * gear_coeffs[STATIC_SPEED_GEAR_INDEX] : 0.0f;
+        emulator_gear_index = STATIC_SPEED_GEAR_INDEX;
+    }
+}
+
+float gear_speed_emulator_get_speed(void) {
+    return emulator_mode == 0 ? 0.0f : emulator_speed;
+}
+
+int gear_speed_emulator_get_gear(void) {
+    return emulator_gear_index + 1;
 }

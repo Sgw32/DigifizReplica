@@ -916,6 +916,14 @@ extern "C" {
     ) \
     PARAM(  \
         U8, \
+        speed_rpm_mode, \
+        .p_name = "Speed source mode", \
+        .p_info = "0 = speed input, 1 = RPM with 3-rd gear coefficient, 2 = dynamic RPM/gear coefficients. Updates after reboot.", \
+        .value = 0, \
+        .max = 2, \
+    ) \
+    PARAM(  \
+        U8, \
         option_gear_change_indicator, \
         .p_name = "Gear change indicator", \
         .p_info = "Blink gear on speedometer when gear changes",\
