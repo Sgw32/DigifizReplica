@@ -229,7 +229,6 @@ void digifizLoop(void *pvParameters) {
         setMFABlock(digifiz_parameters.mfaBlock.value ? 0 : 1); //in display h
         displayMFAClock();
         displayMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState.value);
-        setDot(false);
         //printf("Reg in: %u %u %u\n", digifiz_reg_in.bytes[0], digifiz_reg_in.bytes[1], digifiz_reg_in.mfaReset);
         xSemaphoreGive(displayMutex); // Give back the mutex
         
@@ -483,6 +482,7 @@ void displayUpdate(void *pvParameters) {
         fireDigifiz();
         setMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState.value);
         processMFA();
+        setDot((millis() % 1000U) < 500U);
         regout_all(digifiz_reg_out.byte);
         regin_read(digifiz_reg_in.bytes);
         //protocolParse();
