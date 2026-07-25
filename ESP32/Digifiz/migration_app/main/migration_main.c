@@ -30,15 +30,6 @@ extern const uint8_t migration_html_end[] asm("_binary_migration_html_end");
 static const char *TAG = "partition_migration";
 static bool migration_complete;
 
-/*
- * app_main runs with the relatively small ESP-IDF main-task stack.  Keeping the
- * flash blocks here avoids placing 4 KiB (copy/update) or 8 KiB (verification)
- * automatic arrays on that stack.  Migration and HTTP upload cannot run at the
- * same time, so the uploader can safely reuse flash_buffer_a after reboot.
- */
-static uint8_t flash_buffer_a[COPY_BLOCK_SIZE];
-static uint8_t flash_buffer_b[COPY_BLOCK_SIZE];
-
 static bool ranges_overlap(uint32_t first_address, size_t first_length,
                            uint32_t second_address, size_t second_length)
 {
@@ -48,27 +39,29 @@ static bool ranges_overlap(uint32_t first_address, size_t first_length,
 
 static esp_err_t copy_flash(uint32_t source, uint32_t destination, size_t length)
 {
+    uint8_t buffer[COPY_BLOCK_SIZE];
     ESP_RETURN_ON_ERROR(esp_flash_erase_region(esp_flash_default_chip, destination, length), TAG,
                         "erase destination");
-    for (size_t offset = 0; offset < length; offset += sizeof(flash_buffer_a)) {
-        ESP_RETURN_ON_ERROR(esp_flash_read(esp_flash_default_chip, flash_buffer_a, source + offset,
-                                          sizeof(flash_buffer_a)), TAG, "read source");
-        ESP_RETURN_ON_ERROR(esp_flash_write(esp_flash_default_chip, flash_buffer_a,
-                                           destination + offset, sizeof(flash_buffer_a)), TAG,
-                            "write destination");
+    for (size_t offset = 0; offset < length; offset += sizeof(buffer)) {
+        ESP_RETURN_ON_ERROR(esp_flash_read(esp_flash_default_chip, buffer, source + offset,
+                                          sizeof(buffer)), TAG, "read source");
+        ESP_RETURN_ON_ERROR(esp_flash_write(esp_flash_default_chip, buffer, destination + offset,
+                                           sizeof(buffer)), TAG, "write destination");
     }
     return ESP_OK;
 }
 
 static esp_err_t verify_flash(uint32_t source, uint32_t destination, size_t length)
 {
-    for (size_t offset = 0; offset < length; offset += sizeof(flash_buffer_a)) {
-        ESP_RETURN_ON_ERROR(esp_flash_read(esp_flash_default_chip, flash_buffer_a, source + offset,
-                                          sizeof(flash_buffer_a)), TAG, "verify source read");
-        ESP_RETURN_ON_ERROR(esp_flash_read(esp_flash_default_chip, flash_buffer_b,
-                                          destination + offset, sizeof(flash_buffer_b)), TAG,
+    uint8_t source_data[COPY_BLOCK_SIZE];
+    uint8_t destination_data[COPY_BLOCK_SIZE];
+    for (size_t offset = 0; offset < length; offset += sizeof(source_data)) {
+        ESP_RETURN_ON_ERROR(esp_flash_read(esp_flash_default_chip, source_data, source + offset,
+                                          sizeof(source_data)), TAG, "verify source read");
+        ESP_RETURN_ON_ERROR(esp_flash_read(esp_flash_default_chip, destination_data,
+                                          destination + offset, sizeof(destination_data)), TAG,
                             "verify destination read");
-        if (memcmp(flash_buffer_a, flash_buffer_b, sizeof(flash_buffer_a)) != 0) {
+        if (memcmp(source_data, destination_data, sizeof(source_data)) != 0) {
             ESP_LOGE(TAG, "verification failed at offset 0x%x", (unsigned)offset);
             return ESP_ERR_INVALID_CRC;
         }
@@ -144,14 +137,14 @@ static esp_err_t update_handler(httpd_req_t *request)
     const esp_partition_t *target = esp_ota_get_next_update_partition(NULL);
     esp_ota_handle_t handle;
     esp_err_t error = esp_ota_begin(target, request->content_len, &handle);
+    uint8_t buffer[4096];
     int remaining = request->content_len;
     while (error == ESP_OK && remaining > 0) {
-        int received = httpd_req_recv(request, (char *)flash_buffer_a,
-                                      remaining < sizeof(flash_buffer_a)
-                                          ? remaining : sizeof(flash_buffer_a));
+        int received = httpd_req_recv(request, (char *)buffer,
+                                      remaining < sizeof(buffer) ? remaining : sizeof(buffer));
         if (received == HTTPD_SOCK_ERR_TIMEOUT) continue;
         if (received <= 0) { error = ESP_FAIL; break; }
-        error = esp_ota_write(handle, flash_buffer_a, received);
+        error = esp_ota_write(handle, buffer, received);
         remaining -= received;
     }
     if (error == ESP_OK) error = esp_ota_end(handle); else esp_ota_abort(handle);
