@@ -7,11 +7,17 @@ extern "C" {
 
 #include <stdint.h>
 
+/** Time characteristic UUID; payload is { hour, minute }. */
+#define BLE_TIME_CHARACTERISTIC_UUID 0xFF04
+
 /**
  * @brief Initialize the BLE module
  * 
  * Sets up the BLE stack, registers the GATT service and characteristics,
  * and starts advertising. Automatically resumes advertising after disconnect.
+ * The time characteristic uses UUID 0xFF04 and an exact two-byte payload:
+ * hour (0..23), then minute (0..59). A successful write updates the ESP32 RTC
+ * while preserving the date and seconds.
  */
 void ble_module_init(void);
 
