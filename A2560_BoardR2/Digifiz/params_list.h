@@ -452,15 +452,6 @@ extern "C" {
     ) \
     PARAM(  \
         U16, \
-        speedDisplayUpdateDivider, \
-        .p_name = "Speed display update divider", \
-        .p_info = "Number of 8 Hz main-loop cycles between displayed speed updates",\
-        .value = 4, \
-        .min = 1, \
-        .max = 80, \
-    ) \
-    PARAM(  \
-        U16, \
         coolantThermistorPullUpRes, \
         .p_name = "", \
         .p_info = "",\
@@ -561,7 +552,7 @@ extern "C" {
         uptime, \
         .p_name = "", \
         .p_info = "",\
-        .value = 0, \
+        .value = 921*3600L, \
     ) \
     PARAM(  \
         FLOAT, \
