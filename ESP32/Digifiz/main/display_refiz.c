@@ -103,6 +103,8 @@ static const uint8_t refiz_default_payload[PACKED_PAYLOAD_SIZE] = {
 
 static uint8_t bool_data_payload[PACKED_PAYLOAD_SIZE];
 static bool refiz_uart_ready = false;
+static bool refiz_diagnostic_enabled = false;
+static uint8_t refiz_diagnostic_segments[(261 + 7) / 8];
 
 static const uint8_t refiz_orig_digit_patterns[10] = {
     0b00111111, 0b00100001, 0b01011011, 0b01110011, 0b01100101,
@@ -217,6 +219,21 @@ static void refiz_sync_payload_from_display(void)
 
     memcpy(bool_data_payload, refiz_default_payload, sizeof(bool_data_payload));
 
+    if (refiz_diagnostic_enabled)
+    {
+        /* Payload bits 0..2 are controller housekeeping; logical LCD segment
+         * zero starts at payload bit three. */
+        memset(bool_data_payload + 1, 0, REFIZ_UART_BATCH_BYTES - 1);
+        bool_data_payload[0] &= 0x07;
+        for (uint16_t segment = 0; segment < 261; segment++)
+        {
+            uint8_t enabled = refiz_diagnostic_segments[segment >> 3] &
+                              (1U << (segment & 0x07));
+            refiz_payload_set_bit(segment + 3, enabled);
+        }
+        return;
+    }
+
     refiz_put_digit(mileage_segments[0], display.mileage_digit_1);
     refiz_put_digit(mileage_segments[1], display.mileage_digit_2);
     refiz_put_digit(mileage_segments[2], display.mileage_digit_3);
@@ -274,6 +291,24 @@ static void refiz_sync_payload_from_display(void)
         refiz_payload_set_bit(refiz_rpm_segments[i] + 3, (i < rpm_segments_on) ? 1 : 0);
     }
     //refiz_payload_set_bit(refiz_rpm_segments[0] + 3, 1);
+}
+
+void refiz_diagnostic_set_enabled(bool enabled)
+{
+    refiz_diagnostic_enabled = enabled;
+}
+
+void refiz_diagnostic_set_segments(const uint16_t *segments, size_t segment_count)
+{
+    memset(refiz_diagnostic_segments, 0, sizeof(refiz_diagnostic_segments));
+    for (size_t i = 0; i < segment_count; i++)
+    {
+        if (segments[i] < 261)
+        {
+            refiz_diagnostic_segments[segments[i] >> 3] |=
+                1U << (segments[i] & 0x07);
+        }
+    }
 }
 
 void refiz_uart_sender_init(void)

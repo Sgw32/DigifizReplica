@@ -30,6 +30,65 @@ esp_err_t digifiz_register_uri_handler(httpd_handle_t server);
 esp_err_t update_post_handler(httpd_req_t *req);
 static esp_err_t echo_handler(httpd_req_t *req);
 static esp_err_t params_get_handler(httpd_req_t *req);
+
+#ifdef DIGIFIZ_REFIZ_DISPLAY
+static esp_err_t refiz_diagnostic_post_handler(httpd_req_t *req)
+{
+    char buf[1536];
+    if (req->content_len <= 0 || req->content_len >= sizeof(buf)) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid request size");
+        return ESP_FAIL;
+    }
+
+    int received = 0;
+    while (received < req->content_len) {
+        int chunk = httpd_req_recv(req, buf + received, req->content_len - received);
+        if (chunk <= 0) {
+            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Failed to receive data");
+            return ESP_FAIL;
+        }
+        received += chunk;
+    }
+    buf[received] = '\0';
+
+    cJSON *json = cJSON_Parse(buf);
+    cJSON *enabled = json ? cJSON_GetObjectItemCaseSensitive(json, "enabled") : NULL;
+    cJSON *segments = json ? cJSON_GetObjectItemCaseSensitive(json, "segments") : NULL;
+    if (!cJSON_IsBool(enabled) || !cJSON_IsArray(segments) ||
+        cJSON_GetArraySize(segments) > 261) {
+        cJSON_Delete(json);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Expected enabled and segments");
+        return ESP_FAIL;
+    }
+
+    uint16_t selected[261];
+    size_t selected_count = 0;
+    cJSON *item = NULL;
+    cJSON_ArrayForEach(item, segments) {
+        if (!cJSON_IsNumber(item) || item->valuedouble < 0 ||
+            item->valuedouble > 260 || item->valuedouble != item->valueint) {
+            cJSON_Delete(json);
+            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid segment number");
+            return ESP_FAIL;
+        }
+        selected[selected_count++] = (uint16_t)item->valueint;
+    }
+
+    refiz_diagnostic_set_segments(selected, selected_count);
+    refiz_diagnostic_set_enabled(cJSON_IsTrue(enabled));
+    cJSON_Delete(json);
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_sendstr(req, "{\"status\":\"ok\"}");
+    return ESP_OK;
+}
+
+static const httpd_uri_t refiz_diagnostic_post = {
+    .uri = "/refiz_diagnostic",
+    .method = HTTP_POST,
+    .handler = refiz_diagnostic_post_handler,
+    .user_ctx = NULL
+};
+#endif
 /*
  * This handler echos back the received ws data
  * and triggers an async send if certain message received
@@ -571,6 +630,11 @@ esp_err_t digifiz_register_uri_handler(httpd_handle_t server)
     if (ret)
         goto _ret;
     ret = httpd_register_uri_handler(server, &set_color_scheme);
+    if (ret)
+        goto _ret;
+#ifdef DIGIFIZ_REFIZ_DISPLAY
+    ret = httpd_register_uri_handler(server, &refiz_diagnostic_post);
+#endif
     if (ret)
         goto _ret;
 _ret:
