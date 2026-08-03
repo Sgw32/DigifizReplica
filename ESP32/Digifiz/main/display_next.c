@@ -8,6 +8,7 @@
 #include "params.h"
 #include "led_effects.h"
 #include "millis.h"
+#include "esp_timer.h"
 
 #define TAG "display_next"
 #define SCRIPT_KEY "display_next_script"
@@ -16,11 +17,15 @@ uint8_t selectedBrightness = 20;
 uint32_t mRPMData = 4000;
 uint8_t backlightOff = 0;
 
-uint8_t backlightLevel = 30;
+uint8_t backlightLevel = 0;
 
 DigifizNextDisplay display;
 static led_strip_handle_t led_strip;
-float brightnessFiltered = 6.0f;
+float brightnessFiltered = 0.0f;
+static int64_t brightnessRampStartUs;
+static bool brightnessRampComplete;
+
+#define BRIGHTNESS_STARTUP_RAMP_US 1000000LL
 static led_effect_state_t effect_state;
 
 static uint16_t l_spd_m = 0;
@@ -1166,6 +1171,28 @@ void setMFABlock(uint8_t block) {
 
 // Set the brightness level
 void setBrightness(uint8_t levels) {
+    const int64_t now = esp_timer_get_time();
+    if (brightnessRampStartUs == 0) {
+        brightnessRampStartUs = now;
+    }
+
+    const int64_t rampElapsedUs = now - brightnessRampStartUs;
+    if (!brightnessRampComplete && rampElapsedUs < BRIGHTNESS_STARTUP_RAMP_US) {
+        /* Always start at zero after boot/wake and reach the requested level in
+         * one second.  This limits the display inrush independently of the
+         * user-configurable brightness smoothing speed. */
+        brightnessFiltered = ((float)levels * (float)rampElapsedUs) /
+                             (float)BRIGHTNESS_STARTUP_RAMP_US;
+        backlightLevel = (uint8_t)brightnessFiltered;
+        return;
+    }
+    if (!brightnessRampComplete) {
+        brightnessFiltered = (float)levels;
+        backlightLevel = levels;
+        brightnessRampComplete = true;
+        return;
+    }
+
     float coef = ((float)digifiz_parameters.brightnessSpeed.value)/100.0f;
     brightnessFiltered += coef*((float)levels-brightnessFiltered);
     backlightLevel = (uint8_t)brightnessFiltered;
@@ -1175,6 +1202,8 @@ void resetBrightness()
 {
     brightnessFiltered = 0.0f;
     backlightLevel = 0;
+    brightnessRampStartUs = esp_timer_get_time();
+    brightnessRampComplete = false;
 }
 
 // Set the refuel sign status

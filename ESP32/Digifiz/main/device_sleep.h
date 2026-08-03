@@ -38,6 +38,14 @@ void device_sleep_dump();
  */
 void device_power_enable(bool enable);
 
+/**
+ * @brief Restore a time saved immediately before POWER_OUT was enabled.
+ *
+ * This must be called after NVS initialization and before enabling POWER_OUT.
+ * A successfully consumed backup is cleared so it cannot be reused.
+ */
+void device_restore_power_time(void);
+
 #ifdef __cplusplus
 }
 #endif
