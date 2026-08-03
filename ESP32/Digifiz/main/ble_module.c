@@ -10,8 +10,11 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 #include <string.h>
+#include <time.h>
 #include <inttypes.h>  // <- for PRIu32
 #include "gear_estimator.h"
+#include "digifiz_time.h"
+#include "ble_module.h"
 
 #define GATTS_TAG "NIMBLE_MODULE"
 #define SERVICE_UUID  0x00FF
@@ -22,14 +25,54 @@
 void ble_store_config_init(void);
 
 static uint16_t conn_handle;
-static uint16_t char1_handle, char2_handle, char3_handle;
+static uint16_t char1_handle, char2_handle, char3_handle, time_char_handle;
 static uint32_t char1_value = 123456, char2_value = 654321; // RPM, Speed
 static uint8_t char3_value = 0; // Gear
 
 static const char *device_name = "DigifizBLE";
 
+static int time_characteristic_access(struct ble_gatt_access_ctxt *ctxt) {
+    uint8_t value[2];
+
+    if (ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR) {
+        time_t now;
+        struct tm timeinfo;
+        time(&now);
+        if (localtime_r(&now, &timeinfo) == NULL) {
+            return BLE_ATT_ERR_UNLIKELY;
+        }
+
+        value[0] = (uint8_t)timeinfo.tm_hour;
+        value[1] = (uint8_t)timeinfo.tm_min;
+        return os_mbuf_append(ctxt->om, value, sizeof(value)) == 0
+                   ? 0
+                   : BLE_ATT_ERR_INSUFFICIENT_RES;
+    }
+
+    if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
+        uint16_t value_len = 0;
+        int rc = ble_hs_mbuf_to_flat(ctxt->om, value, sizeof(value), &value_len);
+        if (rc != 0 || value_len != sizeof(value)) {
+            return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+        }
+        if (value[0] > 23 || value[1] > 59) {
+            return BLE_ATT_ERR_VALUE_NOT_ALLOWED;
+        }
+
+        return set_hour_and_minute(value[0], value[1])
+                   ? 0
+                   : BLE_ATT_ERR_UNLIKELY;
+    }
+
+    return BLE_ATT_ERR_UNLIKELY;
+}
+
 static int gatt_svr_access_cb(uint16_t conn_handle, uint16_t attr_handle,
                               struct ble_gatt_access_ctxt *ctxt, void *arg) {
+    if (attr_handle == time_char_handle) {
+        return time_characteristic_access(ctxt);
+    }
+
     void *val_ptr = NULL;
     size_t val_len = 0;
 
@@ -75,6 +118,12 @@ static const struct ble_gatt_svc_def gatt_services[] = {
                 .access_cb = gatt_svr_access_cb,
                 .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE,
                 .val_handle = &char3_handle,
+            },
+            {
+                .uuid = BLE_UUID16_DECLARE(BLE_TIME_CHARACTERISTIC_UUID),
+                .access_cb = gatt_svr_access_cb,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE,
+                .val_handle = &time_char_handle,
             },
             {0}
         }

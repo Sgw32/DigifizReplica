@@ -7,6 +7,7 @@
 #include "digifiz_time.h"
 #include "vehicle_data.h"
 #include "display_next.h"
+#include "esp_system.h"
 #include <stdlib.h>
 #include <ctype.h>
 
@@ -216,7 +217,11 @@ static void printStatusJSON()
 
 static void printHelp()
 {
+  esp_reset_reason_t reason = esp_reset_reason();
+
   printLnCString("Digifiz Replica by PHOL-LABS.\n");
+  printLnCString("Reset reason:\n");
+  printLnUINT32((uint32_t)reason);
   printLnCString("Your dashboard is:\n");
   if (digifiz_parameters.option_mfa_manufacturer.value)
     printLnCString("MFA ON\n");

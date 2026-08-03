@@ -7,7 +7,9 @@
 #include "setup.h"
 #include "display_next.h"
 #include "digifiz_watchdog.h"
+#include "nvs.h"
 #include <stdio.h>
+#include <sys/time.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -16,10 +18,69 @@
 
 #define SLEEP_PIN GPIO_NUM_10
 #define POWER_OUT_PIN GPIO_NUM_47
+#define POWER_TIME_NAMESPACE "power_backup"
+#define POWER_TIME_SECONDS_KEY "time_seconds"
+#define POWER_TIME_USECONDS_KEY "time_useconds"
 
 
 const int ext_wakeup_pin_1 = SLEEP_PIN;
 const uint64_t ext_wakeup_pin_1_mask = 1ULL << SLEEP_PIN;
+
+static void save_power_time(void)
+{
+    struct timeval now;
+    nvs_handle_t handle;
+
+    gettimeofday(&now, NULL);
+    esp_err_t err = nvs_open(POWER_TIME_NAMESPACE, NVS_READWRITE, &handle);
+    if (err == ESP_OK) {
+        err = nvs_set_i64(handle, POWER_TIME_SECONDS_KEY, (int64_t)now.tv_sec);
+        if (err == ESP_OK) {
+            err = nvs_set_i32(handle, POWER_TIME_USECONDS_KEY, (int32_t)now.tv_usec);
+        }
+        if (err == ESP_OK) {
+            err = nvs_commit(handle);
+        }
+        nvs_close(handle);
+    }
+
+    if (err != ESP_OK) {
+        ESP_LOGE(LOG_TAG, "Failed to back up time before power enable: %s", esp_err_to_name(err));
+    }
+}
+
+void device_restore_power_time(void)
+{
+    nvs_handle_t handle;
+    int64_t seconds = 0;
+    int32_t useconds = 0;
+    esp_err_t err = nvs_open(POWER_TIME_NAMESPACE, NVS_READWRITE, &handle);
+    if (err != ESP_OK) {
+        ESP_LOGW(LOG_TAG, "Could not open power time backup: %s", esp_err_to_name(err));
+        return;
+    }
+
+    esp_err_t seconds_err = nvs_get_i64(handle, POWER_TIME_SECONDS_KEY, &seconds);
+    esp_err_t useconds_err = nvs_get_i32(handle, POWER_TIME_USECONDS_KEY, &useconds);
+    if (seconds_err == ESP_OK && useconds_err == ESP_OK && seconds != 0) {
+        const struct timeval restored = {
+            .tv_sec = (time_t)seconds,
+            .tv_usec = (suseconds_t)useconds,
+        };
+        if (settimeofday(&restored, NULL) == 0) {
+            ESP_LOGI(LOG_TAG, "Restored time saved before POWER_OUT reset");
+            nvs_set_i64(handle, POWER_TIME_SECONDS_KEY, 0);
+            nvs_set_i32(handle, POWER_TIME_USECONDS_KEY, 0);
+            err = nvs_commit(handle);
+            if (err != ESP_OK) {
+                ESP_LOGE(LOG_TAG, "Failed to clear restored power time: %s", esp_err_to_name(err));
+            }
+        } else {
+            ESP_LOGE(LOG_TAG, "Failed to restore time saved before POWER_OUT reset");
+        }
+    }
+    nvs_close(handle);
+}
 
 static void deep_sleep_task(void *args)
 {
@@ -112,7 +173,7 @@ bool device_sleep_check() {
     }
     else
     {
-        gpio_set_level(POWER_OUT_PIN, 1);
+        device_power_enable(true);
     }
     return sleepMode;
 }
@@ -121,6 +182,9 @@ void device_power_enable(bool enable)
 {
     if (enable)
     {
+        if (gpio_get_level(POWER_OUT_PIN) == 0) {
+            save_power_time();
+        }
         gpio_set_level(POWER_OUT_PIN, 1);
     }
     else

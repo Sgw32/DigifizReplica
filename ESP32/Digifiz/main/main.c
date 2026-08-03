@@ -598,6 +598,7 @@ void on_cpu_1(void *pvParameters)
     displayMutex = xSemaphoreCreateMutex(); // Create the mutex
     initAndCheckRTC();
     initEEPROM(); //Start memory container
+    device_restore_power_time();
     initGearEstimator();
     initADC();
     initDisplay();

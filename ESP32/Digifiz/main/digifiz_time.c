@@ -6,6 +6,38 @@
 
 static const char *TAG = "DigifizTime";
 
+bool set_hour_and_minute(uint8_t hour, uint8_t minute) {
+    if (hour > 23 || minute > 59) {
+        ESP_LOGW(TAG, "Invalid time: %02u:%02u", hour, minute);
+        return false;
+    }
+
+    time_t t;
+    struct tm tm;
+    time(&t);
+    if (localtime_r(&t, &tm) == NULL) {
+        ESP_LOGE(TAG, "Failed to read current time");
+        return false;
+    }
+
+    tm.tm_hour = hour;
+    tm.tm_min = minute;
+    t = mktime(&tm);
+    if (t == (time_t)-1) {
+        ESP_LOGE(TAG, "Failed to convert updated time");
+        return false;
+    }
+
+    struct timeval tv = { .tv_sec = t, .tv_usec = 0 };
+    if (settimeofday(&tv, NULL) != 0) {
+        ESP_LOGE(TAG, "Failed to set time");
+        return false;
+    }
+
+    ESP_LOGI(TAG, "Time set to %02u:%02u", hour, minute);
+    return true;
+}
+
 void set_hour(uint8_t hour) {
     struct tm tm;
     time_t t;
