@@ -1,0 +1,47 @@
+name: Build SLCD_DR_Ctl
+
+on:
+  push:
+    paths:
+      - 'SLCD_DR_Ctl/**'
+      - '.github/workflows/build_slcd_dr_ctl.yml'
+  pull_request:
+    paths:
+      - 'SLCD_DR_Ctl/**'
+      - '.github/workflows/build_slcd_dr_ctl.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install Arduino AVR core
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+
+      - name: Compile SLCD_DR_Ctl for Arduino Nano ATmega328P
+        run: |
+          mkdir -p build/SLCD_DR_Ctl
+          arduino-cli compile \
+            --fqbn arduino:avr:nano:cpu=atmega328 \
+            --output-dir build/SLCD_DR_Ctl \
+            --export-binaries \
+            SLCD_DR_Ctl
+
+      - name: Upload SLCD_DR_Ctl build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SLCD_DR_Ctl-arduino-nano-atmega328p
+          if-no-files-found: error
+          path: |
+            build/SLCD_DR_Ctl/*.hex
+            build/SLCD_DR_Ctl/*.elf
+            build/SLCD_DR_Ctl/*.eep
