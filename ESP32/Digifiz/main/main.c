@@ -230,6 +230,7 @@ void digifizLoop(void *pvParameters) {
         displayMFAClock();
         displayMFAType(uptimeDisplayEnabled ? 6 : digifiz_parameters.mfaState.value);
         //printf("Reg in: %u %u %u\n", digifiz_reg_in.bytes[0], digifiz_reg_in.bytes[1], digifiz_reg_in.mfaReset);
+        check_invalidate_power_time();
         xSemaphoreGive(displayMutex); // Give back the mutex
         
         device_sleep_dump();
@@ -469,13 +470,19 @@ void displayUpdate(void *pvParameters) {
         setFuel(fuel);
         setCoolantData(getDisplayedCoolantTemp());
         processIndicators();
+
+        //Gradually increase power
         if (millis()>2000)
         {
             setBrightness(digifiz_parameters.autoBrightness.value ? getBrightnessLevel() : digifiz_parameters.brightnessLevel.value);
         }
+        else if (millis()>300)
+        {
+            setBrightness(6);
+        }
         else
         {
-            setBrightness(30);
+            setBrightness(0);
         }
 
         setRPMData(averageRPM);
@@ -599,6 +606,8 @@ void on_cpu_1(void *pvParameters)
     initAndCheckRTC();
     initEEPROM(); //Start memory container
     device_restore_power_time();
+    startMFAOperationPause();
+    save_power_time();
     initGearEstimator();
     initADC();
     initDisplay();

@@ -7,15 +7,24 @@
 #include "setup.h"
 #include "display_next.h"
 #include "digifiz_watchdog.h"
+#include "mfa.h"
 #include "nvs.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/time.h>
+#include "millis.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h" // Include semaphore/mutex header
 #include "driver/rtc_io.h"
+
+
+// Power on
+// Check if we need to restore the time immediately after the boot
+// Save time to backup right after boot 
+// Turn on the power but keep the brightness zero
+// After 300 ms enable brightness and invalidate backup
 
 #define SLEEP_PIN GPIO_NUM_10
 #define POWER_OUT_PIN GPIO_NUM_47
@@ -28,45 +37,59 @@
 const int ext_wakeup_pin_1 = SLEEP_PIN;
 const uint64_t ext_wakeup_pin_1_mask = 1ULL << SLEEP_PIN;
 static volatile uint32_t power_enable_generation;
+static uint8_t time_is_restored = 0;
+uint32_t save_millis = 0;
+int64_t backup_seconds = 0;
+int32_t backup_useconds = 0;
 
-static esp_err_t invalidate_power_time(void)
+uint8_t backup_time_invalidated = 0;
+
+esp_err_t check_invalidate_power_time(void)
 {
-    nvs_handle_t handle;
-    esp_err_t err = nvs_open(POWER_TIME_NAMESPACE, NVS_READWRITE, &handle);
-    if (err == ESP_OK) {
-        err = nvs_set_i64(handle, POWER_TIME_SECONDS_KEY, 0);
-        if (err == ESP_OK) {
-            err = nvs_set_i32(handle, POWER_TIME_USECONDS_KEY, 0);
+    esp_err_t err = ESP_OK;
+    if (!backup_time_invalidated)
+    {
+        nvs_handle_t handle;
+        if (millis() > (save_millis + POWER_TIME_VALID_MS)) {
+            device_get_power_backup_time(&backup_seconds, &backup_useconds);
+            esp_err_t err = nvs_open(POWER_TIME_NAMESPACE, NVS_READWRITE, &handle);
+            if (err == ESP_OK) {
+                err = nvs_set_i64(handle, POWER_TIME_SECONDS_KEY, 0);
+                if (err == ESP_OK) {
+                    err = nvs_set_i32(handle, POWER_TIME_USECONDS_KEY, 0);
+                }
+                if (err == ESP_OK) {
+                    err = nvs_commit(handle);
+                }
+                nvs_close(handle);
+            }
+            backup_time_invalidated = true;
         }
-        if (err == ESP_OK) {
-            err = nvs_commit(handle);
-        }
-        nvs_close(handle);
     }
     return err;
 }
 
-static void invalidate_power_time_task(void *args)
-{
-    const uint32_t generation = (uint32_t)(uintptr_t)args;
-    vTaskDelay(pdMS_TO_TICKS(POWER_TIME_VALID_MS));
+// static void invalidate_power_time_task(void *args)
+// {
+//     const uint32_t generation = (uint32_t)(uintptr_t)args;
+//     vTaskDelay(pdMS_TO_TICKS(POWER_TIME_VALID_MS));
 
-    if (generation == power_enable_generation && gpio_get_level(POWER_OUT_PIN) == 1) {
-        esp_err_t err = invalidate_power_time();
-        if (err == ESP_OK) {
-            ESP_LOGI(LOG_TAG, "POWER_OUT remained enabled; power time backup invalidated");
-        } else {
-            ESP_LOGE(LOG_TAG, "Failed to invalidate power time backup: %s", esp_err_to_name(err));
-        }
-    }
-    vTaskDelete(NULL);
-}
+//     if (generation == power_enable_generation && gpio_get_level(POWER_OUT_PIN) == 1) {
+//         esp_err_t err = invalidate_power_time();
+//         if (err == ESP_OK) {
+//             ESP_LOGI(LOG_TAG, "POWER_OUT remained enabled; power time backup invalidated");
+//         } else {
+//             ESP_LOGE(LOG_TAG, "Failed to invalidate power time backup: %s", esp_err_to_name(err));
+//         }
+//     }
+//     vTaskDelete(NULL);
+// }
 
-static void save_power_time(void)
+void save_power_time(void)
 {
     struct timeval now;
     nvs_handle_t handle;
-
+    save_millis = millis();
     gettimeofday(&now, NULL);
     esp_err_t err = nvs_open(POWER_TIME_NAMESPACE, NVS_READWRITE, &handle);
     if (err == ESP_OK) {
@@ -84,6 +107,43 @@ static void save_power_time(void)
         ESP_LOGE(LOG_TAG, "Failed to back up time before power enable: %s", esp_err_to_name(err));
     }
 }
+
+esp_err_t device_get_inv_backup_time(int64_t *seconds, int32_t *useconds)
+{
+    if (seconds == NULL || useconds == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    *seconds = backup_seconds;
+    *useconds = backup_useconds;
+    return ESP_OK;
+}
+
+esp_err_t device_get_power_backup_time(int64_t *seconds, int32_t *useconds)
+{
+    if (seconds == NULL || useconds == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    *seconds = 0;
+    *useconds = 0;
+
+    nvs_handle_t handle;
+    esp_err_t err = nvs_open(POWER_TIME_NAMESPACE, NVS_READONLY, &handle);
+    if (err != ESP_OK) {
+        return err;
+    }
+
+    err = nvs_get_i64(handle, POWER_TIME_SECONDS_KEY, seconds);
+    if (err == ESP_OK) {
+        err = nvs_get_i32(handle, POWER_TIME_USECONDS_KEY, useconds);
+    }
+    nvs_close(handle);
+
+    return err;
+}
+
+
 
 void device_restore_power_time(void)
 {
@@ -103,19 +163,21 @@ void device_restore_power_time(void)
             .tv_sec = (time_t)seconds,
             .tv_usec = (suseconds_t)useconds,
         };
+        time_is_restored = 1;
         if (settimeofday(&restored, NULL) == 0) {
             ESP_LOGI(LOG_TAG, "Restored time saved before POWER_OUT reset");
             nvs_close(handle);
-            err = invalidate_power_time();
-            if (err != ESP_OK) {
-                ESP_LOGE(LOG_TAG, "Failed to clear restored power time: %s", esp_err_to_name(err));
-            }
             return;
         } else {
             ESP_LOGE(LOG_TAG, "Failed to restore time saved before POWER_OUT reset");
         }
     }
     nvs_close(handle);
+}
+
+bool get_time_is_restored()
+{
+    return time_is_restored;
 }
 
 static void deep_sleep_task(void *args)
@@ -202,39 +264,44 @@ bool device_sleep_check() {
     bool sleepMode = gpio_get_level(SLEEP_PIN) == 1;
     if (sleepMode)
     {
-#ifndef DEBUG_SLEEP_DISABLE
         resetBrightness();
-#endif
         device_power_enable(false);
     }
     else
-    {
+    {        
         device_power_enable(true);
     }
     return sleepMode;
 }
 
+static uint8_t prev_enable = 0;
+
 void device_power_enable(bool enable)
 {
     if (enable)
     {
-        if (gpio_get_level(POWER_OUT_PIN) == 0) {
-            save_power_time();
-            const uint32_t generation = ++power_enable_generation;
+        if (prev_enable==0) 
+        {
+            startMFAOperationPause();
+            resetBrightness();
             gpio_set_level(POWER_OUT_PIN, 1);
-            if (xTaskCreate(invalidate_power_time_task, "power_time_clear", 3072,
-                            (void *)(uintptr_t)generation, 2, NULL) != pdPASS) {
-                ESP_LOGE(LOG_TAG, "Failed to schedule power time backup invalidation");
-            }
+            prev_enable = enable;
+            //const uint32_t generation = ++power_enable_generation;
+            // if (xTaskCreate(invalidate_power_time_task, "power_time_clear", 3072,
+            //                 (void *)(uintptr_t)generation, 2, NULL) != pdPASS) {
+            //     ESP_LOGE(LOG_TAG, "Failed to schedule power time backup invalidation");
+            // }
             return;
         }
         gpio_set_level(POWER_OUT_PIN, 1);
     }
     else
     {
-        ++power_enable_generation;
+        //++power_enable_generation;
+        startMFAOperationPause();
         gpio_set_level(POWER_OUT_PIN, 0);
     }
+    prev_enable = enable;
 }
 
 void device_sleep_dump() {

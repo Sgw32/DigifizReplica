@@ -21,6 +21,7 @@
 #define CHAR1_UUID    0xFF01  // RPM
 #define CHAR2_UUID    0xFF02  // Speed
 #define CHAR3_UUID    0xFF03  // Gear
+#define BLE_TIME_CHARACTERISTIC_UUID 0xFF04 /** Time characteristic UUID; payload is { hour, minute }. */
 
 void ble_store_config_init(void);
 

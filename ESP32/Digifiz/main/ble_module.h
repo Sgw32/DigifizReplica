@@ -7,9 +7,6 @@ extern "C" {
 
 #include <stdint.h>
 
-/** Time characteristic UUID; payload is { hour, minute }. */
-#define BLE_TIME_CHARACTERISTIC_UUID 0xFF04
-
 /**
  * @brief Initialize the BLE module
  * 
