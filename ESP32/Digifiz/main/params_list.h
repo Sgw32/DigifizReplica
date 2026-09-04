@@ -127,6 +127,14 @@ extern "C" {
     ) \
     PARAM(  \
         U8, \
+        option_invert_oil03_input, \
+        .p_name = "Invert 0.3 bar input", \
+        .p_info = "Invert the 0.3 bar oil pressure input (1 is treated as 0 and 0 as 1)",\
+        .value = 0, \
+        .max = 1, \
+    ) \
+    PARAM(  \
+        U8, \
         rpmOptions_redline_segments, \
         .p_name = "Redline segments", \
         .p_info = "Redline segments number",\
@@ -797,6 +805,15 @@ extern "C" {
     ) \
     PARAM(  \
         U16, \
+        speedDisplayUpdateDivider, \
+        .p_name = "Speed display update divider", \
+        .p_info = "Number of 32 Hz main-loop cycles between displayed speed updates",\
+        .value = 16, \
+        .min = 1, \
+        .max = 320, \
+    ) \
+    PARAM(  \
+        U16, \
         coolantThermistorPullUpRes, \
         .p_name = "Coolant pull-up", \
         .p_info = "Pull-up resistance for coolant temperature sensor",\
@@ -923,6 +940,14 @@ extern "C" {
         .p_name = "6-th gear coefficient", \
         .p_info = "Proportion between speed and gear. Def. no gear",\
         .value = 10000, \
+    ) \
+    PARAM(  \
+        U8, \
+        speed_rpm_mode, \
+        .p_name = "Speed source mode", \
+        .p_info = "0 = speed input, 1 = RPM with 3-rd gear coefficient, 2 = dynamic RPM/gear coefficients. Updates after reboot.", \
+        .value = 0, \
+        .max = 2, \
     ) \
     PARAM(  \
         U8, \

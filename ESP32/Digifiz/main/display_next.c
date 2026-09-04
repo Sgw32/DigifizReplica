@@ -13,15 +13,13 @@
 #define TAG "display_next"
 #define SCRIPT_KEY "display_next_script"
 
-uint8_t selectedBrightness = 20;
 uint32_t mRPMData = 4000;
 uint8_t backlightOff = 0;
-
-uint8_t backlightLevel = 30;
+uint8_t backlightLevel = 0;
 
 DigifizNextDisplay display;
 static led_strip_handle_t led_strip;
-float brightnessFiltered = 6.0f;
+float brightnessFiltered = 0.0f;
 static led_effect_state_t effect_state;
 
 static uint16_t l_spd_m = 0;
@@ -526,7 +524,7 @@ void deinit_leds(void)
 // Initialize the display
 void initDisplay() {
     ESP_LOGI(LOG_TAG, "initDisplay started");
-    setBrightness(1);
+    setBrightness(0);
     memset(&display, 0, sizeof(DigifizNextDisplay));
     display.battery_ind = 0;
     display.mfa1_ind = 0;
@@ -833,7 +831,16 @@ void setCoolantData(uint16_t data) {
 
 // Set the dot status
 void setDot(bool value) {
-    // Implementation placeholder
+    bool dot_on = !digifiz_parameters.displayDot.value || value;
+
+    display.clock_dot = dot_on ? 0b11 : 0b00;
+
+    if (digifiz_parameters.mfaState.value == MFA_STATE_TRIP_DURATION) {
+        if (dot_on)
+            display.mfa_dots |= 0b011;
+        else
+            display.mfa_dots &= ~0b011;
+    }
 }
 
 // Set the floating dot status

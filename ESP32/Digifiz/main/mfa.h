@@ -1,5 +1,7 @@
 #ifndef MFA_H
 #define MFA_H
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -66,6 +68,22 @@ void initMFA();
  * @brief Run periodic MFA processing.
  */
 void processMFA();
+
+/**
+ * @brief Start the one-time MFA input pause countdown.
+ *
+ * MFA input starts paused. The first call starts a three-second countdown;
+ * repeated calls do not restart the countdown.
+ */
+void startMFAOperationPause(void);
+
+/**
+ * @brief Check whether MFA input operations are currently paused.
+ *
+ * @return true until three seconds have elapsed after the first call to
+ *         startMFAOperationPause(), otherwise false.
+ */
+bool isMFAOperationPaused(void);
 
 /**
  * @brief Handle MFA mode button press event.

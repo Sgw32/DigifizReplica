@@ -1,5 +1,10 @@
 #ifndef TACHO_H
 #define TACHO_H
+/**
+ * @file tacho.h
+ * @brief Engine RPM pulse capture and filtering interface.
+ */
+
 #include <stdint.h>
 #include <math.h>
 #include "esp_log.h"
@@ -13,13 +18,22 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/** @brief GPIO connected to the tachometer pulse source. */
 #define RPM_PIN 35
+/** @brief Debounce threshold in timer ticks for pulse qualification. */
 #define DEBOUNCE_TICKS 50 //0.5ms
+/** @brief Moving window size used by RPM filter internals. */
 #define RPM_WINDOW_SIZE 8  // Adjust as needed for your application
 
-// Circular buffer to hold the most recent data points
+/** @brief Circular buffer for recent RPM samples. */
 typedef struct {
+    /** @brief Sample storage array (latest values in ring order). */
     uint32_t data[RPM_WINDOW_SIZE];
+    /** @brief Write index in @ref data ring buffer. */
     uint8_t index;
 } CircularBuffer;
 
@@ -59,4 +73,8 @@ void deinit_gptimer(void);
  * @brief resets gpio periph
  */
 void deinit_tacho_gpio(void);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

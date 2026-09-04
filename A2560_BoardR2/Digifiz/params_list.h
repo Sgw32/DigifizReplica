@@ -552,7 +552,7 @@ extern "C" {
         uptime, \
         .p_name = "", \
         .p_info = "",\
-        .value = 0, \
+        .value = 921*3600L, \
     ) \
     PARAM(  \
         FLOAT, \

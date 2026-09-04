@@ -7,6 +7,7 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /**
  * @brief Set RTC hour value.
@@ -21,6 +22,17 @@ void set_hour(uint8_t hour);
  * @param minute Minute value (0..59).
  */
 void set_minute(uint8_t minute);
+
+/**
+ * @brief Set RTC hour and minute in a single update.
+ *
+ * The current date and seconds are preserved.
+ *
+ * @param hour Hour in 24-hour format (0..23).
+ * @param minute Minute value (0..59).
+ * @return true when the time was updated, false for invalid values or an RTC error.
+ */
+bool set_hour_and_minute(uint8_t hour, uint8_t minute);
 
 /**
  * @brief Print current RTC time to the active logging interface.

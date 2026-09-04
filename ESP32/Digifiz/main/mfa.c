@@ -8,8 +8,13 @@
 #include <time.h>
 #include <sys/time.h>
 
+#define MFA_OPERATION_PAUSE_DURATION_MS 10000U
+
 uint8_t uptimeDisplayEnabled = 0;
 uint8_t mfaMemorySelected = 0;
+
+static volatile bool mfaOperationPauseStarted = true;
+static volatile uint32_t mfaOperationPauseStartTime = 0;
 
 uint8_t bMFAMode = 0;
 uint8_t bMFABlock = 0;
@@ -78,6 +83,23 @@ void MFAResetMillis()
     bootMillis = millis();
 }
 
+void startMFAOperationPause(void)
+{
+    mfaOperationPauseStartTime = millis();
+    mfaOperationPauseStarted = true;
+}
+
+bool isMFAOperationPaused(void)
+{
+    if (mfaOperationPauseStarted &&
+        (uint32_t)(millis() - mfaOperationPauseStartTime) >= MFA_OPERATION_PAUSE_DURATION_MS)
+    {
+        mfaOperationPauseStarted = false;
+    }
+
+    return mfaOperationPauseStarted;
+}   
+
 // Process MFA data
 void processMFA() 
 {
@@ -97,8 +119,8 @@ void processMFA()
         bMFASensor = 0;//gpio_get_level(TOUCH_PIN);
     }
 
-    // Block MFA input actions shortly after boot to prevent spurious events
-    if ((millis()-bootMillis) < 3000)
+    // Track current levels while MFA input actions are paused to prevent spurious events.
+    if (isMFAOperationPaused())
     {
         prevMFAMode = bMFAMode;
         prevMFABlock = bMFABlock;
@@ -186,7 +208,7 @@ void pressMFAMode() {
     if (digifiz_parameters.mfaState.value>5) // 0 1 2 3 4 5
         digifiz_parameters.mfaState.value = 0;
 #endif
-    saveParameters();
+    //saveParameters();
 }
 
 // Simulate pressing MFA block button

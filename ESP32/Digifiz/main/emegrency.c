@@ -41,7 +41,11 @@ uint8_t processOilPressure(int mRPM)
      * oil03 == 0 means 0.3 bar sensor is active / low pressure.
      * This must always show solid oil indicator, but without buzzer by itself.
      */
-    if (digifiz_reg_in.oil03 == 0)
+
+    emergency_state = 0;
+    const uint8_t oil03_input = digifiz_reg_in.oil03 ? 1 : 0;
+    const uint8_t invert_oil03_input = digifiz_parameters.option_invert_oil03_input.value ? 1 : 0;
+    if ((oil03_input ^ invert_oil03_input) == 0)
     {
         state |= EMERGENCY_OIL03_LOW;
     }

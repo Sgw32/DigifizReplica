@@ -8,8 +8,13 @@
 #include "vehicle_data.h"
 #include "display_next.h"
 #include "reg_inout.h"
+#include "device_sleep.h"
+#include "esp_system.h"
+#include "millis.h"
 #include <stdlib.h>
 #include <ctype.h>
+#include <inttypes.h>
+#include <time.h>
 
 uint32_t statusTime;
 
@@ -273,9 +278,44 @@ static void printStatusJSON()
   printLnCString(g_jsonString);
 }
 
+static void printPowerBackupTime(void)
+{
+  esp_reset_reason_t reason = esp_reset_reason();
+  int64_t seconds;
+  int32_t useconds;
+  esp_err_t err = device_get_power_backup_time(&seconds, &useconds);
+  if (err != ESP_OK)
+  {
+    char error_buffer[64];
+    snprintf(error_buffer, sizeof(error_buffer), "POWER_TIME_BACKUP_ERROR: %s\n",
+             esp_err_to_name(err));
+    printLnCString(error_buffer);
+    return;
+  }
+
+  char backup_buffer[64];
+  snprintf(backup_buffer, sizeof(backup_buffer), "POWER_TIME_BACKUP:\n%" PRId64 ".%06" PRId32 "\n",
+           seconds, useconds);
+  printLnCString(backup_buffer);
+  device_get_inv_backup_time(&seconds, &useconds);
+  snprintf(backup_buffer, sizeof(backup_buffer), "INV POWER_TIME_BACKUP:\n%" PRId64 ".%06" PRId32 "\n",
+           seconds, useconds);
+  printLnCString(backup_buffer);
+  printLnCString("Time restored:\n");
+  printLnUINT32((uint32_t)get_time_is_restored());
+  printLnCString("Reset reason:\n");
+  printLnUINT32((uint32_t)reason);
+  printLnCString("Millis:\n");
+  printLnUINT32(millis());
+}
+
 static void printHelp()
 {
+  esp_reset_reason_t reason = esp_reset_reason();
+
   printLnCString("Digifiz Replica by PHOL-LABS.\n");
+  printLnCString("Reset reason:\n");
+  printLnUINT32((uint32_t)reason);
   printLnCString("Your dashboard is:\n");
   if (digifiz_parameters.option_mfa_manufacturer.value)
     printLnCString("MFA ON\n");
@@ -305,7 +345,7 @@ static void printHelp()
     printLnCString("RTC OK\n");
   else
     printLnCString("RTC NOT OK\n");
-  printLnCString("Extra commands: adc 0, daily_raw 0, ntc_r 0\n");
+  printLnCString("Extra commands: adc 0, daily_raw 0, ntc_r 0, backup\n");
 }
 
 // Function to map parameter name to enum value
@@ -396,8 +436,8 @@ void printLnFloat(float val)
 
 void processData(int parameter,long value)
 {
-  printf("par:%d\n",parameter);
-  printf("val:%lu\n",value);
+  // printf("par:%d\n",parameter);
+  // printf("val:%lu\n",value);
   int par = parameter;
   //emergency reset(if requested)
   if (par == PARAMETER_RESET_DIGIFIZ)
@@ -407,6 +447,11 @@ void processData(int parameter,long value)
             saveParameters();
             return;
   }
+
+  time_t now;
+  struct tm timeinfo;
+  time(&now);
+  localtime_r(&now, &timeinfo);
   
   if (par<PARAMETER_READ_ADDITION)
   {
@@ -790,23 +835,23 @@ void processData(int parameter,long value)
         break;
       case PARAMETER_GET_DAY:
         printLnCString("PARAMETER_GET_DAY\n");
-        // printLnFloat(myRTC.now().day());
+        printLnUINT32((uint32_t)timeinfo.tm_mday);
         break;
       case PARAMETER_GET_MONTH:
         printLnCString("PARAMETER_GET_MONTH\n");
-        // printLnFloat(myRTC.now().month());
+        printLnUINT32((uint32_t)(timeinfo.tm_mon + 1));
         break;
       case PARAMETER_GET_YEAR:
         printLnCString("PARAMETER_GET_YEAR\n");
-        // printLnFloat(myRTC.now().year());
+        printLnUINT32((uint32_t)(timeinfo.tm_year + 1900));
         break;
       case PARAMETER_GET_HOUR:
         printLnCString("PARAMETER_GET_HOUR\n");
-        // printLnFloat(myRTC.now().hour());
+        printLnUINT32((uint32_t)timeinfo.tm_hour);
         break;
       case PARAMETER_GET_MINUTE:
         printLnCString("PARAMETER_GET_MINUTE\n");
-        // printLnFloat(myRTC.now().minute());
+        printLnUINT32((uint32_t)timeinfo.tm_min);
         break;
       case PARAMETER_GET_GPIO_PINS:
         processGPIOPinsValue(value);
@@ -1075,7 +1120,11 @@ void protocolParse(char* buf, uint8_t len)
                     break;
                 }
             }
-            if (found_separator)
+            if (!found_separator && strcmp(cmd_buffer,"backup")==0)
+            {
+                printPowerBackupTime();
+            }
+            else if (found_separator)
             {
                 int parameter_p = 0;
                 long value_p = 0;
@@ -1094,6 +1143,10 @@ void protocolParse(char* buf, uint8_t len)
                 else if (strcmp(cmd_buffer_par,"save")==0)
                 {
                     saveParameters();
+                }
+                else if (strcmp(cmd_buffer_par,"backup")==0)
+                {
+                    printPowerBackupTime();
                 }
                 else if (strcmp(cmd_buffer_par,"adc")==0)
                 {
