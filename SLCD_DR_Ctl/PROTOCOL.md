@@ -18,7 +18,7 @@ SOF1 SOF2 CMD LEN_L LEN_H PAYLOAD... CRC
 - `SOF2` = `0x5A`
 - `CMD`  = command ID
 - `LEN_L`, `LEN_H` = payload length (little endian)
-- `CRC` = XOR of `CMD`, `LEN_L`, `LEN_H`, and all payload bytes
+- `CRC` = `crc8()` table CRC of `CMD`, `LEN_L`, `LEN_H`, and all payload bytes (initial value `0x00`, `tablCrc8`; check vector `123456789` => `0xA1`)
 
 ## Commands (PC -> Arduino)
 
