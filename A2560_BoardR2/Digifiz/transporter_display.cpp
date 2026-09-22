@@ -179,7 +179,7 @@ void displayMFAType(uint8_t mfaType)
     switch(digifiz_parameters.mfaState.value)
     {
         case MFA_STATE_TRIP_L100KM:
-            setMFADisplayedNumber((uint16_t)(averageConsumption(digifiz_parameters.mfaBlock.value)*100));
+            setMFADisplayedNumber((uint16_t)((digifiz_parameters.option_mpg.value ? litersPer100KmToMpg(averageConsumption(digifiz_parameters.mfaBlock.value)) : averageConsumption(digifiz_parameters.mfaBlock.value))*100));
             setFloatDot(true);
             break; 
         case MFA_STATE_TRIP_MEAN_SPEED:
