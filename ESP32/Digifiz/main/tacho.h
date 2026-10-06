@@ -25,7 +25,7 @@ extern "C" {
 /** @brief GPIO connected to the tachometer pulse source. */
 #define RPM_PIN 35
 /** @brief Debounce threshold in timer ticks for pulse qualification. */
-#define DEBOUNCE_TICKS 50 //0.5ms
+#define DEBOUNCE_TICKS 50 //50 us at 1 MHz
 /** @brief Moving window size used by RPM filter internals. */
 #define RPM_WINDOW_SIZE 8  // Adjust as needed for your application
 

@@ -3,6 +3,9 @@
 #include "esp_log.h"
 #include "millis.h"
 #include "params.h"
+#include "pulse_filters.h"
+#include "esp_timer.h"
+#include <assert.h>
 
 uint32_t mRPMSenseData;
 
@@ -10,6 +13,7 @@ uint32_t mRPMSenseData;
 #define RPM_ALGORITHM_LEGACY 0u
 #define RPM_ALGORITHM_STABLE 1u
 #define RPM_ALGORITHM_GLITCH 2u
+#define RPM_ALGORITHM_GLITCHANALOG 3u
 #define RPM_MIN_LOW_US_DEFAULT 100u
 #define RPM_MIN_HIGH_US_DEFAULT 100u
 
@@ -25,6 +29,12 @@ static uint32_t average_intv_q = 0;
 static uint32_t rpm_debounce_ticks = DEBOUNCE_TICKS;
 static uint32_t rpm_min_low_us = RPM_MIN_LOW_US_DEFAULT;
 static uint32_t rpm_min_high_us = RPM_MIN_HIGH_US_DEFAULT;
+static rpm_rc_filter_t rpm_rc_filter;
+static volatile bool rpm_analog_input_high;
+typedef struct {
+    uint32_t period_us;
+    uint32_t measured_ms;
+} rpm_analog_sample_t;
 
 CircularBuffer rpm_buffer;
 
@@ -170,6 +180,29 @@ static void IRAM_ATTR gpio_isr_handler_glitch(void* arg) {
     }
 }
 
+/* Keep edge capture cheap; filtering runs at a fixed rate even when there
+ * are no edges. In particular a short glitch never resets the RC voltage. */
+static void IRAM_ATTR gpio_isr_handler_glitchanalog(void *arg)
+{
+    rpm_analog_input_high = gpio_get_level(RPM_PIN) != 0;
+}
+
+static bool IRAM_ATTR rpm_analog_sample_handler(gptimer_handle_t timer,
+                                              const gptimer_alarm_event_data_t *event,
+                                              void *arg)
+{
+    rpm_analog_sample_t sample;
+    BaseType_t task_woken = pdFALSE;
+    if (rpm_rc_sample(&rpm_rc_filter, rpm_analog_input_high,
+                      (uint64_t)esp_timer_get_time(), &sample.period_us)) {
+        /* A one-item mailbox preserves the latest eight-period estimate
+         * even if the consumer is briefly busy. */
+        sample.measured_ms = (uint32_t)(xTaskGetTickCountFromISR() * portTICK_PERIOD_MS);
+        xQueueOverwriteFromISR(gpio_evt_queue, &sample, &task_woken);
+    }
+    return task_woken == pdTRUE;
+}
+
 static void tacho_timer_init() {
     ESP_LOGI(TAG, "Create timer handle");
     gptimer = NULL;
@@ -179,9 +212,21 @@ static void tacho_timer_init() {
         .resolution_hz = 1000000, // 1MHz, 1 tick=1us
     };
     ESP_ERROR_CHECK(gptimer_new_timer(&timer_config, &gptimer));
+    if (digifiz_parameters.rpm_algorithm.value == RPM_ALGORITHM_GLITCHANALOG) {
+        gptimer_event_callbacks_t callbacks = {
+            .on_alarm = rpm_analog_sample_handler,
+        };
+        ESP_ERROR_CHECK(gptimer_register_event_callbacks(gptimer, &callbacks, NULL));
+        gptimer_alarm_config_t alarm = {
+            .alarm_count = RPM_RC_SAMPLE_US,
+            .reload_count = 0,
+            .flags.auto_reload_on_alarm = true,
+        };
+        ESP_ERROR_CHECK(gptimer_set_alarm_action(gptimer, &alarm));
+    }
     ESP_LOGI(TAG, "Enable timer");
     ESP_ERROR_CHECK(gptimer_enable(gptimer));
-    ESP_ERROR_CHECK(gptimer_start(gptimer));
+    /* Start after GPIO and filter initialization, including in analog mode. */
 }
 
 void deinit_gptimer(void)
@@ -239,6 +284,22 @@ static void frequency_task_glitch(void* arg) {
     }
 }
 
+static void frequency_task_glitchanalog(void *arg)
+{
+    rpm_analog_sample_t sample;
+    while (1) {
+        if (xQueueReceive(gpio_evt_queue, &sample, portMAX_DELAY)
+            && sample.period_us > 0
+            && (uint32_t)(millis() - sample.measured_ms) < 1000u) {
+            uint32_t hz = 1000000u / sample.period_us;
+            if (hz < digifiz_parameters.rpm_sanity_check.value) {
+                mRPMSenseData = hz;
+                last_rpm_value_millis = sample.measured_ms;
+            }
+        }
+    }
+}
+
 static void tacho_gpio_init() {
     gpio_config_t io_conf;
     io_conf.intr_type = GPIO_INTR_ANYEDGE;
@@ -246,13 +307,17 @@ static void tacho_gpio_init() {
     io_conf.pin_bit_mask = (1ULL << RPM_PIN);
     io_conf.pull_down_en = 0;
     io_conf.pull_up_en = 1;
-    gpio_config(&io_conf);
+    ESP_ERROR_CHECK(gpio_config(&io_conf));
 
     //gpio_install_isr_service(ESP_INTR_FLAG_EDGE);
     if (digifiz_parameters.rpm_algorithm.value == RPM_ALGORITHM_STABLE) {
         gpio_isr_handler_add(RPM_PIN, gpio_isr_handler_stable, (void*) RPM_PIN);
     } else if (digifiz_parameters.rpm_algorithm.value == RPM_ALGORITHM_GLITCH) {
         gpio_isr_handler_add(RPM_PIN, gpio_isr_handler_glitch, (void*) RPM_PIN);
+    } else if (digifiz_parameters.rpm_algorithm.value == RPM_ALGORITHM_GLITCHANALOG) {
+        rpm_analog_input_high = gpio_get_level(RPM_PIN) != 0;
+        rpm_rc_init(&rpm_rc_filter, rpm_analog_input_high);
+        ESP_ERROR_CHECK(gpio_isr_handler_add(RPM_PIN, gpio_isr_handler_glitchanalog, NULL));
     } else {
         gpio_isr_handler_add(RPM_PIN, gpio_isr_handler_legacy, (void*) RPM_PIN);
     }
@@ -304,14 +369,23 @@ void initTacho()
     if (rpm_min_high_us == 0) {
         rpm_min_high_us = RPM_MIN_HIGH_US_DEFAULT;
     }
-    gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
+    gpio_evt_queue = xQueueCreate(
+        digifiz_parameters.rpm_algorithm.value == RPM_ALGORITHM_GLITCHANALOG ? 1 : 10,
+        digifiz_parameters.rpm_algorithm.value == RPM_ALGORITHM_GLITCHANALOG
+            ? sizeof(rpm_analog_sample_t) : sizeof(uint32_t));
+    assert(gpio_evt_queue != NULL);
     tacho_timer_init();
     tacho_gpio_init();
+    ESP_ERROR_CHECK(gptimer_start(gptimer));
     // task takes ownership of allocated memory
     if (digifiz_parameters.rpm_algorithm.value == RPM_ALGORITHM_STABLE) {
         xTaskCreatePinnedToCore(frequency_task_stable, "rpm_count_task_stable", 2048, NULL, 10, NULL, 1);
     } else if (digifiz_parameters.rpm_algorithm.value == RPM_ALGORITHM_GLITCH) {
         xTaskCreatePinnedToCore(frequency_task_glitch, "rpm_count_task_glitch", 2048, NULL, 10, NULL, 1);
+    } else if (digifiz_parameters.rpm_algorithm.value == RPM_ALGORITHM_GLITCHANALOG) {
+        BaseType_t created = xTaskCreatePinnedToCore(frequency_task_glitchanalog,
+            "rpm_glitchanalog", 2048, NULL, 10, NULL, 1);
+        assert(created == pdPASS);
     } else {
         xTaskCreatePinnedToCore(frequency_task_legacy, "rpm_count_task_legacy", 2048, NULL, 10, NULL, 1);
     }
