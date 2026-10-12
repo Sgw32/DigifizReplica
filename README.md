@@ -1,14 +1,14 @@
 [![Build Digifiz Next](https://github.com/Sgw32/DigifizReplica/actions/workflows/build_main.yml/badge.svg)](https://github.com/Sgw32/DigifizReplica/actions/workflows/build_main.yml)
 
-[![Build Digifiz Replica Arduino](https://github.com/Sgw32/DigifizReplica/actions/workflows/build_legacy_arduino.yml/badge.svg)](https://github.com/Sgw32/DigifizReplica/actions/workflows/build_legacy_arduino.yml)
+[![Build Digifiz GEN1 Arduino](https://github.com/Sgw32/DigifizReplica/actions/workflows/build_legacy_arduino.yml/badge.svg)](https://github.com/Sgw32/DigifizReplica/actions/workflows/build_legacy_arduino.yml)
 
-# Official Digifiz Replica repository
+# Official Digifiz Next repository
 
-![Digifiz Replica](/images/digifiz_photo.jpg)
+![Digifiz GEN1](/images/digifiz_photo.jpg)
 
-Digifiz Replica project code
+Digifiz Next/GEN1 project code
 
-Digifiz Replica is a Digifiz replacement for Golf/ Jetta/ Scirocco cars of mk2 generation. The project is not an official Volkswagen product (actually, it is a completely new product), is a hobbyist product and just resembles the look of the device. Use it on your own risk!
+Digifiz Next/GEN1 or simply Digifiz Replica is a Digifiz replacement for Golf/ Jetta/ Scirocco cars of mk2 generation. The project is not an official Volkswagen product (actually, it is a completely new product), is a hobbyist product and just resembles the look of the device. Use it on your own risk!
 
 Currently Audi Digifiz with Red and Green version is also supported. 
 
@@ -23,7 +23,7 @@ MedianFilterLib2
 
 Ctl+Shift+U for firmware upload using USBasp
 
-![Digifiz Replica](/images/digifiz_next_photo.jpg)
+![Digifiz Next](/images/digifiz_next_photo.jpg)
 
 Requirements for ESP32 version:
 
@@ -31,7 +31,7 @@ ESP32-IDF v5.2.1
 
 
 
-## Digifiz Replica information
+## Hardware information
 
 As tens of units were already dispatched some info should be here. 
 The project itself started in 2021 and many units were sold to Russia and abroad(mainly to USA, Germany, UK, Italy and other countries from EU)
@@ -39,6 +39,9 @@ The project itself started in 2021 and many units were sold to Russia and abroad
 Original Russian community for Digifiz Replica: https://vk.com/digifiz
 Mirror (also on RU language) in Telegram with news and so on: https://t.me/digifiz
 English versions of communities and chat are coming soon and also will be in Telegram. 
+
+Facebook group:
+https://www.facebook.com/groups/digifiz
 
 Currently (2023) firmware supports such cars as:
 
@@ -52,12 +55,12 @@ Currently (2023) firmware supports such cars as:
 
 More info in manual (see Docs)
 
-## Audi Digifiz
+## Audi DRA
 
-Now Audi Digifiz Replicas are also supported. 
+Now Audi "DRA" Digifiz Replicas are also supported. 
 Both Green and Red versions are working (see setup.h file):
-![Digifiz Replica Audi Red](/images/audi_red.jpg)
-![Digifiz Replica Audi Green](/images/audi_green.jpg)
+![Digifiz DRA Red](/images/audi_red.jpg)
+![Digifiz DRA Green](/images/audi_green.jpg)
 
 
 ## Current roadmap
@@ -66,12 +69,12 @@ Both Green and Red versions are working (see setup.h file):
 - More stable configuration
 - Compile through PlatformIO
 - Docs using Doxygen
-- Very far plans: mk2 hardware redesign, Golf 3, Audi 80 B3, AvtoVAZ dashboards 
+- Very far plans: mk2 hardware redesign, Audi 80 B3, AvtoVAZ dashboards 
 - LCD Digifiz
 
 ## License
 
-Digifiz Replica firmware is open source under MIT license. 
+Digifiz Next/GEN1 firmware is open source under MIT license. 
 Potential hardware files disclosure may be done on one of Open Hardware Licenses.
 Currently, hardware is closed source and is available for sale. 
 
@@ -92,7 +95,7 @@ AvtoVAZ is a trademark of AvtoVAZ Concern
 
 Any images or text of trademarks used on this site are for information purposes only.
 
-Digifiz Replica dashboards, as well as Digifiz Audi are replacement parts only for the respective cars, with OEM VAG numbers assigned:
+Digifiz Next/DRA/GEN1 dashboards, as well as Digifiz Audi are replacement parts only for the respective cars, with OEM VAG numbers assigned:
 
 191 919 065 B / 191 919 019 B / 87001181 / 191 919 005 B / 191919065B
 191919033LR 616.051.2001 6160512001
