@@ -40,6 +40,7 @@ float getGasLevel(float R); //percents
 float getRToFuelLevel();
 float getAmbientTemperature(); //celsius
 float getFuelConsumption();
+float litersPer100KmToMpg(float litersPer100Km);
 
 float getIntakePressure();
 float getCurrentIntakeFuelConsumption();

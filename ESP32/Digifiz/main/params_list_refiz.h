@@ -93,6 +93,14 @@ extern "C" {
     ) \
     PARAM(  \
         U8, \
+        option_mpg, \
+        .p_name = "MPG option", \
+        .p_info = "Display fuel consumption in miles per gallon instead of liters per 100 km",\
+        .value = 0, \
+        .max = 1, \
+    ) \
+    PARAM(  \
+        U8, \
         option_kelvin, \
         .p_name = "Kelvin option", \
         .p_info = "Enable Kelvin degrees option",\

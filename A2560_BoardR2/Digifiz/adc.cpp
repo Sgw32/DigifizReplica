@@ -656,6 +656,14 @@ uint8_t getLitresInTank() //0..99
     return constrain(gasolineLevel*(float)tankCapacity,0,99); //where 99 of course means error
 }
 
+float litersPer100KmToMpg(float litersPer100Km)
+{
+    if (litersPer100Km <= 0.0f)
+        return 0.0f;
+
+    return 235.214583f / litersPer100Km;
+}
+
 uint8_t getGallonsInTank() //0..99
 {
     if (invalid_gas >= MAX_CONSECUTIVE_INVALID)

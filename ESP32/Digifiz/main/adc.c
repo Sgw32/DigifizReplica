@@ -370,6 +370,14 @@ uint8_t getLitresInTank() {
     return constrain(gasolineLevel*(float)tankCapacity,0,99); //where 99 of course means error
 }
 
+float litersPer100KmToMpg(float litersPer100Km)
+{
+    if (litersPer100Km <= 0.0f)
+        return 0.0f;
+
+    return 235.214583f / litersPer100Km;
+}
+
 // Get the gallons of fuel in the tank
 uint8_t getGallonsInTank() {
     return constrain(gasolineLevel*(float)tankCapacity*0.264172f,0,99); //where 99 of course means error 

@@ -289,7 +289,12 @@ void pressMFASensorSuperSuperLong() {
 float getMFASensorValue() {
    switch (digifiz_parameters.mfa_sensor.value) {
         case MFA_SENSOR_CONSUMPTION:
-            return getFuelConsumption();
+        {
+            float consumption = getFuelConsumption();
+            return digifiz_parameters.option_mpg.value
+                ? litersPer100KmToMpg(consumption)
+                : consumption;
+        }
         case MFA_SENSOR_BAROMETER:
             return getBarometerPressure();
         case MFA_SENSOR_LAMBDA_AFR:
