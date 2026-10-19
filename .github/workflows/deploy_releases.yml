@@ -9,6 +9,8 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Repository
@@ -99,7 +101,10 @@ jobs:
           # Create a zip file of all the artifacts in the build directory
           zip -r build/digifiz-firmware.zip build/*
           
-      # --- ESP-IDF Build ---
+      # --- Digifiz Next ESP-IDF Build ---
+      - name: Select Digifiz Next setup
+        run: cp ESP32/Digifiz/main/setup_dr_next.h ESP32/Digifiz/main/setup.h
+
       - name: Set up ESP-IDF and Build
         uses: espressif/esp-idf-ci-action@v1.1.0
         with:
@@ -120,6 +125,39 @@ jobs:
             ESP32/Digifiz/build/*.elf
             
      
+      # Preserve Digifiz Next binaries before switching the shared setup.h.
+      - name: Preserve Digifiz Next Build
+        run: |
+          mkdir -p release/digifiz-next
+          cp ESP32/Digifiz/build/Digifiz.bin release/digifiz-next/
+          cp ESP32/Digifiz/build/Digifiz.elf release/digifiz-next/
+          cp ESP32/Digifiz/build/bootloader/bootloader.bin release/digifiz-next/
+          cp ESP32/Digifiz/build/partition_table/partition-table.bin release/digifiz-next/
+          cp ESP32/Digifiz/build/ota_data_initial.bin release/digifiz-next/
+
+      # ReFIZ uses the same project and output filenames, but a different setup.
+      - name: Select ReFIZ setup and clean previous build
+        run: |
+          cp ESP32/Digifiz/main/setup_refiz.h ESP32/Digifiz/main/setup.h
+          rm -rf ESP32/Digifiz/build
+
+      - name: Build ReFIZ firmware
+        uses: espressif/esp-idf-ci-action@v1.1.0
+        with:
+          esp_idf_version: v5.2.1
+          target: esp32s3
+          path: 'ESP32/Digifiz/'
+
+      - name: Package ReFIZ firmware
+        run: |
+          mkdir -p release/refiz
+          cp ESP32/Digifiz/build/Digifiz.bin release/refiz/
+          cp ESP32/Digifiz/build/Digifiz.elf release/refiz/
+          cp ESP32/Digifiz/build/bootloader/bootloader.bin release/refiz/
+          cp ESP32/Digifiz/build/partition_table/partition-table.bin release/refiz/
+          cp ESP32/Digifiz/build/ota_data_initial.bin release/refiz/
+          (cd release/refiz && zip -9 ../refiz-firmware.zip *)
+
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -139,7 +177,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./ESP32/Digifiz/build/Digifiz.bin
+          asset_path: ./release/digifiz-next/Digifiz.bin
           asset_name: Digifiz.bin
           asset_content_type: application/octet-stream
       
@@ -149,7 +187,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./ESP32/Digifiz/build/bootloader/bootloader.bin
+          asset_path: ./release/digifiz-next/bootloader/bootloader.bin
           asset_name: bootloader.bin
           asset_content_type: application/octet-stream
       
@@ -159,7 +197,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./ESP32/Digifiz/build/partition_table/partition-table.bin
+          asset_path: ./release/digifiz-next/partition_table/partition-table.bin
           asset_name: partition_table.bin
           asset_content_type: application/octet-stream
       
@@ -169,7 +207,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./ESP32/Digifiz/build/ota_data_initial.bin
+          asset_path: ./release/digifiz-next/ota_data_initial.bin
           asset_name: ota_data_initial.bin
           asset_content_type: application/octet-stream
       
@@ -179,7 +217,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./ESP32/Digifiz/build/Digifiz.elf
+          asset_path: ./release/digifiz-next/Digifiz.elf
           asset_name: Digifiz.elf
           asset_content_type: application/octet-stream
       
@@ -193,3 +231,13 @@ jobs:
           asset_path: ./build/digifiz-firmware.zip  # Path to the zip file
           asset_name: digifiz-firmware.zip  # Name of the zip file
           asset_content_type: application/octet-stream
+
+      - name: Upload ReFIZ Firmware Archive to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release/refiz-firmware.zip
+          asset_name: refiz-firmware.zip
+          asset_content_type: application/zip

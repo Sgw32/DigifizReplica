@@ -38,6 +38,12 @@ extern "C" {
 #define DEFAULT_OPTION_FAHRENHEIT 0
 #endif
 
+#ifdef MPG
+#define DEFAULT_OPTION_MPG 1
+#else
+#define DEFAULT_OPTION_MPG 0
+#endif
+
 #ifdef KELVIN
 #define DEFAULT_OPTION_KELVIN 1
 #else
@@ -155,6 +161,14 @@ extern "C" {
         .p_name = "", \
         .p_info = "",\
         .value = DEFAULT_OPTION_FAHRENHEIT, \
+        .max = 1, \
+    ) \
+    PARAM(  \
+        U8, \
+        option_mpg, \
+        .p_name = "", \
+        .p_info = "",\
+        .value = DEFAULT_OPTION_MPG, \
         .max = 1, \
     ) \
     PARAM(  \

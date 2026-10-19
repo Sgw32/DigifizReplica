@@ -13,6 +13,7 @@ extern "C" {
 
 
 #include "setup.h"
+#include "speed_filter.h"
 
 #ifdef DIGIFIZ_REFIZ_DISPLAY
 
@@ -90,6 +91,14 @@ extern "C" {
         option_fahrenheit, \
         .p_name = "Fahreheit option", \
         .p_info = "Enable Fahrenheit degress option",\
+        .value = 0, \
+        .max = 1, \
+    ) \
+    PARAM(  \
+        U8, \
+        option_mpg, \
+        .p_name = "MPG option", \
+        .p_info = "Display fuel consumption in miles per gallon instead of liters per 100 km",\
         .value = 0, \
         .max = 1, \
     ) \
@@ -801,7 +810,9 @@ extern "C" {
         U16, \
         speedFilterK, \
         .p_name = "LPF coefficient for speed calculation", \
-        .p_info = "",\
+        .p_info = "Speed LPF: 0=default, 100=~1 s settling, 1000=instant. Larger is faster.",\
+        .value = SPEED_FILTER_DEFAULT_K, \
+        .max = SPEED_FILTER_MAX_K, \
     ) \
     PARAM(  \
         U16, \

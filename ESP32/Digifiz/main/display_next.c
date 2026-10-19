@@ -1060,7 +1060,7 @@ void displayMFAType(uint8_t mfaType) {
             display.mfa_dots&=0b00;
             if (digifiz_parameters.mfa_sensor.value == MFA_SENSOR_CONSUMPTION)
             {
-                setMFADisplayedNumber((uint16_t)(digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]*100));
+                setMFADisplayedNumber((uint16_t)((digifiz_parameters.option_mpg.value ? litersPer100KmToMpg(digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value]) : digifiz_status.averageConsumption[digifiz_parameters.mfaBlock.value])*100));
             }
             else
             {

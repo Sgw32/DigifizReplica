@@ -96,6 +96,7 @@ float getOilTemperature(); //celsius
 float getRToFuelLevel(float R);
 float getAmbientTemperature(); //celsius
 float getFuelConsumption();
+float litersPer100KmToMpg(float litersPer100Km);
 
 float getIntakePressure();
 float getCurrentIntakeFuelConsumption();
