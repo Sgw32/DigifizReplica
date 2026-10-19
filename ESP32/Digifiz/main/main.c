@@ -30,6 +30,7 @@
 #include "tacho.h"
 #include "adc.h"
 #include "speedometer.h"
+#include "speed_filter.h"
 #include "device_sleep.h"
 #include "reg_inout.h"
 #include "buzzer.h"
@@ -273,9 +274,6 @@ void displayUpdate(void *pvParameters) {
 
         if (!digifiz_parameters.option_testmode_on.value)
         {
-            if (digifiz_parameters.speed_rpm_mode.value == 0) {
-                spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
-            }
             rpm = readLastRPM(); 
         }
         //For test fuel intake
@@ -306,7 +304,12 @@ void displayUpdate(void *pvParameters) {
         if (digifiz_parameters.speed_rpm_mode.value != 0) {
             gear_speed_emulator_set_rpm(averageRPM);
             spd_m = (uint32_t)gear_speed_emulator_get_speed();
-            spd_m_speedometer += (spd_m-spd_m_speedometer)*0.5;
+        }
+        // Apply the display LPF once per 32 Hz cycle for either speed source.
+        // Keep spd_m unfiltered for mileage and gear estimation, as on A2560.
+        if (!digifiz_parameters.option_testmode_on.value) {
+            spd_m_speedometer = speed_filter_update(spd_m_speedometer, (float)spd_m,
+                                                    digifiz_parameters.speedFilterK.value);
         }
         gear_estimator_set_input(averageRPM, spd_m);
 

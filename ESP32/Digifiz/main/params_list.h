@@ -13,6 +13,7 @@ extern "C" {
 
 
 #include "setup.h"
+#include "speed_filter.h"
 
 #ifdef DIGIFIZ_REFIZ_DISPLAY
 
@@ -809,7 +810,9 @@ extern "C" {
         U16, \
         speedFilterK, \
         .p_name = "LPF coefficient for speed calculation", \
-        .p_info = "",\
+        .p_info = "Speed LPF: 0=default, 100=~1 s settling, 1000=instant. Larger is faster.",\
+        .value = SPEED_FILTER_DEFAULT_K, \
+        .max = SPEED_FILTER_MAX_K, \
     ) \
     PARAM(  \
         U16, \

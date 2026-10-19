@@ -628,6 +628,11 @@ void processData(int parameter,long value)
         printLnCString("PARAMETER_RPM_FILTER_FALLING\n");
         digifiz_parameters.rpmFallingFilterK.value = value;
         break;
+      case PARAMETER_SPEED_FILTER:
+        printLnCString("PARAMETER_SPEED_FILTER\n");
+        digifiz_parameters.speedFilterK.value = value <= 0 ? 0
+            : value > (long)SPEED_FILTER_MAX_K ? SPEED_FILTER_MAX_K : value;
+        break;
       case PARAMETER_SET_FUEL_CALC_FUNCTION:
         printLnCString("PARAMETER_SET_FUEL_CALC_FUNCTION\n");
         // digifiz_parameters.option_linear_fuel.value = value&1;
@@ -1013,7 +1018,7 @@ void processData(int parameter,long value)
         break;
       case PARAMETER_SPEED_FILTER:
         printLnCString("PARAMETER_SPEED_FILTER\n");
-        printLnUINT8(digifiz_parameters.speedFilterK.value);
+        printLnUINT32(digifiz_parameters.speedFilterK.value);
         break;
       case PARAMETER_SET_RPM_OPTIONS: //TODO: move to new params
         printLnCString("PARAMETER_GET_RPM_OPTIONS\n");
