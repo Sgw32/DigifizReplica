@@ -25,12 +25,11 @@
 
 /**
  * @file frequency_count.h
- * @brief Example application for the ESP32 Frequency Counter component.
+ * @brief Continuous ESP32 pulse counting with a rolling measurement window.
  *
- * An accurate sampling window signal is created by the RMT component, during which time
- * a Pulse Counter counts both rising and falling edges of the signal of interest.
- *
- * To connect the RMT window output to the PCNT enable, a GPIO must be used. This is set by rmt_gpio.
+ * PCNT counts falling edges continuously, with hardware glitch filtering and
+ * overflow accumulation. Cumulative count snapshots and their actual elapsed
+ * timestamps determine frequency; counts are not cleared between readings.
  * It should not be used for any external purposes.
  *
  * Usage:
@@ -39,8 +38,6 @@
  * - Create a task with frequency_count_task() as its function, passing a pointer
  *   to the frequency_count_configuration_t into the task creation function
  * 
- * TODO:
- * - Support sampling periods of milliseconds
  * 
  */
 
@@ -61,7 +58,7 @@ typedef struct
     gpio_num_t pcnt_gpio;                   ///< count events on this GPIO
     float sampling_period_seconds;          ///< time (in seconds) between start of adjacent samples
     float sampling_window_seconds;          ///< sample window length (in seconds)
-    uint16_t filter_length;                 ///< counter filter length in APB cycles
+    uint16_t filter_length;                 ///< glitch filter in 80 MHz APB cycles (0: 1 us default)
     void (*frequency_update_callback)(double hz);  ///< called each time a frequency is determined
 } frequency_count_configuration_t;
 

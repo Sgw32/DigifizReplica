@@ -871,9 +871,9 @@ extern "C" {
         U8, \
         rpm_algorithm, \
         .p_name = "RPM algorithm", \
-        .p_info = "RPM handling algorithm: 0 = legacy/unstable, 1 = stable input, 2 = glitch-filtered input", \
+        .p_info = "RPM algorithm (reboot): 0 = legacy, 1 = stable, 2 = glitch, 3 = glitchanalog (RC 400 us, 8 periods)", \
         .value = 0, \
-        .max = 2, \
+        .max = 3, \
     ) \
     PARAM(  \
         U16, \
@@ -997,7 +997,7 @@ extern "C" {
         U32, \
         speed_meas_window, \
         .p_name = "Speedometer measurement window in ms", \
-        .p_info = "Measurement period for PCNT. Updates after reboot.",\
+        .p_info = "Rolling PCNT measurement window. Updates after reboot.",\
         .min = 250, \
         .max = 2000, \
         .value = 1000, \
@@ -1006,7 +1006,7 @@ extern "C" {
         U8, \
         stable_speed_input, \
         .p_name = "Stable Speed input", \
-        .p_info = "Enable for electronic speed signal", \
+        .p_info = "Electronic speed input (50 us pulse qualification, reboot required)", \
         .value = 0, \
         .max = 1, \
     ) \
@@ -1014,7 +1014,7 @@ extern "C" {
         U8, \
         filtered_speed_input, \
         .p_name = "Filtered Speed input", \
-        .p_info = "Enable for speed signal filtering(disable stable)", \
+        .p_info = "8-period median speed filter (disable stable, reboot required)", \
         .value = 1, \
         .max = 1, \
     ) \
