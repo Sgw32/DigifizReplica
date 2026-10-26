@@ -81,6 +81,31 @@ cc -std=c11 -O2 -Wall -Wextra -Werror -fsanitize=address,undefined \
 /tmp/digifiz-speed-filter-test
 ```
 
+## Web interface regression tests
+
+Requires Node.js 20+ and Chromium. From the repository root:
+
+```sh
+cd ESP32/Digifiz/tests/web
+npm ci
+npm test
+```
+
+The tests use `/usr/bin/chromium` by default; set `CHROMIUM_PATH` for another
+Chromium installation. They execute the actual embedded HTML in a headless
+browser with mocked device HTTP endpoints and WebSocket connections. No
+ESP32 or external server is required.
+
+Coverage includes pending numeric/text/checkbox inputs, edits made during
+an in-flight refresh, focus and selection, imported drafts, rejected writes
+and partial bulk updates. Automatic refreshes update the loaded-value column
+while preserving inputs. Explicit **Load Parameters** still reloads inputs
+from the device.
+
+Color tests insert above and below the first, middle and last rows, insert
+after moving a row, check the order submitted to the device, and verify
+append/move/delete controls and the empty-table state.
+
 These tests use the production speed LPF helper and verify the step response,
 decay to zero, legacy saved settings, coefficient limits, live changes and
 noise attenuation. They do not require ESP32 hardware.

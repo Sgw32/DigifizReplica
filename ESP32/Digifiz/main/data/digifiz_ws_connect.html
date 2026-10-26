@@ -619,13 +619,25 @@
 <script>
 let currentParams = [];
 
-function loadParams() {
+function loadParams({ preserveInputs = false } = {}) {
         return fetch('/params?type=params')
         .then(res => res.json())
         .then(data => {
                 const params = Array.isArray(data.params) ? data.params : [];
                 currentParams = params.map(param => ({ ...param }));
                 const tableContainer = document.getElementById("table-container");
+
+                if (preserveInputs && tableContainer.querySelector('table')) {
+                        // Automatic refreshes update device readback only. Keep
+                        // drafts, checkbox states, focus and selection intact.
+                        params.forEach(param => {
+                                const input = document.getElementById(`input-${param.name}`);
+                                if (input) {
+                                        input.closest('tr').cells[1].textContent = param.value;
+                                }
+                        });
+                        return;
+                }
 
                 const table = document.createElement("table");
                 const thead = document.createElement("thead");
@@ -686,7 +698,7 @@ function setParam(name) {
         const input = document.getElementById(`input-${name}`);
         const value = input.type === "checkbox" ? (input.checked ? 1 : 0) : input.value;
 
-        fetch('/set_param', {
+        return fetch('/set_param', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, value })
@@ -697,7 +709,7 @@ function setParam(name) {
         })
         .then(data => {
         alert(`Parameter "${name}" updated successfully!`);
-        loadParams(); // Refresh values
+        return loadParams({ preserveInputs: true });
         })
         .catch(err => {
         console.error("Set failed:", err);
@@ -856,7 +868,7 @@ async function applyImportedParameterValues(paramMap) {
         }
 
         if (appliedCount) {
-                loadParams();
+                await loadParams({ preserveInputs: true });
         }
 
         if (errors.length) {
@@ -1355,6 +1367,7 @@ function addColorSegmentRow(data = null) {
     // Append row to table
     tbody.appendChild(row);
     updateSetColorSchemeButton();
+    return row;
 }
 
 document.getElementById('addColorSegment').addEventListener('click', function() {
