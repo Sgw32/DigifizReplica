@@ -412,6 +412,10 @@ void displayUpdate(void *pvParameters) {
             refuel_indicator_managed = true;
 
             bool shouldBlink = criticalFuel && digifiz_parameters.option_refuel_blink.value;
+#ifdef DIGIFIZ_NEXT_DISPLAY
+            // New fuel color modes keep the glyph visible and use the shared clock.
+            shouldBlink = shouldBlink && digifiz_parameters.fuelColorChangeMode.value == 0;
+#endif
 
             if (shouldBlink)
             {

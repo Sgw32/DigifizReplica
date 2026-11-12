@@ -416,7 +416,11 @@ uint8_t getDisplayedCoolantTemp() {
     }
     else
     {
-        if ((coolantT>120.0f)&&digifiz_parameters.tempOptions_alarm_function.value)
+        bool legacy_temp_blink = digifiz_parameters.tempOptions_alarm_function.value;
+#ifdef DIGIFIZ_NEXT_DISPLAY
+        legacy_temp_blink = legacy_temp_blink && digifiz_parameters.coolantColorChangeMode.value == 0;
+#endif
+        if ((coolantT>120.0f)&&legacy_temp_blink)
         {
             if ((millis()-lastMillis)>TEMPERATURE_ALARM_PERIOD)
             {

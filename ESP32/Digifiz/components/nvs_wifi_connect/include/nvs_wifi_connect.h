@@ -2,6 +2,11 @@
 
 #include <esp_http_server.h>
 
+/* Two Wi-Fi routes plus up to seven application routes (ReFIZ), with headroom.
+ * Use the same limits in station and fallback-AP server startup paths. */
+#define NVS_WIFI_CONNECT_HTTP_MAX_URI_HANDLERS 16
+#define NVS_WIFI_CONNECT_HTTP_STACK_SIZE 20480
+
 
 enum {
     NVS_WIFI_CONNECT_MODE_STAY_ACTIVE, // -> no operation

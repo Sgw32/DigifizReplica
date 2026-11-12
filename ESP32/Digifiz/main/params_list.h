@@ -14,6 +14,7 @@ extern "C" {
 
 #include "setup.h"
 #include "speed_filter.h"
+#include "block_color_alert_params.h"
 
 #ifdef DIGIFIZ_REFIZ_DISPLAY
 
@@ -667,10 +668,10 @@ extern "C" {
     PARAM(  \
         U8, \
         speedColorChangeEnable, \
-        .p_name = "Speed color alert", \
-        .p_info = "Enable speed color change above threshold",\
+        .p_name = "Speed color mode", \
+        .p_info = BLOCK_COLOR_MODE_INFO,\
         .value = 0, \
-        .max = 1, \
+        .max = 2, \
     ) \
     PARAM(  \
         U16, \
@@ -1026,6 +1027,7 @@ extern "C" {
         .value = 5, \
         .max = 400, \
     ) \
+    NEXT_BLOCK_COLOR_ALERT_PARAMS(PARAM)
 
 
 #endif

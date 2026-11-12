@@ -427,14 +427,20 @@ static httpd_handle_t start_webserver(void)
 {
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.stack_size = 20480; 
+    config.stack_size = NVS_WIFI_CONNECT_HTTP_STACK_SIZE;
+    config.max_uri_handlers = NVS_WIFI_CONNECT_HTTP_MAX_URI_HANDLERS;
     // Start the httpd server
     ESP_LOGI(WS_TAG, "Starting server on port: '%d'", config.server_port);
     if (httpd_start(&server, &config) == ESP_OK) {
         // Registering the ws handler
         ESP_LOGI(WS_TAG, "Registering URI handlers");
-        digifiz_register_uri_handler(server);
-        nvs_wifi_connect_register_uri_handler(server);
+        esp_err_t err = digifiz_register_uri_handler(server);
+        if (err == ESP_OK) err = nvs_wifi_connect_register_uri_handler(server);
+        if (err != ESP_OK) {
+            ESP_LOGE(WS_TAG, "Registering URI handlers failed: %s", esp_err_to_name(err));
+            httpd_stop(server);
+            return NULL;
+        }
         return server;
     }
 
