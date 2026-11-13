@@ -467,7 +467,9 @@
 	<a href="#" onclick="selTab(event,'Control')" class="tablinks">Control</a>
 	<a href="#" onclick="selTab(event,'Settings')" class="tablinks">Settings</a>
 	<a href="#" onclick="selTab(event,'Colors')" class="tablinks">Colors</a>
+<!-- REFIZ_ONLY_BEGIN -->
 	<a href="#" onclick="selTab(event,'Diagnostics')" class="tablinks">Diagnostics</a>
+<!-- REFIZ_ONLY_END -->
 	<a href="#" onclick="selTab(event,'About')" class="tablinks">About</a>
 	<a href="javascript:void(0);" class="icon" onclick="myFunction()">
 		<span class="hamburger"></span>
@@ -580,6 +582,7 @@
 	</div>
 </div>
 
+<!-- REFIZ_ONLY_BEGIN -->
 <div id="Diagnostics" class="tabcontent">
 	<div class="tci">
 		<div class="hdr">ReFIZ segment diagnostics</div>
@@ -597,6 +600,7 @@
 	</div>
 </div>
 
+<!-- REFIZ_ONLY_END -->
 <div id="About" class="tabcontent">
 <div class="tci">
    Copyright &copy; 2021-2025 by Fedor Zagumennov (Sgw32)<br>
@@ -660,7 +664,11 @@ function loadParams({ preserveInputs = false } = {}) {
                 const tr = document.createElement("tr");
 
                 let inputCellHTML = "";
-                if (param.min === 0 && param.max === 1) {
+                if (param.info === "0=no change, 1=constant color, 2=blinking") {
+                        inputCellHTML = `<select id="input-${param.name}">${[
+                                [0, "No change"], [2, "Blinking"], [1, "Constant color"]
+                        ].map(([value, label]) => `<option value="${value}" ${Number(param.value) === value ? "selected" : ""}>${label}</option>`).join("")}</select>`;
+                } else if (param.min === 0 && param.max === 1) {
                         const checked = param.value === 1 || param.value === "1" ? "checked" : "";
                         inputCellHTML = `<input type="checkbox" id="input-${param.name}" ${checked}>`;
                 } else {
@@ -956,6 +964,7 @@ function myFunction() {
 document.getElementById("defaultTab").click();
 </script>
 
+<!-- REFIZ_ONLY_BEGIN -->
 <script>
 const refizSegments = document.getElementById('refizSegments');
 for (let segment = 0; segment <= 260; segment++) {
@@ -994,6 +1003,7 @@ document.getElementById('refizApply').addEventListener('click', async () => {
 	}
 });
 </script>
+<!-- REFIZ_ONLY_END -->
 
 <script>
 	let exSend = document.getElementById("digifizConsole");

@@ -9,6 +9,7 @@
 #include "params.h"
 #include "led_effects.h"
 #include "millis.h"
+#include "block_color_alert.h"
 
 #define TAG "display_next"
 #define SCRIPT_KEY "display_next_script"
@@ -25,8 +26,13 @@ static led_effect_state_t effect_state;
 static uint16_t l_spd_m = 0;
 static uint16_t last_coolant_value = 0;
 
-static void refresh_speed_digit_colors(uint16_t speed_value);
-static void apply_speed_digit_override_color(uint8_t r, uint8_t g, uint8_t b);
+static uint16_t last_rpm_value;
+static uint8_t shown_mfa_type;
+static bool speed_shows_gear;
+static bool color_alert_active[BLOCK_COUNT];
+static block_color_config_t color_alert_config[BLOCK_COUNT];
+static block_color_clock_t color_alert_clock;
+static bool color_alert_phase;
 
 typedef struct
 {
@@ -64,7 +70,6 @@ static bool turn_blink_initialized = false;
 static bool check_engine_active = false;
 static uint32_t check_engine_last_toggle_ms = 0;
 static bool check_engine_blink_state = true;
-static bool check_engine_speed_override_active = false;
 
 static uint8_t d_clock_hours = 0;
 static uint8_t d_clock_minutes = 0;
@@ -197,13 +202,6 @@ static uint8_t backcolor_r;
 static uint8_t backcolor_g;
 static uint8_t backcolor_b;
 
-#define SPEED_DIGITS_FIRST_SEGMENT 234
-#define SPEED_DIGITS_LAST_SEGMENT 269
-
-static void restore_speed_digit_colors(void);
-static void update_speed_digit_color_override(uint16_t speed_value);
-
-static bool speed_alert_color_active = false;
 int16_t redline_scheme_id = -1;
 
 // Sample script (to be written to NVS initially)
@@ -526,6 +524,9 @@ void initDisplay() {
     ESP_LOGI(LOG_TAG, "initDisplay started");
     setBrightness(0);
     memset(&display, 0, sizeof(DigifizNextDisplay));
+    memset(color_alert_active, 0, sizeof(color_alert_active));
+    color_alert_clock = (block_color_clock_t){0};
+    speed_shows_gear = false;
     display.battery_ind = 0;
     display.mfa1_ind = 0;
     display.mfa2_ind = 0;
@@ -705,6 +706,7 @@ void setFuel(uint8_t litres) {
 
 // Set the RPM data
 void setRPMData(uint16_t inp_d) {
+    last_rpm_value = inp_d; // Thresholds use real RPM, before gauge clamping.
     // Implementation placeholder
     if (inp_d>digifiz_parameters.maxRPM.value)
         inp_d = digifiz_parameters.maxRPM.value;
@@ -738,6 +740,7 @@ void setRPMData(uint16_t inp_d) {
 // Set the speedometer data
 void setSpeedometerData(uint16_t data) {
     l_spd_m = data;
+    speed_shows_gear = false;
     uint8_t number_spd[10]={DIGIT_NUMBER_0,
                             DIGIT_NUMBER_1,
                             DIGIT_NUMBER_2,
@@ -779,11 +782,11 @@ void setSpeedometerData(uint16_t data) {
         }
     }
 
-    update_speed_digit_color_override(data);
 }
 
 // Display current gear in format "-G-" where G is gear number or '-' for neutral
 void setSpeedometerGear(int8_t gear) {
+    speed_shows_gear = true;
     uint8_t number_spd[10]={DIGIT_NUMBER_0,
                             DIGIT_NUMBER_1,
                             DIGIT_NUMBER_2,
@@ -808,9 +811,6 @@ void setSpeedometerGear(int8_t gear) {
     display.speed_digit_3 = DIGIT_NUMBER_MINUS;
     display.speed_digit_s3 = DIGIT_NUMBER_MINUS;
 
-    if (speed_alert_color_active) {
-        restore_speed_digit_colors();
-    }
 }
 
 // Set the coolant temperature data
@@ -1045,6 +1045,7 @@ void displayMFAClock()
 
 // Display the MFA type
 void displayMFAType(uint8_t mfaType) {
+    shown_mfa_type = mfaType;
     switch(mfaType)
     {
         case MFA_STATE_TRIP_DURATION:
@@ -1198,10 +1199,6 @@ void setCheckEngine(bool onoff) {
     check_engine_active = onoff;
     check_engine_last_toggle_ms = millis();
     check_engine_blink_state = true;
-    if (!check_engine_active && check_engine_speed_override_active) {
-        refresh_speed_digit_colors(l_spd_m);
-        check_engine_speed_override_active = false;
-    }
 }
 
 void applyCheckEngineAction(void)
@@ -1210,11 +1207,6 @@ void applyCheckEngineAction(void)
 
     if (!check_engine_active || action == CHECK_ENGINE_ACTION_NONE)
     {
-        if (check_engine_speed_override_active)
-        {
-            refresh_speed_digit_colors(l_spd_m);
-            check_engine_speed_override_active = false;
-        }
         return;
     }
 
@@ -1223,29 +1215,6 @@ void applyCheckEngineAction(void)
     if (action == CHECK_ENGINE_ACTION_TEMP_BLINK)
     {
         display.coolant_value = check_engine_blink_state ? last_coolant_value : 0;
-        if (check_engine_speed_override_active)
-        {
-            refresh_speed_digit_colors(l_spd_m);
-            check_engine_speed_override_active = false;
-        }
-    }
-    else if (action == CHECK_ENGINE_ACTION_SPEED_BLINK)
-    {
-        if (check_engine_blink_state)
-        {
-            apply_speed_digit_override_color(255, 0, 0);
-            check_engine_speed_override_active = true;
-        }
-        else
-        {
-            refresh_speed_digit_colors(l_spd_m);
-            check_engine_speed_override_active = false;
-        }
-    }
-    else if (check_engine_speed_override_active)
-    {
-        refresh_speed_digit_colors(l_spd_m);
-        check_engine_speed_override_active = false;
     }
 }
 
@@ -1399,62 +1368,57 @@ static uint8_t r_colors_default[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LE
 static uint8_t g_colors_default[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
 static uint8_t b_colors_default[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
 
-static uint8_t r_colors_active[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
-static uint8_t g_colors_active[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
-static uint8_t b_colors_active[DIGIFIZ_DISPLAY_NEXT_LEDS + DIGIFIZ_BACKLIGHT_LEDS];
+#define ALERT_CONFIG(prefix, mode_field, low) (block_color_config_t){ \
+    .mode = digifiz_parameters.mode_field.value, \
+    .threshold = digifiz_parameters.prefix##ColorChangeThreshold.value, \
+    .hysteresis = digifiz_parameters.prefix##ColorChangeHysteresis.value, \
+    .below = low, \
+    .color = { digifiz_parameters.prefix##AlertColor_r.value, \
+               digifiz_parameters.prefix##AlertColor_g.value, \
+               digifiz_parameters.prefix##AlertColor_b.value } }
 
-static void restore_speed_digit_colors(void)
+static void update_block_color_alerts(uint32_t now)
 {
-    for (uint16_t led = SPEED_DIGITS_FIRST_SEGMENT; led <= SPEED_DIGITS_LAST_SEGMENT; ++led) {
-        r_colors_active[led] = r_colors_default[led];
-        g_colors_active[led] = g_colors_default[led];
-        b_colors_active[led] = b_colors_default[led];
-    }
-    speed_alert_color_active = false;
-}
-
-static void apply_speed_alert_colors(uint8_t r, uint8_t g, uint8_t b)
-{
-    for (uint16_t led = SPEED_DIGITS_FIRST_SEGMENT; led <= SPEED_DIGITS_LAST_SEGMENT; ++led) {
-        r_colors_active[led] = r;
-        g_colors_active[led] = g;
-        b_colors_active[led] = b;
-    }
-    speed_alert_color_active = true;
-}
-
-static void refresh_speed_digit_colors(uint16_t speed_value)
-{
-    if (!digifiz_parameters.speedColorChangeEnable.value) {
-        restore_speed_digit_colors();
-        return;
-    }
-
-    uint16_t threshold = digifiz_parameters.speedColorChangeThreshold.value;
-    bool should_activate = speed_value >= threshold;
-
-    if (should_activate) {
-        apply_speed_alert_colors(
-            digifiz_parameters.speedAlertColor_r.value,
-            digifiz_parameters.speedAlertColor_g.value,
-            digifiz_parameters.speedAlertColor_b.value);
-    } else {
-        restore_speed_digit_colors();
+    color_alert_config[BLOCK_RPM] = ALERT_CONFIG(rpm, rpmColorChangeMode, false);
+    color_alert_config[BLOCK_SPEED] = ALERT_CONFIG(speed, speedColorChangeEnable, false);
+    color_alert_config[BLOCK_FUEL] = ALERT_CONFIG(fuel, fuelColorChangeMode, true);
+    color_alert_config[BLOCK_COOLANT] = ALERT_CONFIG(coolant, coolantColorChangeMode, false);
+    color_alert_config[BLOCK_OIL] = ALERT_CONFIG(oil, oilColorChangeMode, false);
+    float values[BLOCK_COUNT] = { last_rpm_value, l_spd_m, getLitresInTank(),
+                                 getCoolantTemperature(), getOilTemperature() };
+    DeviceSensorsFaulty faults = getFaultyMask();
+    bool valid[BLOCK_COUNT] = {
+        true, !speed_shows_gear, !faults.fuel_faulty,
+        !faults.coolant_faulty && values[BLOCK_COOLANT] >= -50 && values[BLOCK_COOLANT] <= 200,
+        !faults.oil_faulty && values[BLOCK_OIL] >= -50 && values[BLOCK_OIL] <= 200 &&
+            shown_mfa_type == MFA_STATE_OIL_TEMP &&
+            digifiz_parameters.mfaState.value == MFA_STATE_OIL_TEMP && !uptimeDisplayEnabled
+    };
+    color_alert_phase = block_color_phase(&color_alert_clock, now,
+                                          digifiz_parameters.blockAlertBlinkPeriodMs.value);
+    for (unsigned block = 0; block < BLOCK_COUNT; ++block) {
+        color_alert_active[block] = block_color_update(color_alert_active[block],
+            color_alert_config[block], values[block], valid[block]);
     }
 }
 
-static void update_speed_digit_color_override(uint16_t speed_value)
+static led_rgb_t render_block_color(uint16_t led, led_rgb_t base)
 {
-    refresh_speed_digit_colors(speed_value);
-}
-
-static void apply_speed_digit_override_color(uint8_t r, uint8_t g, uint8_t b)
-{
-    for (uint16_t led = SPEED_DIGITS_FIRST_SEGMENT; led <= SPEED_DIGITS_LAST_SEGMENT; ++led) {
-        r_colors_active[led] = r;
-        g_colors_active[led] = g;
-        b_colors_active[led] = b;
+    int block = block_color_section(led);
+    if (block == BLOCK_SPEED && check_engine_active &&
+        digifiz_parameters.checkEngineAction.value == CHECK_ENGINE_ACTION_SPEED_BLINK) {
+        // Check-engine warnings take priority over the configurable speed alert.
+        return check_engine_blink_state ? (led_rgb_t){255, 0, 0} : base;
     }
+    if (block >= 0) {
+        base = block_color_render(base, color_alert_config[block],
+                                  color_alert_active[block], color_alert_phase);
+    }
+    // Keep disabled scale marks disabled, even during alerts or LED effects.
+    if ((digifiz_parameters.rpmOptions_7k_line.value && led > 76 && led <= 78) ||
+        (digifiz_parameters.rpmOptions_diesel_line.value && led > 76 && led <= 80))
+        return (led_rgb_t){0, 0, 0};
+    return base;
 }
 
 void compileColorScheme(void)
@@ -1511,9 +1475,6 @@ void compileColorScheme(void)
             g_colors_default[led_num] = g;
             b_colors_default[led_num] = b;
 
-            r_colors_active[led_num] = r;
-            g_colors_active[led_num] = g;
-            b_colors_active[led_num] = b;
             led_num+=1;
             if (led_num>(DIGIFIZ_DISPLAY_NEXT_LEDS+DIGIFIZ_BACKLIGHT_LEDS-1))
             {
@@ -1522,12 +1483,12 @@ void compileColorScheme(void)
             }
         }
     }
-    speed_alert_color_active = false;
 }
 
 // Fire up the Digifiz system
 void fireDigifiz() {
     led_num = 0;
+    update_block_color_alerts(millis());
 
     uint8_t *ptr = (uint8_t*)&display;
     effect_state.effect = digifiz_parameters.ledEffect_type.value;
@@ -1541,7 +1502,7 @@ void fireDigifiz() {
             for (uint16_t j = 0; j != 8; j++)
             {
                 uint8_t bit = (ptr[i] >> j) & 1;
-                led_rgb_t col = led_effect_compute(&effect_state, led_num);
+                led_rgb_t col = render_block_color(led_num, led_effect_compute(&effect_state, led_num));
                 
                 if (get_update_in_progress())
                     bit=0;
@@ -1573,9 +1534,11 @@ void fireDigifiz() {
             for (uint16_t j = 0; j != 8; j++)
             {
                 uint8_t bit = (ptr[i] >> j) & 1;
-                uint8_t r = r_colors_active[led_num];
-                uint8_t g = g_colors_active[led_num];
-                uint8_t b = b_colors_active[led_num];
+                led_rgb_t col = render_block_color(led_num, (led_rgb_t){
+                    r_colors_default[led_num], g_colors_default[led_num], b_colors_default[led_num]});
+                uint8_t r = col.r;
+                uint8_t g = col.g;
+                uint8_t b = col.b;
 
                 if (get_update_in_progress())
                     bit=0;

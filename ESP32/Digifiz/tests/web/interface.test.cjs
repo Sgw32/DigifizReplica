@@ -1,21 +1,39 @@
 const assert = require('node:assert/strict');
-const { readFileSync } = require('node:fs');
-const { resolve } = require('node:path');
+const { readFileSync, mkdtempSync, rmSync } = require('node:fs');
+const { resolve, join } = require('node:path');
+const { tmpdir } = require('node:os');
+const { execFileSync } = require('node:child_process');
+const { gunzipSync } = require('node:zlib');
 const { test, before, after } = require('node:test');
 const { chromium } = require('playwright-core');
 
 // Serve the actual embedded page, with device endpoints mocked at the HTTP
 // boundary. All DOM manipulation and application JavaScript run in Chromium.
-const html = readFileSync(resolve(__dirname, '../../main/data/digifiz_ws_connect.html'), 'utf8');
+const pages = {};
+let pageDirectory;
 let browser;
 before(async () => {
+    pageDirectory = mkdtempSync(join(tmpdir(), 'digifiz-pages-'));
+    for (const variant of ['next', 'refiz']) {
+        const output = join(pageDirectory, `${variant}.html`);
+        execFileSync(process.env.PYTHON || 'python3', [
+            resolve(__dirname, '../../main/tools/build_web_page.py'),
+            '--source', resolve(__dirname, '../../main/data/digifiz_ws_connect.html'),
+            '--output', output, '--variant', variant,
+        ]);
+        pages[variant] = readFileSync(output, 'utf8');
+        assert.equal(gunzipSync(readFileSync(`${output}.gz`)).toString(), pages[variant]);
+    }
     browser = await chromium.launch({
         executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium',
         headless: true,
         args: ['--no-sandbox', '--disable-dev-shm-usage'],
     });
 });
-after(async () => { await browser?.close(); });
+after(async () => {
+    await browser?.close();
+    if (pageDirectory) rmSync(pageDirectory, { recursive: true, force: true });
+});
 
 const inputFor = (page, name) => page.locator(`[id="input-${name}"]`);
 const rowFor = (page, name) => page.locator('#table-container tbody tr')
@@ -23,7 +41,7 @@ const rowFor = (page, name) => page.locator('#table-container tbody tr')
 const readbackFor = (page, name) => rowFor(page, name).locator('td').nth(1);
 const colorRows = page => page.locator('#colorSchemeTable tbody tr');
 
-async function device(t) {
+async function device(t, variant = 'next') {
     const state = {
         params: [
             { name: 'alpha', value: 10, type: 'uint16_t', min: 0, max: 1000, step: 1 },
@@ -31,9 +49,12 @@ async function device(t) {
             { name: 'enabled', value: 0, type: 'uint8_t', min: 0, max: 1 },
             { name: 'label', value: 'original', type: 'string', min: 0, max: 0 },
             { name: 'threshold', value: 30, type: 'uint16_t', min: 0, max: 1000 },
+            { name: 'RPM color mode', value: 0, type: 'uint8_t', min: 0, max: 2,
+              info: '0=no change, 1=constant color, 2=blinking' },
         ],
         posts: [],
         colorPosts: [],
+        diagnosticPosts: [],
         failedNames: new Set(),
         reads: 0,
         beforeRead: null,
@@ -60,7 +81,7 @@ async function device(t) {
         const url = new URL(route.request().url());
         const json = data => route.fulfill({ json: data });
         if (url.pathname === '/') {
-            return route.fulfill({ contentType: 'text/html', body: html });
+            return route.fulfill({ contentType: 'text/html', body: pages[variant] });
         }
         if (url.pathname === '/params' && url.searchParams.get('type') === 'params') {
             ++state.reads;
@@ -86,6 +107,10 @@ async function device(t) {
         }
         if (url.pathname === '/set_color_scheme') {
             state.colorPosts.push(route.request().postDataJSON());
+            return json({ status: 'ok' });
+        }
+        if (url.pathname === '/refiz_diagnostic' && variant === 'refiz') {
+            state.diagnosticPosts.push(route.request().postDataJSON());
             return json({ status: 'ok' });
         }
         return route.fulfill({ status: 404, body: 'Not mocked' });
@@ -203,6 +228,47 @@ test('explicit Load Parameters still replaces drafts with device values', async 
     await page.evaluate(() => loadParams());
     assert.equal(await inputFor(page, 'alpha').inputValue(), '10');
     assert.equal(await inputFor(page, 'enabled').isChecked(), false);
+});
+
+test('color modes have named choices, preserve a pending mode, and submit its numeric code', async t => {
+    const { page, state } = await device(t);
+    await settings(page);
+    const mode = inputFor(page, 'RPM color mode');
+    assert.deepEqual(await mode.locator('option').allTextContents(), ['No change', 'Blinking', 'Constant color']);
+    await mode.selectOption({ label: 'Blinking' });
+    await inputFor(page, 'alpha').fill('50');
+    await rowFor(page, 'alpha').getByRole('button', { name: 'Set', exact: true }).click();
+    await waitForReadback(page, 'alpha', 50);
+    assert.equal(await mode.inputValue(), '2');
+    await rowFor(page, 'RPM color mode').getByRole('button', { name: 'Set', exact: true }).click();
+    await waitForReadback(page, 'RPM color mode', 2);
+    assert.deepEqual(state.posts.at(-1), { name: 'RPM color mode', value: '2' });
+});
+
+test('Next contains no diagnostic tab, panel, or diagnostic JavaScript', async t => {
+    const { page } = await device(t, 'next');
+    assert.equal(await page.getByRole('link', { name: 'Diagnostics', exact: true }).count(), 0);
+    assert.equal(await page.locator('#Diagnostics').count(), 0);
+    assert(!pages.next.includes('/refiz_diagnostic'));
+    assert(!pages.next.includes('refizSegments'));
+});
+
+test('ReFIZ diagnostics can select all 261 segments, apply, clear, and disable', async t => {
+    const { page, state } = await device(t, 'refiz');
+    await page.getByRole('link', { name: 'Diagnostics', exact: true }).click();
+    assert.equal(await page.locator('#refizSegments input').count(), 261);
+    await page.locator('#refizDiagnosticEnabled').check();
+    await page.locator('#refizAllOn').click();
+    await page.locator('#refizApply').click();
+    await page.waitForFunction(() => document.getElementById('refizDiagnosticStatus').textContent.startsWith('Applied 261'));
+    assert.deepEqual(state.diagnosticPosts[0], {
+        enabled: true, segments: Array.from({ length: 261 }, (_, index) => index),
+    });
+    await page.locator('#refizAllOff').click();
+    await page.locator('#refizDiagnosticEnabled').uncheck();
+    await page.locator('#refizApply').click();
+    await page.waitForFunction(() => document.getElementById('refizDiagnosticStatus').textContent.startsWith('Applied 0'));
+    assert.deepEqual(state.diagnosticPosts[1], { enabled: false, segments: [] });
 });
 
 async function colors(page) {

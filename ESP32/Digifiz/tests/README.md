@@ -81,6 +81,59 @@ cc -std=c11 -O2 -Wall -Wextra -Werror -fsanitize=address,undefined \
 /tmp/digifiz-speed-filter-test
 ```
 
+## Next block color alerts
+
+```sh
+cc -std=c11 -O2 -Wall -Wextra -Werror -fsanitize=address,undefined \
+  -I ESP32/Digifiz/main -I ESP32/Digifiz/components/xparam \
+  ESP32/Digifiz/tests/block_color_alert_test.c -lm -o /tmp/block-color-alert-test
+/tmp/block-color-alert-test
+```
+
+The production alert engine is tested for all five thresholds and recovery
+boundaries, invalid/hidden inputs, synchronized phases, live settings, clock
+rollover, restoration of per-LED theme colors and physical LED ranges. These
+tests also instantiate the actual new parameter definitions and check defaults.
+
+Next exposes a named **color mode** choice for each block: **No change**,
+**Blinking**, or **Constant color**. Internally 0 means no change, 1 means
+constant and 2 means blinking, preserving the original saved speed-color
+enable value of 1. The existing speed threshold and RGB storage keys remain.
+Other blocks default to no change; an existing enabled speed alert stays enabled.
+
+| Block | Activation | Default threshold | Default hysteresis |
+| --- | --- | --- | --- |
+| RPM | Above threshold | 6000 RPM | 200 RPM |
+| Speed | Above threshold | 120 displayed km/h or mph | 5 displayed units |
+| Fuel | Below threshold | 10 liters | 2 liters |
+| Coolant | Above threshold | 110 degrees Celsius | 5 degrees Celsius |
+| Oil on MFA | Above threshold | 130 degrees Celsius | 5 degrees Celsius |
+
+Activation is strict (`>` or `<`). High alerts clear at or below threshold
+minus hysteresis; low fuel clears at or above threshold plus hysteresis.
+Temperature limits always use Celsius and fuel always uses liters, independently
+of Fahrenheit/Kelvin/gallons display options. Each block has its own RGB triplet,
+defaulting to red. Changes take effect while running.
+
+**Color alert blink period ms** is one shared full cycle, defaulting to 1000 ms:
+500 ms in the selected/theme color and 500 ms in the alert color. All blocks
+join the same phase, even if they trigger at different times. Constant mode
+uses the alert RGB throughout. The overlay also works over LED effects and
+does not change which pixels are lit or replace stored/custom color schemes.
+
+Oil coloring is limited to the visible oil-temperature MFA page; unrelated MFA
+pages, clock digits and the oil-pressure icon are unaffected. Faulty or invalid
+temperature/fuel readings clear their color alerts. Speed alerts are suppressed
+while gear glyphs are displayed; check-engine speed warnings take priority.
+
+With a new fuel/coolant color mode enabled, the corresponding legacy low-fuel
+or healthy-sensor overtemperature on/off blink is suppressed so the color
+alternation stays visible. Legacy behavior remains when color mode is off;
+sensor-fault and check-engine indications still operate.
+
+The firmware renders alerts at its display-task rate; board testing is still
+needed to verify LED appearance and electrical behavior.
+
 ## Web interface regression tests
 
 Requires Node.js 20+ and Chromium. From the repository root:
@@ -102,9 +155,21 @@ and partial bulk updates. Automatic refreshes update the loaded-value column
 while preserving inputs. Explicit **Load Parameters** still reloads inputs
 from the device.
 
+The tests build both variant-specific pages with the production page generator
+and check their gzip payloads. Next contains no Diagnostics markup or script;
+ReFIZ retains it and can select/apply all 261 segments, clear and disable the
+pattern. Named color-mode choices and draft preservation are also exercised.
+
 Color tests insert above and below the first, middle and last rows, insert
 after moving a row, check the order submitted to the device, and verify
 append/move/delete controls and the empty-table state.
+
+Both station and fallback-AP HTTP servers now reserve 16 URI slots and a 20 KiB
+stack. ReFIZ registers nine routes (seven application routes plus two Wi-Fi
+routes), exceeding ESP-IDF's default eight-slot capacity. Next needs eight;
+both have headroom and reject incomplete server registration rather than
+silently serving a partial route set. Hardware HTTP/diagnostic behavior cannot
+be exercised by the host browser mocks.
 
 These tests use the production speed LPF helper and verify the step response,
 decay to zero, legacy saved settings, coefficient limits, live changes and

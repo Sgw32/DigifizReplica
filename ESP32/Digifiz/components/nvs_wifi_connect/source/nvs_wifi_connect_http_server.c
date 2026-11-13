@@ -198,6 +198,8 @@ static httpd_handle_t start_webserver(void)
 {
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.max_uri_handlers = NVS_WIFI_CONNECT_HTTP_MAX_URI_HANDLERS;
+    config.stack_size = NVS_WIFI_CONNECT_HTTP_STACK_SIZE;
     // Start the httpd server
     if (httpd_start(&server, &config) == ESP_OK)
     {
@@ -213,6 +215,7 @@ static httpd_handle_t start_webserver(void)
             return server;
     }
 _ret:
+    if (server) httpd_stop(server);
     ESP_LOGI(TAG, "Error starting server!");
     return NULL;
 }

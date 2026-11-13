@@ -1,20 +1,16 @@
 cmake_minimum_required(VERSION 3.5)
 
-find_program(GZIP_EXECUTABLE gzip)
-
-set(WEB_FILES digifiz_ws_connect.html)
-set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data)
-set(DIST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data/dist)
-
-file(MAKE_DIRECTORY ${DIST_DIR})
-
-foreach(file ${WEB_FILES})
-    if(file MATCHES "\\.png$")
-        list(APPEND OUTPUT_FILES ${DIST_DIR}/${file})
-    else()
-        list(APPEND OUTPUT_FILES ${DIST_DIR}/${file}.gz)
-    endif()
-endforeach()
+idf_build_get_property(python PYTHON)
+set(WEB_SOURCE ${COMPONENT_DIR}/data/digifiz_ws_connect.html)
+set(WEB_HTML ${CMAKE_CURRENT_BINARY_DIR}/web/digifiz_ws_connect.html)
+set(WEB_GZIP ${WEB_HTML}.gz)
+set(WEB_BUILDER ${COMPONENT_DIR}/tools/build_web_page.py)
+file(STRINGS ${COMPONENT_DIR}/setup.h REFIZ_DEFINE
+    REGEX "^#[ \t]*define[ \t]+DIGIFIZ_REFIZ_DISPLAY")
+set(WEB_VARIANT next)
+if(REFIZ_DEFINE)
+    set(WEB_VARIANT refiz)
+endif()
 
 idf_component_register(
     SRCS "ble_module.c" "gear_estimator.c" "kline.c" "vehicle_data.c" "digifiz_time.c" "digifiz_wifi_connect.c" "digifiz_ws_server.c" "millis.c" "reg_inout.c" "frequency_count.c" "device_sleep.c" "emegrency.c"
@@ -45,31 +41,14 @@ idf_component_register(
         app_update
         driver
     EMBED_FILES
-        ${OUTPUT_FILES}
+        ${WEB_GZIP}
 )
 
-add_custom_target(frontend_assets ALL DEPENDS ${OUTPUT_FILES})
-
-foreach(file ${WEB_FILES})
-    if(file MATCHES "\\.png$")
-        add_custom_command(
-            OUTPUT ${DIST_DIR}/${file}
-            COMMAND ${CMAKE_COMMAND} -E copy
-                ${SRC_DIR}/${file}
-                ${DIST_DIR}/${file}
-            DEPENDS ${SRC_DIR}/${file}
-            COMMENT "Copying ${file}"
-        )
-    else()
-        add_custom_command(
-            OUTPUT ${DIST_DIR}/${file}.gz
-            COMMAND ${GZIP_EXECUTABLE} -k -9 -c
-                ${SRC_DIR}/${file} >
-                ${DIST_DIR}/${file}.gz
-            DEPENDS ${SRC_DIR}/${file}
-            COMMENT "Compressing ${file}"
-        )
-    endif()
-endforeach()
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/setup.h)
+add_custom_command(OUTPUT ${WEB_HTML} ${WEB_GZIP}
+    COMMAND ${python} ${WEB_BUILDER} --source ${WEB_SOURCE} --output ${WEB_HTML} --variant ${WEB_VARIANT}
+    DEPENDS ${WEB_SOURCE} ${WEB_BUILDER} ${CMAKE_CURRENT_SOURCE_DIR}/setup.h
+    VERBATIM)
+add_custom_target(frontend_assets ALL DEPENDS ${WEB_HTML} ${WEB_GZIP})
 
 add_dependencies(${COMPONENT_LIB} frontend_assets)
