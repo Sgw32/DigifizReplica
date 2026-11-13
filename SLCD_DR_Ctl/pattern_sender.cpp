@@ -44,8 +44,10 @@ void initDisplayClockTimer() {
 }
 
 ISR(TIMER1_COMPA_vect) {
-  if ((tr_status & 0x40) == 0) {
-    if (CLOCK_PORT & (1 << CLOCK_PIN_NAME)) {
+  if ((tr_status & 0x40) == 0) 
+  {
+    if (CLOCK_PORT & (1 << CLOCK_PIN_NAME)) 
+    {
       CLOCK_PORT &= ~(1 << CLOCK_PIN_NAME);
       if ((tr_status & 0x10) == 0) {
         STROBE_CLOCK_PORT |= (1 << STROBE_CLOCK_PIN_NAME);
@@ -54,19 +56,24 @@ ISR(TIMER1_COMPA_vect) {
         delayMicroseconds(16);
         DATA_PORT &= ~(1 << DATA_PIN_NAME);
       }
-    } else {
+    } 
+    else 
+    {
       if (((tr_status & 0x20) == 0) && ((tr_status & 0x10) == 0)) {
         STROBE_CLOCK_PORT |= (1 << STROBE_CLOCK_PIN_NAME);
       }
       CLOCK_PORT |= (1 << CLOCK_PIN_NAME);
-      if (tr_status & 0x20) {
+      if (tr_status & 0x20) 
+      {
         tr_status &= ~0x20;
         tr_status |= 0x10;
         delayMicroseconds(8);
         STROBE_CLOCK_PORT &= ~(1 << STROBE_CLOCK_PIN_NAME);
         delayMicroseconds(2);
         DATA_PORT &= ~(1 << DATA_PIN_NAME);
-      } else if (tr_status & 0x10) {
+      } 
+      else if (tr_status & 0x10) 
+      {
         tr_status &= ~0x10;
         DATA_PORT |= (1 << DATA_PIN_NAME);
         delayMicroseconds(8);
@@ -76,29 +83,41 @@ ISR(TIMER1_COMPA_vect) {
 
     if (tr_status & 0x80) {
       delayMicroseconds(8);
-      if (data_cnt == 3) {
+      if (data_cnt == 3) 
+      {
         DATA_PORT &= ~(1 << DATA_PIN_NAME);
       }
-      if (data_cnt == 515) {
+      if (data_cnt == 515) 
+      {
         DATA_PORT |= (1 << DATA_PIN_NAME);
       }
     }
-  } else {
-    if (tr_status & 0x80) {
+  } 
+  else 
+  {
+    //if ((tr_status & 0x40) == 0) false
+    if (tr_status & 0x80) 
+    {
       STROBE_CLOCK_PORT &= ~(1 << STROBE_CLOCK_PIN_NAME);
 
       if (data_cnt > 250) {
         delayMicroseconds(8);
-        if (getPayloadBit(data_cnt)) {
+        if (getPayloadBit(data_cnt)) 
+        {
           DATA_PORT |= (1 << DATA_PIN_NAME);
-        } else {
+        } 
+        else 
+        {
           DATA_PORT &= ~(1 << DATA_PIN_NAME);
         }
-      } else if (data_cnt > 3) {
+      } else if (data_cnt > 2) {
         delayMicroseconds(8);
-        if (getPayloadBit(data_cnt)) {
+        if (getPayloadBit(data_cnt)) 
+        {
           DATA_PORT |= (1 << DATA_PIN_NAME);
-        } else {
+        } 
+        else 
+        {
           DATA_PORT &= ~(1 << DATA_PIN_NAME);
         }
       }
