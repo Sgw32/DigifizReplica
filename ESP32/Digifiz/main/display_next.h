@@ -320,11 +320,10 @@ void fireDigifiz();
 void refiz_uart_sender_init(void);
 void refiz_uart_sender_trigger(void);
 
-/** Enable or disable the ReFIZ static segment diagnostic override. */
-void refiz_diagnostic_set_enabled(bool enabled);
-
-/** Replace the diagnostic segment mask (logical segment numbers 0..260). */
-void refiz_diagnostic_set_segments(const uint16_t *segments, size_t segment_count);
+/** Atomically update the ReFIZ 65-byte diagnostic payload and activation state. */
+void refiz_diagnostic_apply(bool enabled, const uint8_t *payload, bool reset);
+/** Read the diagnostic state/payload (not the live normal framebuffer). */
+void refiz_diagnostic_get_state(bool *enabled, uint8_t *payload);
 
 /** @brief Set oil warning indicator state. */
 void setOilIndicator(bool onoff);

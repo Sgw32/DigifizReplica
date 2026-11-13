@@ -11,6 +11,7 @@
 #include "millis.h"
 #include "driver/uart.h"
 #include "esp_err.h"
+#include "refiz_payload.h"
 
 #define TAG "display_refiz"
 #define SCRIPT_KEY "display_refiz_script"
@@ -76,35 +77,19 @@ static uint8_t d_clock_hours = 0;
 static uint8_t d_clock_minutes = 0;
 static uint8_t rpm_segments_on = 0;
 
-#define PAYLOAD_SIZE 520
-#define PACKED_PAYLOAD_SIZE ((PAYLOAD_SIZE + 7) / 8)
-//#define SEND_PAYLOAD_BITS 256 //we do not transmit extra data
-#define REFIZ_UART_BATCH_OFFSET_START 0
-#define REFIZ_UART_BATCH_BYTES 33
-#define REFIZ_UART_BATCH_BITS (REFIZ_UART_BATCH_BYTES * 8)
+#define PAYLOAD_SIZE REFIZ_PAYLOAD_BITS
+#define PACKED_PAYLOAD_SIZE REFIZ_PAYLOAD_BYTES
 
 #define REFIZ_UART_BAUD 57600
 #define REFIZ_UART_NUM UART_NUM_1
 #define REFIZ_UART_TX_PIN 43
 #define REFIZ_UART_RX_PIN UART_PIN_NO_CHANGE
-#define REFIZ_UART_SET_RANGE_CMD 0x02
-#define REFIZ_UART_SET_PACKED_RANGE_CMD 0x03
-#define REFIZ_UART_SOF1 0xA5
-#define REFIZ_UART_SOF2 0x5A
 #define REFIZ_UART_TX_BUFFER_SIZE 1024
-
-static const uint8_t refiz_default_payload[PACKED_PAYLOAD_SIZE] = {
-  0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x3B,
-  0xFE, 0x06, 0x00, 0x00, 0x00, 0xF8, 0xFB, 0xEF, 0xFD, 0x06, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8
-};
 
 static uint8_t bool_data_payload[PACKED_PAYLOAD_SIZE];
 static bool refiz_uart_ready = false;
-static bool refiz_diagnostic_enabled = false;
-static uint8_t refiz_diagnostic_segments[(261 + 7) / 8];
+static refiz_diagnostic_state_t diagnostic_state;
+static portMUX_TYPE diagnostic_lock = portMUX_INITIALIZER_UNLOCKED;
 
 static const uint8_t refiz_orig_digit_patterns[10] = {
     0b00111111, 0b00100001, 0b01011011, 0b01110011, 0b01100101,
@@ -181,7 +166,7 @@ static void refiz_put_digit(const uint16_t segments[7], uint8_t next_pattern)
     }
 }
 
-static void refiz_sync_payload_from_display(void)
+static bool refiz_sync_payload_from_display(void)
 {
     static const uint16_t mileage_segments[6][7] = {
         {75, 74, 74, 74, 74, 107, 106},
@@ -217,22 +202,11 @@ static void refiz_sync_payload_from_display(void)
         166, 167, 168, 169, 170, 171, 172, 173, 174, 175
     };
 
-    memcpy(bool_data_payload, refiz_default_payload, sizeof(bool_data_payload));
-
-    if (refiz_diagnostic_enabled)
-    {
-        /* Payload bits 0..2 are controller housekeeping; logical LCD segment
-         * zero starts at payload bit three. */
-        memset(bool_data_payload + 1, 0, REFIZ_UART_BATCH_BYTES - 1);
-        bool_data_payload[0] &= 0x07;
-        for (uint16_t segment = 0; segment < 261; segment++)
-        {
-            uint8_t enabled = refiz_diagnostic_segments[segment >> 3] &
-                              (1U << (segment & 0x07));
-            refiz_payload_set_bit(segment + 3, enabled);
-        }
-        return;
-    }
+    bool diagnostic_enabled;
+    portENTER_CRITICAL(&diagnostic_lock);
+    bool full_frame = refiz_diagnostic_prepare(&diagnostic_state, bool_data_payload, &diagnostic_enabled);
+    portEXIT_CRITICAL(&diagnostic_lock);
+    if (diagnostic_enabled) return full_frame;
 
     refiz_put_digit(mileage_segments[0], display.mileage_digit_1);
     refiz_put_digit(mileage_segments[1], display.mileage_digit_2);
@@ -290,25 +264,23 @@ static void refiz_sync_payload_from_display(void)
     {
         refiz_payload_set_bit(refiz_rpm_segments[i] + 3, (i < rpm_segments_on) ? 1 : 0);
     }
-    //refiz_payload_set_bit(refiz_rpm_segments[0] + 3, 1);
+    return full_frame;
 }
 
-void refiz_diagnostic_set_enabled(bool enabled)
+void refiz_diagnostic_apply(bool enabled, const uint8_t *payload, bool reset)
 {
-    refiz_diagnostic_enabled = enabled;
+    portENTER_CRITICAL(&diagnostic_lock);
+    refiz_diagnostic_update(&diagnostic_state, enabled, payload, reset);
+    portEXIT_CRITICAL(&diagnostic_lock);
 }
 
-void refiz_diagnostic_set_segments(const uint16_t *segments, size_t segment_count)
+void refiz_diagnostic_get_state(bool *enabled, uint8_t *payload)
 {
-    memset(refiz_diagnostic_segments, 0, sizeof(refiz_diagnostic_segments));
-    for (size_t i = 0; i < segment_count; i++)
-    {
-        if (segments[i] < 261)
-        {
-            refiz_diagnostic_segments[segments[i] >> 3] |=
-                1U << (segments[i] & 0x07);
-        }
-    }
+    portENTER_CRITICAL(&diagnostic_lock);
+    refiz_diagnostic_ensure_initialized(&diagnostic_state);
+    *enabled = diagnostic_state.enabled;
+    memcpy(payload, diagnostic_state.payload, REFIZ_PAYLOAD_BYTES);
+    portEXIT_CRITICAL(&diagnostic_lock);
 }
 
 void refiz_uart_sender_init(void)
@@ -344,40 +316,9 @@ void refiz_uart_sender_trigger(void)
         return;
     }
 
-    refiz_sync_payload_from_display();
-
-    const uint16_t offset = REFIZ_UART_BATCH_OFFSET_START;
-    const uint16_t bit_count = REFIZ_UART_BATCH_BITS;
-    const uint16_t byte_count = REFIZ_UART_BATCH_BYTES;
-    const uint16_t payload_len = 4 + byte_count;
-
-    uint8_t frame[2 + 3 + 4 + REFIZ_UART_BATCH_BYTES + 1];
-
-    size_t pos = 0;
-
-    frame[pos++] = REFIZ_UART_SOF1;
-    frame[pos++] = REFIZ_UART_SOF2;
-    frame[pos++] = REFIZ_UART_SET_PACKED_RANGE_CMD;
-
-    frame[pos++] = payload_len & 0xFF;
-    frame[pos++] = (payload_len >> 8) & 0xFF;
-
-    frame[pos++] = offset & 0xFF;
-    frame[pos++] = (offset >> 8) & 0xFF;
-
-    frame[pos++] = bit_count & 0xFF;
-    frame[pos++] = (bit_count >> 8) & 0xFF;
-
-    memcpy(&frame[pos], bool_data_payload, REFIZ_UART_BATCH_BYTES);
-    pos += REFIZ_UART_BATCH_BYTES;
-
-    uint8_t crc = 0;
-    for (size_t i = 2; i < pos; i++)
-    {
-        crc ^= frame[i];
-    }
-
-    frame[pos++] = crc;
+    bool full_frame = refiz_sync_payload_from_display();
+    uint8_t frame[REFIZ_MAX_FRAME_BYTES];
+    size_t pos = refiz_build_payload_frame(frame, bool_data_payload, full_frame);
     /* Send in chunks */
     size_t tx_pos = 0;
 

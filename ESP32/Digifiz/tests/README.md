@@ -81,6 +81,57 @@ cc -std=c11 -O2 -Wall -Wextra -Werror -fsanitize=address,undefined \
 /tmp/digifiz-speed-filter-test
 ```
 
+## ReFIZ full-payload diagnostics
+
+```sh
+cc -std=c11 -O2 -Wall -Wextra -Werror -fsanitize=address,undefined \
+  -I ESP32/Digifiz/main ESP32/Digifiz/tests/refiz_payload_test.c \
+  -o /tmp/refiz-payload-test
+/tmp/refiz-payload-test
+```
+
+The editor covers **all 520 raw payload bits (65 bytes)**, including control
+and configuration bits. Bit labels show the raw bit number followed by
+`byte.bit`; bytes are packed least-significant-bit first. The former logical
+LCD segment 0 corresponds to raw payload bit 3. Every bit, including 0–2 and
+519, can be changed. The SLCD controller may interpret some positions as
+configuration/reserved data rather than visible LCD segments.
+
+On opening the page, the editor reads the device state and firmware default
+pattern. **Enable diagnostic mode** immediately starts diagnostics with the
+ESP32 sender's original default payload, and the checkboxes reflect those
+bytes. Edit the checkboxes and use **Apply payload** to transmit the complete
+65-byte pattern. **Restore defaults** stages the device-provided default for
+the next Apply; **Reload from device** reads the current state without resetting
+an active custom pattern. Re-enabling diagnostics resets to defaults again.
+
+Diagnostic UART frames use the existing `SET_PACKED_RANGE` command (`0x03`),
+offset 0, bit count 520 and the existing XOR checksum. Snapshotting under a
+lock prevents partially updated frames while the HTTP task changes settings.
+Disabling diagnostics sends a full restored normal frame, including the upper
+configuration bytes, before resuming the original 264-bit normal updates. The
+first frame after startup also synchronizes the complete controller payload.
+
+`GET /refiz_diagnostic` returns `enabled`, `bit_count`, `payload` (65 bytes),
+and `default_payload` (65 bytes). POST accepts:
+
+```json
+{"enabled": true, "reset": true}
+```
+
+or `{"enabled": true, "payload": [...]}` with exactly 65 integer bytes in
+0–255. `{"enabled": false}` resumes normal operation. Responses return the
+same authoritative state as GET. Invalid sizes, non-integers, out-of-range
+bytes, conflicting payload/reset options, and oversized requests are rejected
+before changing the diagnostic state. The legacy `segments` array (logical
+indexes 0–260) remains accepted for cached older pages.
+
+Host tests exercise each of the 520 bits through the actual packed-frame
+builder, full on/off masks, checksums, defaults, transitions and restoration
+of upper bytes. Browser tests cover default checkbox initialization, lower and
+upper bit edits, reactivation, reset/reload, select/clear all and failed-request
+retries. Physical UART/SLCD behavior still requires hardware verification.
+
 ## Next block color alerts
 
 ```sh
@@ -157,7 +208,7 @@ from the device.
 
 The tests build both variant-specific pages with the production page generator
 and check their gzip payloads. Next contains no Diagnostics markup or script;
-ReFIZ retains it and can select/apply all 261 segments, clear and disable the
+ReFIZ retains it and can edit/apply all 520 payload bits, clear and disable the
 pattern. Named color-mode choices and draft preservation are also exercised.
 
 Color tests insert above and below the first, middle and last rows, insert
@@ -165,7 +216,7 @@ after moving a row, check the order submitted to the device, and verify
 append/move/delete controls and the empty-table state.
 
 Both station and fallback-AP HTTP servers now reserve 16 URI slots and a 20 KiB
-stack. ReFIZ registers nine routes (seven application routes plus two Wi-Fi
+stack. ReFIZ registers ten routes (eight application routes plus two Wi-Fi
 routes), exceeding ESP-IDF's default eight-slot capacity. Next needs eight;
 both have headroom and reject incomplete server registration rather than
 silently serving a partial route set. Hardware HTTP/diagnostic behavior cannot

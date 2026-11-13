@@ -32,8 +32,37 @@ static esp_err_t echo_handler(httpd_req_t *req);
 static esp_err_t params_get_handler(httpd_req_t *req);
 
 #ifdef DIGIFIZ_REFIZ_DISPLAY
-static esp_err_t refiz_diagnostic_post_handler(httpd_req_t *req)
+#include "refiz_payload.h"
+
+static esp_err_t refiz_diagnostic_send_state(httpd_req_t *req)
 {
+    bool enabled;
+    uint8_t payload[REFIZ_PAYLOAD_BYTES];
+    refiz_diagnostic_get_state(&enabled, payload);
+    cJSON *json = cJSON_CreateObject();
+    if (!json) return ESP_ERR_NO_MEM;
+    cJSON_AddBoolToObject(json, "enabled", enabled);
+    cJSON_AddNumberToObject(json, "bit_count", REFIZ_PAYLOAD_BITS);
+    cJSON *current = cJSON_AddArrayToObject(json, "payload");
+    cJSON *defaults = cJSON_AddArrayToObject(json, "default_payload");
+    if (!current || !defaults) { cJSON_Delete(json); return ESP_ERR_NO_MEM; }
+    for (size_t i = 0; i < REFIZ_PAYLOAD_BYTES; ++i) {
+        cJSON_AddItemToArray(current, cJSON_CreateNumber(payload[i]));
+        cJSON_AddItemToArray(defaults, cJSON_CreateNumber(refiz_default_payload[i]));
+    }
+    char *body = cJSON_PrintUnformatted(json);
+    cJSON_Delete(json);
+    if (!body) return ESP_ERR_NO_MEM;
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_set_hdr(req, "Cache-Control", "no-store");
+    esp_err_t result = httpd_resp_sendstr(req, body);
+    free(body);
+    return result;
+}
+
+static esp_err_t refiz_diagnostic_handler(httpd_req_t *req)
+{
+    if (req->method == HTTP_GET) return refiz_diagnostic_send_state(req);
     char buf[1536];
     if (req->content_len <= 0 || req->content_len >= sizeof(buf)) {
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid request size");
@@ -54,38 +83,65 @@ static esp_err_t refiz_diagnostic_post_handler(httpd_req_t *req)
     cJSON *json = cJSON_Parse(buf);
     cJSON *enabled = json ? cJSON_GetObjectItemCaseSensitive(json, "enabled") : NULL;
     cJSON *segments = json ? cJSON_GetObjectItemCaseSensitive(json, "segments") : NULL;
-    if (!cJSON_IsBool(enabled) || !cJSON_IsArray(segments) ||
-        cJSON_GetArraySize(segments) > 261) {
+    cJSON *payload = json ? cJSON_GetObjectItemCaseSensitive(json, "payload") : NULL;
+    cJSON *reset = json ? cJSON_GetObjectItemCaseSensitive(json, "reset") : NULL;
+    if (!cJSON_IsBool(enabled) || (reset && !cJSON_IsBool(reset)) ||
+        (payload && segments) || (cJSON_IsTrue(reset) && (payload || segments))) {
         cJSON_Delete(json);
-        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Expected enabled and segments");
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Expected enabled and optional payload or reset");
         return ESP_FAIL;
     }
 
-    uint16_t selected[261];
-    size_t selected_count = 0;
+    uint8_t selected[REFIZ_PAYLOAD_BYTES];
+    memcpy(selected, refiz_default_payload, sizeof(selected));
     cJSON *item = NULL;
-    cJSON_ArrayForEach(item, segments) {
-        if (!cJSON_IsNumber(item) || item->valuedouble < 0 ||
-            item->valuedouble > 260 || item->valuedouble != item->valueint) {
+    if (payload) {
+        if (!cJSON_IsArray(payload) || cJSON_GetArraySize(payload) != REFIZ_PAYLOAD_BYTES) {
             cJSON_Delete(json);
-            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid segment number");
+            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Expected exactly 65 payload bytes");
             return ESP_FAIL;
         }
-        selected[selected_count++] = (uint16_t)item->valueint;
+        size_t byte = 0;
+        cJSON_ArrayForEach(item, payload) {
+            if (!cJSON_IsNumber(item) || item->valuedouble < 0 || item->valuedouble > 255 ||
+                item->valuedouble != item->valueint) {
+                cJSON_Delete(json);
+                httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Payload bytes must be integers 0..255");
+                return ESP_FAIL;
+            }
+            selected[byte++] = (uint8_t)item->valueint;
+        }
+    } else if (segments) {
+        // Compatibility for a browser page cached before the raw-payload editor.
+        if (!cJSON_IsArray(segments) || cJSON_GetArraySize(segments) > REFIZ_LOGICAL_SEGMENTS) {
+            cJSON_Delete(json);
+            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid legacy segments");
+            return ESP_FAIL;
+        }
+        cJSON_ArrayForEach(item, segments) {
+            if (!cJSON_IsNumber(item) || item->valuedouble < 0 ||
+                item->valuedouble >= REFIZ_LOGICAL_SEGMENTS || item->valuedouble != item->valueint) {
+                cJSON_Delete(json);
+                httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid segment number");
+                return ESP_FAIL;
+            }
+            unsigned bit = (unsigned)item->valueint + 3;
+            selected[bit >> 3] |= 1u << (bit & 7);
+        }
     }
 
-    refiz_diagnostic_set_segments(selected, selected_count);
-    refiz_diagnostic_set_enabled(cJSON_IsTrue(enabled));
+    refiz_diagnostic_apply(cJSON_IsTrue(enabled), payload || segments ? selected : NULL, cJSON_IsTrue(reset));
     cJSON_Delete(json);
-    httpd_resp_set_type(req, "application/json");
-    httpd_resp_sendstr(req, "{\"status\":\"ok\"}");
-    return ESP_OK;
+    return refiz_diagnostic_send_state(req);
 }
 
+static const httpd_uri_t refiz_diagnostic_get = {
+    .uri = "/refiz_diagnostic", .method = HTTP_GET, .handler = refiz_diagnostic_handler
+};
 static const httpd_uri_t refiz_diagnostic_post = {
     .uri = "/refiz_diagnostic",
     .method = HTTP_POST,
-    .handler = refiz_diagnostic_post_handler,
+    .handler = refiz_diagnostic_handler,
     .user_ctx = NULL
 };
 #endif
@@ -639,6 +695,8 @@ esp_err_t digifiz_register_uri_handler(httpd_handle_t server)
     if (ret)
         goto _ret;
 #ifdef DIGIFIZ_REFIZ_DISPLAY
+    ret = httpd_register_uri_handler(server, &refiz_diagnostic_get);
+    if (ret) goto _ret;
     ret = httpd_register_uri_handler(server, &refiz_diagnostic_post);
 #endif
     if (ret)
