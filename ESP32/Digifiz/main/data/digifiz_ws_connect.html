@@ -585,16 +585,18 @@
 <!-- REFIZ_ONLY_BEGIN -->
 <div id="Diagnostics" class="tabcontent">
 	<div class="tci">
-		<div class="hdr">ReFIZ segment diagnostics</div>
+		<div class="hdr">ReFIZ full payload diagnostics</div>
 		<div class="cl1">
-			<p style="font-size: 1rem;">Diagnostic mode freezes the LCD pattern. Select each logical segment that should be on, then apply the pattern.</p>
-			<label><input type="checkbox" id="refizDiagnosticEnabled"> Enable diagnostic mode</label>
+			<p style="font-size: 1rem;">Edit all 520 raw payload bits (65 bytes), including controller/configuration bits. Labels show payload bit and byte.bit, least-significant bit first. LCD segment 0 is payload bit 3. Enabling diagnostics loads and sends the firmware default pattern; edit the checkboxes and apply to send a custom pattern.</p>
+			<label><input type="checkbox" id="refizDiagnosticEnabled" disabled> Enable diagnostic mode (loads defaults)</label>
 			<div class="mfa-buttons" style="margin: 10px 0;">
 				<button type="button" id="refizAllOn">Select all</button>
 				<button type="button" id="refizAllOff">Clear all</button>
-				<button type="button" id="refizApply">Apply pattern</button>
+				<button type="button" id="refizDefaults" disabled>Restore defaults</button>
+				<button type="button" id="refizApply" disabled>Apply payload</button>
+				<button type="button" id="refizReload">Reload from device</button>
 			</div>
-			<div id="refizSegments" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:4px;text-align:left;"></div>
+			<div id="refizSegments" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:4px;text-align:left;"></div>
 			<div id="refizDiagnosticStatus" role="status" style="margin-top:10px;"></div>
 		</div>
 	</div>
@@ -967,13 +969,73 @@ document.getElementById("defaultTab").click();
 <!-- REFIZ_ONLY_BEGIN -->
 <script>
 const refizSegments = document.getElementById('refizSegments');
-for (let segment = 0; segment <= 260; segment++) {
-	const label = document.createElement('label');
-	const input = document.createElement('input');
-	input.type = 'checkbox';
-	input.dataset.segment = segment;
-	label.append(input, ` ${segment}`);
-	refizSegments.appendChild(label);
+const refizEnabled = document.getElementById('refizDiagnosticEnabled');
+const refizStatus = document.getElementById('refizDiagnosticStatus');
+let refizData = null;
+let refizBusy = false;
+
+function updateRefizControls() {
+	refizEnabled.disabled = refizBusy || !refizData;
+	for (const id of ['refizAllOn', 'refizAllOff', 'refizDefaults', 'refizApply']) {
+		document.getElementById(id).disabled = refizBusy || !refizData?.enabled;
+	}
+	document.getElementById('refizReload').disabled = refizBusy;
+	refizSegments.querySelectorAll('input').forEach(input => input.disabled = refizBusy || !refizData?.enabled);
+}
+
+function showRefizPayload(payload) {
+	refizSegments.querySelectorAll('input').forEach(input => {
+		const bit = Number(input.dataset.bit);
+		input.checked = Boolean(payload[bit >> 3] & (1 << (bit & 7)));
+	});
+}
+
+function acceptRefizState(data) {
+	const validPayload = payload => Array.isArray(payload) && payload.length === data.bit_count / 8 &&
+		payload.every(byte => Number.isInteger(byte) && byte >= 0 && byte <= 255);
+	if (typeof data.enabled !== 'boolean' || !Number.isInteger(data.bit_count) ||
+		data.bit_count <= 0 || data.bit_count > 4096 || data.bit_count % 8 !== 0 ||
+		!validPayload(data.payload) || !validPayload(data.default_payload)) {
+		throw new Error('Invalid diagnostic state from device');
+	}
+	if (refizSegments.childElementCount !== data.bit_count) {
+		refizSegments.replaceChildren();
+		for (let bit = 0; bit < data.bit_count; ++bit) {
+			const label = document.createElement('label');
+			const input = document.createElement('input');
+			input.type = 'checkbox';
+			input.dataset.bit = bit;
+			label.title = `Payload byte ${bit >> 3}, bit ${bit & 7}` +
+				(bit >= 3 && bit <= 263 ? `; logical LCD segment ${bit - 3}` : '; controller/configuration');
+			label.append(input, ` ${bit} (${bit >> 3}.${bit & 7})`);
+			refizSegments.appendChild(label);
+		}
+	}
+	refizData = data;
+	refizEnabled.checked = data.enabled;
+	showRefizPayload(data.enabled ? data.payload : data.default_payload);
+}
+
+async function requestRefizState(body) {
+	refizBusy = true;
+	updateRefizControls();
+	refizStatus.textContent = body ? 'Applying…' : 'Loading payload…';
+	try {
+		const response = await fetch('/refiz_diagnostic', body ? {
+			method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
+		} : { cache: 'no-store' });
+		if (!response.ok) throw new Error(await response.text());
+		acceptRefizState(await response.json());
+		refizStatus.textContent = refizData.enabled
+			? `Diagnostic payload active: ${refizData.bit_count} bits.`
+			: 'Diagnostics disabled; normal display resumed. Default payload shown.';
+	} catch (error) {
+		refizEnabled.checked = refizData?.enabled ?? false;
+		refizStatus.textContent = `Could not update diagnostics: ${error.message}. Reload from device to refresh state.`;
+	} finally {
+		refizBusy = false;
+		updateRefizControls();
+	}
 }
 
 function setAllRefizSegments(checked) {
@@ -982,26 +1044,23 @@ function setAllRefizSegments(checked) {
 
 document.getElementById('refizAllOn').addEventListener('click', () => setAllRefizSegments(true));
 document.getElementById('refizAllOff').addEventListener('click', () => setAllRefizSegments(false));
-document.getElementById('refizApply').addEventListener('click', async () => {
-	const status = document.getElementById('refizDiagnosticStatus');
-	const segments = Array.from(refizSegments.querySelectorAll('input:checked'),
-		input => Number(input.dataset.segment));
-	status.textContent = 'Applying…';
-	try {
-		const response = await fetch('/refiz_diagnostic', {
-			method: 'POST',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({
-				enabled: document.getElementById('refizDiagnosticEnabled').checked,
-				segments
-			})
-		});
-		if (!response.ok) throw new Error(await response.text());
-		status.textContent = `Applied ${segments.length} enabled segment(s).`;
-	} catch (error) {
-		status.textContent = `Could not apply diagnostics: ${error.message}`;
-	}
+refizEnabled.addEventListener('change', () => requestRefizState({
+	enabled: refizEnabled.checked, reset: refizEnabled.checked
+}));
+document.getElementById('refizDefaults').addEventListener('click', () => {
+	showRefizPayload(refizData.default_payload);
+	refizStatus.textContent = 'Default payload loaded. Apply payload to send it.';
 });
+document.getElementById('refizReload').addEventListener('click', () => requestRefizState());
+document.getElementById('refizApply').addEventListener('click', () => {
+	const payload = Array(refizData.bit_count / 8).fill(0);
+	refizSegments.querySelectorAll('input:checked').forEach(input => {
+		const bit = Number(input.dataset.bit);
+		payload[bit >> 3] |= 1 << (bit & 7);
+	});
+	return requestRefizState({ enabled: true, payload });
+});
+requestRefizState();
 </script>
 <!-- REFIZ_ONLY_END -->
 
