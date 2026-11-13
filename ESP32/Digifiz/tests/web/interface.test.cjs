@@ -42,6 +42,11 @@ const readbackFor = (page, name) => rowFor(page, name).locator('td').nth(1);
 const colorRows = page => page.locator('#colorSchemeTable tbody tr');
 
 async function device(t, variant = 'next') {
+    const defaultPayload = Array(65).fill(0);
+    Object.assign(defaultPayload, {
+        0: 0x07, 37: 0xF8, 38: 0x3B, 39: 0xFE, 40: 0x06,
+        44: 0xF8, 45: 0xFB, 46: 0xEF, 47: 0xFD, 48: 0x06, 64: 0xF8,
+    });
     const state = {
         params: [
             { name: 'alpha', value: 10, type: 'uint16_t', min: 0, max: 1000, step: 1 },
@@ -55,6 +60,9 @@ async function device(t, variant = 'next') {
         posts: [],
         colorPosts: [],
         diagnosticPosts: [],
+        diagnostic: { enabled: false, bit_count: 520,
+            payload: [...defaultPayload], default_payload: defaultPayload },
+        failDiagnosticWrites: false,
         failedNames: new Set(),
         reads: 0,
         beforeRead: null,
@@ -110,8 +118,16 @@ async function device(t, variant = 'next') {
             return json({ status: 'ok' });
         }
         if (url.pathname === '/refiz_diagnostic' && variant === 'refiz') {
-            state.diagnosticPosts.push(route.request().postDataJSON());
-            return json({ status: 'ok' });
+            if (route.request().method() === 'POST') {
+                const posted = route.request().postDataJSON();
+                state.diagnosticPosts.push(posted);
+                if (state.failDiagnosticWrites) return route.fulfill({ status: 500, body: 'Write failed' });
+                if (posted.reset || (posted.enabled && !state.diagnostic.enabled))
+                    state.diagnostic.payload = [...state.diagnostic.default_payload];
+                if (posted.payload) state.diagnostic.payload = [...posted.payload];
+                state.diagnostic.enabled = posted.enabled;
+            }
+            return json(state.diagnostic);
         }
         return route.fulfill({ status: 404, body: 'Not mocked' });
     });
@@ -253,22 +269,106 @@ test('Next contains no diagnostic tab, panel, or diagnostic JavaScript', async t
     assert(!pages.next.includes('refizSegments'));
 });
 
-test('ReFIZ diagnostics can select all 261 segments, apply, clear, and disable', async t => {
-    const { page, state } = await device(t, 'refiz');
+async function diagnostics(page) {
     await page.getByRole('link', { name: 'Diagnostics', exact: true }).click();
-    assert.equal(await page.locator('#refizSegments input').count(), 261);
+    await page.waitForFunction(() => document.querySelectorAll('#refizSegments input').length === 520);
+}
+
+async function enableDiagnostics(page) {
     await page.locator('#refizDiagnosticEnabled').check();
+    await page.waitForFunction(() => !document.getElementById('refizApply').disabled);
+}
+
+async function applyDiagnostics(page) {
+    await page.locator('#refizApply').click();
+    await page.waitForFunction(() => !document.getElementById('refizApply').disabled);
+}
+
+async function checkedBits(page) {
+    return page.locator('#refizSegments input:checked').evaluateAll(inputs =>
+        inputs.map(input => Number(input.dataset.bit)));
+}
+
+function payloadBits(payload) {
+    return Array.from({ length: 520 }, (_, bit) => bit).filter(bit => payload[bit >> 3] & (1 << (bit & 7)));
+}
+
+test('ReFIZ activation loads device defaults and edits raw housekeeping and upper payload bits', async t => {
+    const { page, state } = await device(t, 'refiz');
+    await diagnostics(page);
+    assert.deepEqual(await checkedBits(page), payloadBits(state.diagnostic.default_payload));
+    assert.equal(await page.locator('#refizApply').isEnabled(), false);
+    await enableDiagnostics(page);
+    assert.deepEqual(state.diagnosticPosts[0], { enabled: true, reset: true });
+    assert.deepEqual(await checkedBits(page), payloadBits(state.diagnostic.default_payload));
+    await page.locator('#refizSegments input[data-bit="0"]').uncheck();
+    await page.locator('#refizSegments input[data-bit="1"]').uncheck();
+    await page.locator('#refizSegments input[data-bit="264"]').check();
+    await page.locator('#refizSegments input[data-bit="512"]').check();
+    await page.locator('#refizSegments input[data-bit="519"]').uncheck();
+    await applyDiagnostics(page);
+    const expected = [...state.diagnostic.default_payload];
+    expected[0] = 4;
+    expected[33] = 1;
+    expected[64] = 0x79;
+    assert.deepEqual(state.diagnosticPosts[1], { enabled: true, payload: expected });
+    assert.deepEqual(await checkedBits(page), payloadBits(expected));
+});
+
+test('ReFIZ selects/clears every payload bit and re-enabling starts from defaults', async t => {
+    const { page, state } = await device(t, 'refiz');
+    await diagnostics(page);
+    await enableDiagnostics(page);
     await page.locator('#refizAllOn').click();
-    await page.locator('#refizApply').click();
-    await page.waitForFunction(() => document.getElementById('refizDiagnosticStatus').textContent.startsWith('Applied 261'));
-    assert.deepEqual(state.diagnosticPosts[0], {
-        enabled: true, segments: Array.from({ length: 261 }, (_, index) => index),
-    });
+    assert.equal((await checkedBits(page)).length, 520);
+    await applyDiagnostics(page);
+    assert.deepEqual(state.diagnosticPosts[1], { enabled: true, payload: Array(65).fill(255) });
     await page.locator('#refizAllOff').click();
+    assert.equal((await checkedBits(page)).length, 0);
+    await applyDiagnostics(page);
+    assert.deepEqual(state.diagnosticPosts[2], { enabled: true, payload: Array(65).fill(0) });
     await page.locator('#refizDiagnosticEnabled').uncheck();
-    await page.locator('#refizApply').click();
-    await page.waitForFunction(() => document.getElementById('refizDiagnosticStatus').textContent.startsWith('Applied 0'));
-    assert.deepEqual(state.diagnosticPosts[1], { enabled: false, segments: [] });
+    await page.waitForFunction(() => document.getElementById('refizDiagnosticStatus').textContent.startsWith('Diagnostics disabled'));
+    assert.deepEqual(state.diagnosticPosts[3], { enabled: false, reset: false });
+    await enableDiagnostics(page);
+    assert.deepEqual(state.diagnostic.payload, state.diagnostic.default_payload);
+    assert.deepEqual(await checkedBits(page), payloadBits(state.diagnostic.default_payload));
+});
+
+test('ReFIZ reload preserves an active edited pattern and Restore defaults stages the authoritative default', async t => {
+    const { page, state } = await device(t, 'refiz');
+    await diagnostics(page);
+    state.diagnostic.enabled = true;
+    state.diagnostic.payload = Array(65).fill(0xAA);
+    await page.locator('#refizReload').click();
+    await page.waitForFunction(() => !document.getElementById('refizApply').disabled);
+    assert.deepEqual(await checkedBits(page), payloadBits(state.diagnostic.payload));
+    assert.equal(state.diagnosticPosts.length, 0);
+    await page.locator('#refizDefaults').click();
+    assert.deepEqual(await checkedBits(page), payloadBits(state.diagnostic.default_payload));
+    assert.deepEqual(state.diagnostic.payload, Array(65).fill(0xAA)); // Not applied yet.
+    await applyDiagnostics(page);
+    assert.deepEqual(state.diagnostic.payload, state.diagnostic.default_payload);
+});
+
+test('ReFIZ failed activation rolls back the toggle; failed applies preserve edits for retry', async t => {
+    const { page, state } = await device(t, 'refiz');
+    await diagnostics(page);
+    state.failDiagnosticWrites = true;
+    await page.locator('#refizDiagnosticEnabled').check();
+    await page.waitForFunction(() => document.getElementById('refizDiagnosticStatus').textContent.startsWith('Could not'));
+    assert.equal(await page.locator('#refizDiagnosticEnabled').isChecked(), false);
+    assert.equal(await page.locator('#refizApply').isEnabled(), false);
+    state.failDiagnosticWrites = false;
+    await enableDiagnostics(page);
+    await page.locator('#refizSegments input[data-bit="519"]').uncheck();
+    state.failDiagnosticWrites = true;
+    await applyDiagnostics(page);
+    assert.equal(await page.locator('#refizSegments input[data-bit="519"]').isChecked(), false);
+    assert.equal(state.diagnostic.payload[64], 0xF8);
+    state.failDiagnosticWrites = false;
+    await applyDiagnostics(page);
+    assert.equal(state.diagnostic.payload[64], 0x78);
 });
 
 async function colors(page) {
