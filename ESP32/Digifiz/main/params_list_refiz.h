@@ -160,8 +160,8 @@ extern "C" {
         U8, \
         rpmOptions_7k_line, \
         .p_name = "7k option", \
-        .p_info = "7k-style RPM gauge",\
-        .value = 0, \
+        .p_info = "Checked: 7k, 70 steps at 100 RPM. Unchecked: 8k, 64 steps at 125 RPM.",\
+        .value = 1, \
         .max = 1, \
     ) \
     PARAM(  \

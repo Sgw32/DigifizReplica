@@ -81,6 +81,41 @@ cc -std=c11 -O2 -Wall -Wextra -Werror -fsanitize=address,undefined \
 /tmp/digifiz-speed-filter-test
 ```
 
+## ReFIZ RPM scale selection
+
+The ReFIZ **7k option** now defaults to checked:
+
+- Checked: 70 RPM steps (`10 × 7`), 100 RPM per step, full at 7000 RPM.
+- Unchecked: 64 RPM steps (`8 × 8`), 125 RPM per step, full at 8000 RPM.
+
+Both scales keep the existing fixed zero marker in addition to those steps.
+Thus full-scale output lights 71 physical marks in 7k mode or 65 in 8k mode.
+The physical segment order is unchanged; 8k mode uses the first 64 steps and
+clears the six unused upper marks. Falling RPM and live scale changes rewrite
+the entire bar so stale marks cannot remain lit. `Maximum RPM` still caps the
+input value; it does not rescale the steps.
+
+The new default applies to fresh/default parameter configurations. Existing
+saved values are preserved, including unchecked/8k. Digifiz Next's parameter
+default and display rendering are unchanged.
+
+Run the host tests from the repository root:
+
+```sh
+cc -std=c11 -O2 -Wall -Wextra -Werror -fsanitize=address,undefined \
+  -I ESP32/Digifiz/main -I ESP32/Digifiz/components/xparam \
+  ESP32/Digifiz/tests/refiz_rpm_scale_test.c -o /tmp/refiz-rpm-scale-test
+/tmp/refiz-rpm-scale-test
+cc -std=c11 -O2 -Wall -Wextra -Werror -fsanitize=address,undefined \
+  -DTEST_NEXT_DEFAULTS -I ESP32/Digifiz/main -I ESP32/Digifiz/components/xparam \
+  ESP32/Digifiz/tests/refiz_rpm_scale_test.c -o /tmp/next-rpm-default-test
+/tmp/next-rpm-default-test
+```
+
+The tests instantiate the actual parameter tables for both builds, check every
+step boundary, saturation and input caps, and verify mode changes preserve
+unrelated payload bits. Physical LCD appearance still needs board verification.
+
 ## ReFIZ full-payload diagnostics
 
 ```sh

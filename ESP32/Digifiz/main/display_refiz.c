@@ -12,6 +12,7 @@
 #include "driver/uart.h"
 #include "esp_err.h"
 #include "refiz_payload.h"
+#include "refiz_rpm_scale.h"
 
 #define TAG "display_refiz"
 #define SCRIPT_KEY "display_refiz_script"
@@ -94,16 +95,6 @@ static portMUX_TYPE diagnostic_lock = portMUX_INITIALIZER_UNLOCKED;
 static const uint8_t refiz_orig_digit_patterns[10] = {
     0b00111111, 0b00100001, 0b01011011, 0b01110011, 0b01100101,
     0b01110110, 0b01111110, 0b00100011, 0b01111111, 0b01110111
-};
-static const uint16_t refiz_rpm_segments[71] = {
-    64, 65, 66, 67, 68, 69, 70, 71, 72, 73,
-    24, 25, 26, 27, 28, 29, 30, 31, 18, 17,
-    159, 158, 157, 156, 155, 154, 153, 152, 151, 150,
-    149, 148, 147, 146, 145, 253, 177, 178, 179, 180,
-    181, 182, 183, 184, 185, 186, 187, 188, 189, 190,
-    191, 49, 50, 63, 62, 61, 60, 59, 58, 57,
-    56, 105, 104, 103, 102, 101, 100, 99, 98, 97,
-    96
 };
 
 static uint8_t refiz_payload_get_bit(uint16_t bit_index)
@@ -249,21 +240,7 @@ static bool refiz_sync_payload_from_display(void)
         refiz_payload_set_bit(coolant_segments[i] + 3, (coolant_value & (1 << i)) ? 1 : 0);
     }
 
-    const uint8_t *display_bits = (const uint8_t *)&display;
-    
-    // for (uint8_t bit = 28; bit < 78; bit++)
-    // {
-    //     if (display_bits[bit / 8] & (1 << (bit % 8)))
-    //     {
-    //         rpm_segments_on++;
-    //     }
-    // }
-
-    //rpm_segments_on = 71;
-    for (uint8_t i = 0; i < 71; i++)
-    {
-        refiz_payload_set_bit(refiz_rpm_segments[i] + 3, (i < rpm_segments_on) ? 1 : 0);
-    }
+    refiz_rpm_write_payload(bool_data_payload, rpm_segments_on);
     return full_frame;
 }
 
@@ -886,16 +863,9 @@ void setFuel(uint8_t litres) {
 
 // Set the RPM data
 void setRPMData(uint16_t inp_d) {
-    // Implementation placeholder
-    //Currently 7k version only!!!
-    if (inp_d>digifiz_parameters.maxRPM.value)
-        inp_d = digifiz_parameters.maxRPM.value;
-    uint32_t data = (71*(uint32_t)inp_d)/7000;
-    if (data<1)
-        data=1;
-    if (data>71)
-        data=71; 
-    rpm_segments_on = data;
+    rpm_segments_on = refiz_rpm_lit_segments(inp_d,
+        digifiz_parameters.rpmOptions_7k_line.value != 0,
+        digifiz_parameters.maxRPM.value);
 }
 
 // Set the speedometer data
