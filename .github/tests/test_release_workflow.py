@@ -87,6 +87,13 @@ if args[:2] == ['release', 'upload']:
         self.run_step("Select ReFIZ setup")
         self.run_step("Package ReFIZ firmware")
 
+    def test_release_version_uses_trigger_tag_without_fetching_git_tags(self):
+        environment_file = self.root / "github-env"
+        self.env["GITHUB_ENV"] = str(environment_file)
+        # This fixture is not a Git checkout: no tag fetch or describe is needed.
+        self.run_step("Set VERSION from release tag")
+        self.assertEqual(environment_file.read_text(), "VERSION=v1.0.24\n")
+
     def test_separate_refiz_build_and_read_only_next_outputs(self):
         if os.geteuid() == 0:
             self.skipTest("Permission reproduction requires the normal unprivileged task user")
