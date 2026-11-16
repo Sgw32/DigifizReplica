@@ -37,6 +37,9 @@ class ReleaseWorkflowTests(unittest.TestCase):
                 path.write_bytes(f"{variant}:{name}".encode())
         (self.project / "main").mkdir()
         (self.project / "main/setup_refiz.h").write_text("ReFIZ setup\n")
+        (self.project / "main/data").mkdir()
+        (self.project / "main/data/digifiz_ws_connect.html").write_text(
+            "<title>Digifiz Server</title><h2>Digifiz Server</h2>\n")
         (self.root / "build/setup_g2").mkdir(parents=True)
         (self.root / "build/setup_g2/Digifiz.hex").write_text("Arduino fixture\n")
         self.log = self.root / "gh-calls.jsonl"
@@ -107,6 +110,8 @@ if args[:2] == ['release', 'upload']:
         self.assertNotEqual(denied.returncode, 0)
         self.package()  # New workflow never needs to remove or modify Next outputs.
         self.assertEqual((self.project / "main/setup.h").read_text(), "ReFIZ setup\n")
+        self.assertEqual((self.project / "main/data/digifiz_ws_connect.html").read_text(),
+                         "<title>ReFIZ Server</title><h2>ReFIZ Server</h2>\n")
         self.assertEqual((self.root / "release/digifiz-next/bootloader.bin").read_bytes(),
                          b"next:bootloader/bootloader.bin")
         self.assertEqual((self.root / "release/digifiz-next/partition_table.bin").read_bytes(),

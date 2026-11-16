@@ -11,6 +11,7 @@ jobs:
     - name: Select refiz setup
       run: |
         cp ESP32/Digifiz/main/setup_refiz.h ESP32/Digifiz/main/setup.h
+        sed -i 's/Digifiz Server/ReFIZ Server/g' ESP32/Digifiz/main/data/digifiz_ws_connect.html
     - name: Set VERSION from tag or commit
       run: |
         git fetch --tags
