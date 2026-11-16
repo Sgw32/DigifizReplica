@@ -8,13 +8,14 @@ on:
 
 jobs:
   build-and-deploy:
+    if: github.event.deleted != true
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - name: Set VERSION from tag or commit
@@ -132,14 +133,13 @@ jobs:
           cp ESP32/Digifiz/build/Digifiz.bin release/digifiz-next/
           cp ESP32/Digifiz/build/Digifiz.elf release/digifiz-next/
           cp ESP32/Digifiz/build/bootloader/bootloader.bin release/digifiz-next/
-          cp ESP32/Digifiz/build/partition_table/partition-table.bin release/digifiz-next/
+          cp ESP32/Digifiz/build/partition_table/partition-table.bin release/digifiz-next/partition_table.bin
           cp ESP32/Digifiz/build/ota_data_initial.bin release/digifiz-next/
 
-      # ReFIZ uses the same project and output filenames, but a different setup.
-      - name: Select ReFIZ setup and clean previous build
-        run: |
-          cp ESP32/Digifiz/main/setup_refiz.h ESP32/Digifiz/main/setup.h
-          rm -rf ESP32/Digifiz/build
+      # The Docker action owns its generated files. Keep the Next build intact
+      # and use an independent directory instead of deleting it on the host.
+      - name: Select ReFIZ setup
+        run: cp ESP32/Digifiz/main/setup_refiz.h ESP32/Digifiz/main/setup.h
 
       - name: Build ReFIZ firmware
         uses: espressif/esp-idf-ci-action@v1.1.0
@@ -147,97 +147,47 @@ jobs:
           esp_idf_version: v5.2.1
           target: esp32s3
           path: 'ESP32/Digifiz/'
+          command: idf.py -B build-refiz build
 
       - name: Package ReFIZ firmware
         run: |
           mkdir -p release/refiz
-          cp ESP32/Digifiz/build/Digifiz.bin release/refiz/
-          cp ESP32/Digifiz/build/Digifiz.elf release/refiz/
-          cp ESP32/Digifiz/build/bootloader/bootloader.bin release/refiz/
-          cp ESP32/Digifiz/build/partition_table/partition-table.bin release/refiz/
-          cp ESP32/Digifiz/build/ota_data_initial.bin release/refiz/
+          cp ESP32/Digifiz/build-refiz/Digifiz.bin release/refiz/
+          cp ESP32/Digifiz/build-refiz/Digifiz.elf release/refiz/
+          cp ESP32/Digifiz/build-refiz/bootloader/bootloader.bin release/refiz/
+          cp ESP32/Digifiz/build-refiz/partition_table/partition-table.bin release/refiz/
+          cp ESP32/Digifiz/build-refiz/ota_data_initial.bin release/refiz/
           (cd release/refiz && zip -9 ../refiz-firmware.zip *)
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Publish complete release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: |
-            Automated release for `${{ github.ref }}`.
-          draft: false
-          prerelease: false
-
-      - name: Upload Firmware to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/digifiz-next/Digifiz.bin
-          asset_name: Digifiz.bin
-          asset_content_type: application/octet-stream
-      
-      - name: Upload Bootloader to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/digifiz-next/bootloader/bootloader.bin
-          asset_name: bootloader.bin
-          asset_content_type: application/octet-stream
-      
-      - name: Upload Partition Table to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/digifiz-next/partition_table/partition-table.bin
-          asset_name: partition_table.bin
-          asset_content_type: application/octet-stream
-      
-      - name: Upload OTA Initial to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/digifiz-next/ota_data_initial.bin
-          asset_name: ota_data_initial.bin
-          asset_content_type: application/octet-stream
-      
-      - name: Upload ELF to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/digifiz-next/Digifiz.elf
-          asset_name: Digifiz.elf
-          asset_content_type: application/octet-stream
-      
-      # --- Upload Arduino Firmware to Release ---
-      - name: Upload Arduino Firmware to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/digifiz-firmware.zip  # Path to the zip file
-          asset_name: digifiz-firmware.zip  # Name of the zip file
-          asset_content_type: application/octet-stream
-
-      - name: Upload ReFIZ Firmware Archive to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/refiz-firmware.zip
-          asset_name: refiz-firmware.zip
-          asset_content_type: application/zip
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          assets=(
+            release/digifiz-next/Digifiz.bin
+            release/digifiz-next/bootloader.bin
+            release/digifiz-next/partition_table.bin
+            release/digifiz-next/ota_data_initial.bin
+            release/digifiz-next/Digifiz.elf
+            build/digifiz-firmware.zip
+            release/refiz-firmware.zip
+          )
+          for asset in "${assets[@]}"; do
+            test -s "$asset"
+          done
+          printf 'Automated release for %s.\n' "$RELEASE_TAG" > "$RUNNER_TEMP/release-notes.md"
+          # An existing release can remain after its tag is deleted. Stage both
+          # new releases and replacements as drafts until every asset is uploaded.
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --draft=true
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --draft \
+              --title "Release $RELEASE_TAG" --notes-file "$RUNNER_TEMP/release-notes.md"
+          fi
+          gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
+          gh release edit "$RELEASE_TAG" --draft=false --prerelease=false --latest \
+            --target "$GITHUB_SHA" --title "Release $RELEASE_TAG" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"
