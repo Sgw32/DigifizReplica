@@ -23,6 +23,7 @@ idf_component_register(
     "led_effects.c"
     "display_next.c"
     "display_refiz.c"
+    "display_nca.c"
     "main.c"
     "tacho.c"
     "speedometer.c"
@@ -40,6 +41,7 @@ idf_component_register(
         json
         app_update
         driver
+        nca_shared
     EMBED_FILES
         ${WEB_GZIP}
 )

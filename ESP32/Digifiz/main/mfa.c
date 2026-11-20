@@ -20,7 +20,7 @@ uint8_t bMFAMode = 0;
 uint8_t bMFABlock = 0;
 uint8_t bMFAReset = 0;
 uint8_t bMFASensor = 0;
-#ifdef DIGIFIZ_REFIZ_DISPLAY
+#if defined(DIGIFIZ_REFIZ_DISPLAY) || defined(DIGIFIZ_NCA_DISPLAY)
 uint8_t bClockMinutes = 0;
 uint8_t bClockHours = 0;
 #endif
@@ -29,7 +29,7 @@ uint8_t prevMFAMode = 0;
 uint8_t prevMFABlock = 0;
 uint8_t prevMFAReset = 0;
 uint8_t prevMFASensor = 0;
-#ifdef DIGIFIZ_REFIZ_DISPLAY
+#if defined(DIGIFIZ_REFIZ_DISPLAY) || defined(DIGIFIZ_NCA_DISPLAY)
 uint8_t prevClockMinutes = 0;
 uint8_t prevClockHours = 0;
 #endif
@@ -42,7 +42,7 @@ extern int16_t seconds_block2;
 extern struct tm saved_time1;
 extern struct tm saved_time2;
 
-#ifdef DIGIFIZ_REFIZ_DISPLAY
+#if defined(DIGIFIZ_REFIZ_DISPLAY) || defined(DIGIFIZ_NCA_DISPLAY)
 static void addSystemTime(int hours, int minutes)
 {
     time_t current_time_t;
@@ -106,7 +106,7 @@ void processMFA()
     bMFAMode = digifiz_reg_in.mfaMode;
     bMFABlock = digifiz_reg_in.mfaBlock;
     bMFAReset = digifiz_reg_in.mfaReset;
-#ifdef DIGIFIZ_REFIZ_DISPLAY
+#if defined(DIGIFIZ_REFIZ_DISPLAY) || defined(DIGIFIZ_NCA_DISPLAY)
     bClockMinutes = !digifiz_reg_in.clockMinutes;
     bClockHours = !digifiz_reg_in.clockHours;
 #endif
@@ -126,7 +126,7 @@ void processMFA()
         prevMFABlock = bMFABlock;
         prevMFAReset = bMFAReset;
         prevMFASensor = bMFASensor;
-#ifdef DIGIFIZ_REFIZ_DISPLAY
+#if defined(DIGIFIZ_REFIZ_DISPLAY) || defined(DIGIFIZ_NCA_DISPLAY)
         prevClockMinutes = bClockMinutes;
         prevClockHours = bClockHours;
 #endif
@@ -175,7 +175,7 @@ void processMFA()
             pressMFASensorSuperSuperLong();
     }
 #endif
-#ifdef DIGIFIZ_REFIZ_DISPLAY
+#if defined(DIGIFIZ_REFIZ_DISPLAY) || defined(DIGIFIZ_NCA_DISPLAY)
     if ((bClockMinutes == 0) && (prevClockMinutes == 1))
     {
         ESP_LOGI(LOG_TAG,  "Clock minutes increment");
@@ -192,7 +192,7 @@ void processMFA()
     prevMFABlock = bMFABlock;
     prevMFAReset = bMFAReset;
     prevMFASensor = bMFASensor;
-#ifdef DIGIFIZ_REFIZ_DISPLAY
+#if defined(DIGIFIZ_REFIZ_DISPLAY) || defined(DIGIFIZ_NCA_DISPLAY)
     prevClockMinutes = bClockMinutes;
     prevClockHours = bClockHours;
 #endif

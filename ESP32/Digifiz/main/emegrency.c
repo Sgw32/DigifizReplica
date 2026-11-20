@@ -128,7 +128,7 @@ void checkEmergency(int mRPM)
     setOilIndicator(oilIndicatorOn);
 #endif
 
-#ifdef DIGIFIZ_REFIZ_DISPLAY
+#if defined(DIGIFIZ_REFIZ_DISPLAY) || defined(DIGIFIZ_NCA_DISPLAY)
     setOilIndicator(oilIndicatorOn);
 #endif
 

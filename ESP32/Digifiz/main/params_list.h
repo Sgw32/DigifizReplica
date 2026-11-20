@@ -16,7 +16,11 @@ extern "C" {
 #include "speed_filter.h"
 #include "block_color_alert_params.h"
 
-#ifdef DIGIFIZ_REFIZ_DISPLAY
+#if defined(DIGIFIZ_NCA_DISPLAY)
+
+#include "params_list_nca.h"
+
+#elif defined(DIGIFIZ_REFIZ_DISPLAY)
 
 #include "params_list_refiz.h"
 

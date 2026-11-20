@@ -224,7 +224,7 @@ static void printRegDump()
 }
 #endif
 
-#ifdef DIGIFIZ_REFIZ_DISPLAY
+#if defined(DIGIFIZ_REFIZ_DISPLAY) || defined(DIGIFIZ_NCA_DISPLAY)
 static void printRegDump()
 {
   uint8_t i = 0;

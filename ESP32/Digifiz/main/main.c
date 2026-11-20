@@ -188,6 +188,8 @@ void adcLoop(void *pvParameters) {
         set_fuel_pressure_bar(getFuelPressure());
         #ifdef DIGIFIZ_REFIZ_DISPLAY
         refiz_uart_sender_trigger();
+        #elif defined(DIGIFIZ_NCA_DISPLAY)
+        nca_uart_publisher_trigger();
         #endif
         xSemaphoreGive(displayMutex); // Give back the mutex
         

@@ -18,7 +18,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#if defined(DIGIFIZ_NEXT_DISPLAY) || defined(DIGIFIZ_REFIZ_DISPLAY)
+#if defined(DIGIFIZ_NEXT_DISPLAY) || defined(DIGIFIZ_REFIZ_DISPLAY) || defined(DIGIFIZ_NCA_DISPLAY)
 
 #include "adc.h"
 #include "mfa.h"
@@ -40,18 +40,24 @@ extern "C" {
 /** @brief WS2812 data output GPIO for the Digifiz Next display chain. */
 #define WSDATA_GPIO_PIN 21
 
-#ifndef DIGIFIZ_REFIZ_DISPLAY
+#if defined(DIGIFIZ_NEXT_DISPLAY)
 /** @brief Number of LEDs used by the main display area. */
 #define DIGIFIZ_DISPLAY_NEXT_LEDS 271
 /** @brief Number of LEDs used by the auxiliary backlight strip. */
 #define DIGIFIZ_BACKLIGHT_LEDS 32
-#else
+#elif defined(DIGIFIZ_REFIZ_DISPLAY)
 #define DIGIFIZ_DISPLAY_NEXT_LEDS 12
 #define DIGIFIZ_BACKLIGHT_LEDS 6
+#else
+/* NCA is a publisher only. These compatibility values are never driven. */
+#define DIGIFIZ_DISPLAY_NEXT_LEDS 1
+#define DIGIFIZ_BACKLIGHT_LEDS 0
 #endif
 
 /** @brief Compile-time flag to enable writing WS2812 display LEDs. */
+#ifndef DIGIFIZ_NCA_DISPLAY
 #define USE_DISPLAY_LEDS
+#endif
 
 /**
  * @brief Bit masks for 7-segment glyphs used by Digifiz number rendering.
@@ -319,6 +325,11 @@ void compileColorScheme(void);
 void fireDigifiz();
 void refiz_uart_sender_init(void);
 void refiz_uart_sender_trigger(void);
+
+/** @brief Initialize the NCA publisher on the shared ReFIZ UART pins. */
+void nca_uart_publisher_init(void);
+/** @brief Publish all topics whose configured period has elapsed. */
+void nca_uart_publisher_trigger(void);
 
 /** Atomically update the ReFIZ 65-byte diagnostic payload and activation state. */
 void refiz_diagnostic_apply(bool enabled, const uint8_t *payload, bool reset);

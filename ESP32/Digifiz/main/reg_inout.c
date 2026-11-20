@@ -249,7 +249,7 @@ void initRegInOut(void)
 }
 #endif
 
-#ifdef DIGIFIZ_REFIZ_DISPLAY
+#if defined(DIGIFIZ_REFIZ_DISPLAY) || defined(DIGIFIZ_NCA_DISPLAY)
 
 #define HC165_COUNT          3
 #define HC165_PULSE_WIDTH_US 10

@@ -59,8 +59,7 @@ extern "C" {
 
 #define CRC_FRAGMENT_SIZE 84
 
-#define DIGIFIZ_REFIZ_DISPLAY
-#define REFIZ_STUB_DYNAMIC_SEGMENTS
+#define DIGIFIZ_NCA_DISPLAY
 
 #ifdef __cplusplus
 }

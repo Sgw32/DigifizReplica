@@ -86,7 +86,7 @@ typedef struct DigifizIn{
 
 #endif
 
-#ifdef DIGIFIZ_REFIZ_DISPLAY
+#if defined(DIGIFIZ_REFIZ_DISPLAY) || defined(DIGIFIZ_NCA_DISPLAY)
 
 typedef struct DigifizIn{
     union {
