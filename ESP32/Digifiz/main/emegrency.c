@@ -55,7 +55,8 @@ uint8_t processOilPressure(int mRPM)
      * Assumption, same as old code:
      * oil18 == 1 means 1.8 bar sensor is NOT active, i.e. pressure is not enough.
      */
-    if ((mRPM > emergencyRPM) && (digifiz_reg_in.oil18 == 1))
+    if (digifiz_parameters.option_enable_oil18_input.value &&
+        (mRPM > emergencyRPM) && (digifiz_reg_in.oil18 == 1))
     {
         state |= EMERGENCY_OIL18_HIGH_RPM;
     }

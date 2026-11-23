@@ -145,6 +145,14 @@ extern "C" {
     ) \
     PARAM(  \
         U8, \
+        option_enable_oil18_input, \
+        .p_name = "Enable 1.8 bar input", \
+        .p_info = "Check high oil pressure input above RPM threshold; disable to suppress its warning and buzzer",\
+        .value = 1, \
+        .max = 1, \
+    ) \
+    PARAM(  \
+        U8, \
         rpmOptions_redline_segments, \
         .p_name = "Redline segments", \
         .p_info = "Redline segments number",\
