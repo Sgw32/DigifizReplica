@@ -139,7 +139,9 @@ jobs:
       # The Docker action owns its generated files. Keep the Next build intact
       # and use an independent directory instead of deleting it on the host.
       - name: Select ReFIZ setup
-        run: cp ESP32/Digifiz/main/setup_refiz.h ESP32/Digifiz/main/setup.h
+        run: |
+          cp ESP32/Digifiz/main/setup_refiz.h ESP32/Digifiz/main/setup.h
+          sed -i 's/Digifiz Server/ReFIZ Server/g' ESP32/Digifiz/main/data/digifiz_ws_connect.html
 
       - name: Build ReFIZ firmware
         uses: espressif/esp-idf-ci-action@v1.1.0
