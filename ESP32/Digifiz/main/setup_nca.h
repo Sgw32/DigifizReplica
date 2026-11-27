@@ -1,0 +1,41 @@
+#ifndef SETUP_H
+#define SETUP_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define configTICK_RATE_HZ CONFIG_FREERTOS_HZ
+#define portTICK_PERIOD_MS ((TickType_t)1000 / configTICK_RATE_HZ)
+
+#define MANUFACTURER_MFA_SWITCH
+#define AVERAGE_CONSUMPTION_L100KM
+#define FUEL_LEVEL_EXPERIMENTAL
+#define OIL_RES_10000
+
+#define EEPROM_SAVE_INTERVAL 64
+#define TEMPERATURE_ALARM_PERIOD 250
+#define TEMPERATURE_FAULTY_PERIOD 1000
+
+#define RPM_8000
+#define DEFAULT_MILEAGE 000000L
+
+#if defined(AUDI_DISPLAY) || defined(AUDI_RED_DISPLAY)
+#ifndef DISABLE_SENSOR_BUTTON
+#define DISABLE_SENSOR_BUTTON
+#endif
+#endif
+
+#define COOLANT_R_AT_NORMAL_T 1000.0f
+#define OIL_R_AT_NORMAL_T 1000.0f
+#define AMBIENT_R_AT_NORMAL_T 500.0f
+#define COOLANT_THERMISTOR_B 4000
+#define AIR_THERMISTOR_B 3600
+#define OIL_THERMISTOR_B 4000
+#define CRC_FRAGMENT_SIZE 84
+
+#define DIGIFIZ_NCA_DISPLAY
+
+#ifdef __cplusplus
+}
+#endif
+#endif
